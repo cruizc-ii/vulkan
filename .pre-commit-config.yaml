@@ -1,0 +1,56 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.3.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-ast
+      - id: check-added-large-files
+      - id: debug-statements
+      - id: debug-statements
+      - id: debug-statements
+      - id: pretty-format-json
+        args: [--autofix]
+      - id: requirements-txt-fixer
+      - id: forbid-new-submodules
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch, staging, --branch, production, --branch, master]
+
+  - repo: https://github.com/ambv/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        language_version: python3
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: "3.7.7"
+    hooks:
+      - id: flake8
+        language_version: python3
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.902
+    hooks:
+      - id: mypy
+        language_version: python3.9
+        verbose: true
+        args:
+          [
+            --show-error-context,
+            --show-error-codes,
+            --pretty,
+            --strict,
+            --ignore-missing-imports,
+          ]
+        stages: [push]
+
+  - repo: local
+    hooks:
+      - id: unittest
+        name: run unit tests
+        entry: python3 -m pytest
+        language: system
+        pass_filenames: false
+        stages: [commit]
