@@ -23,10 +23,10 @@ __**/
 # models
 models/loss_csvs/**
 models/rate_csvs/**
-models/design_models/**
-models/hazard_models/**
-models/strana_models/**
-models/loss_models/**
+models/design/**
+models/hazard/**
+models/strana/**
+models/loss/**
 
 # tests
 fem-from-spec.yml
@@ -119,6 +119,7 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+python3-venv/
 
 # Spyder project settings
 .spyderproject

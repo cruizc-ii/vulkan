@@ -1,6 +1,7 @@
 from unittest.case import TestCase
 from pathlib import Path
-from app.design import ReinforcedConcreteFrame
+
+# from app.design import ReinforcedConcreteFrame
 
 
 TEST_PATH = Path(__file__).resolve().parent
@@ -12,20 +13,21 @@ HYP_DESIGN_FIXTURES_PATH = DESIGN_FIXTURES_PATH / "hypothesis"
 DESIGN_MODELS_PATH = TEST_PATH.parent / "models" / "design_models"
 
 
-class ChopraElasticPeriodsTest(TestCase):
+class BuildingSpecificationTest(TestCase):
     """
-    it should modify masses on the fem and spec instance to produce realistic periods
+    it should load and save spec
     """
 
     maxDiff = None
+    file = None
+    path = None
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.path = DESIGN_FIXTURES_PATH / "chopra-design"
-        cls.file = cls.path / "chopra-design-spec.yml"
+        cls.path = DESIGN_FIXTURES_PATH
+        cls.file = cls.path / "spec-test.yml"
 
     def test_produces_correct_periods(self):
         """it should load a spec and produce a realistic design"""
-        spec = ReinforcedConcreteFrame()
-        spec.force_design()
+        # spec = ReinforcedConcreteFrame.from_file(self.file)
         self.assertTrue(True)
