@@ -1,0 +1,39 @@
+name: ConcreteBeamAsset
+category: structural
+edp: rotations_env
+damage_states:
+  - name: ds0
+    description: 'no damage'
+    median: 1e-10
+    std: 0.01
+    vulnerability:
+      type: lognormal
+      median: 1e-10
+      std: 0.01
+  - name: ds1
+    description: 'crack'
+    median: 0.008
+    std: 0.36
+    vulnerability:
+      type: lognormal
+      median: 0.01395
+      # median: 0.0837
+      std: 0.59
+  - name: ds2
+    description: 'big crack'
+    median: 0.01
+    std: 0.36
+    vulnerability:
+      type: lognormal
+      median: 0.0035
+      # median: 0.2101
+      std: 0.59
+  - name: ds3
+    description: 'loss of core'
+    median: 0.015
+    std: 0.46
+    vulnerability:
+      type: lognormal
+      median: 0.054383333
+      # median: 0.3263
+      std: 0.63

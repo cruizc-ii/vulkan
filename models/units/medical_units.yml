@@ -1,0 +1,33 @@
+- name: machine_big
+  dx: 24.0
+  assets:
+    - MachineAsset
+    - NonStructuralGeneric
+    - UnknownAsset
+- name: room
+  dx: 20
+  assets:
+    - ContentsGeneric
+- name: cashier
+  dx: 8
+  assets:
+    - CashierAsset
+    - NonStructuralGeneric
+- name: surgery
+  dx: 24
+  assets:
+    - NonStructuralGeneric
+- name: patient_rooms
+  dx: 40
+  assets:
+    - ContentsGeneric
+    - ContentsGeneric
+- name: pharm
+  dx: 8
+  assets:
+    - PharmBookcase
+- name: diagnostic
+  dx: 20
+  assets:
+    - DiagnosticAsset
+    - CashierAsset

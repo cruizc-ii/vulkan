@@ -1,0 +1,32 @@
+groups:
+  - name: Reception
+    priority: 5
+    pct: 0.5
+    units:
+      office:
+        min: 1
+        max: 3
+      bathroom:
+        min: 1
+        max: 1
+  - name: ICU
+    pct: 0.2
+    priority: 10
+    units:
+      office:
+        max: 1
+      bathroom:
+        min: 1
+        max: 1
+      rig:
+        min: 1
+        max: 2
+  - name: MachineRoom
+    priority: -1
+    pct: 0.99
+    units:
+      machine1:
+        max: 1
+
+
+

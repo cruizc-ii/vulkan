@@ -1,0 +1,28 @@
+groups:
+  - name: Rooms
+    pct: 0.01
+    unique: yes
+    sticky: yes
+    priority: 1
+    units:
+      - bedroom_test
+      - bathroom_test
+  - name: Dietary
+    pct: 0.10
+    priority: 2
+    unique: yes
+    sticky: yes
+    units:
+      - office_test
+  - name: MachineRoom
+    pct: 0.99
+    priority: 2
+    sticky: yes
+    unique: yes
+    units:
+      - machine1_test
+  - name: NotIncluded
+    pct: 1.5
+    units:
+      - notincluded
+

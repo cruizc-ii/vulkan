@@ -1,0 +1,21 @@
+- name: machine_big_test
+  dx: 24.0
+  assets:
+    - NonStructuralGenericTest
+    - UnknownAsset
+- name: room_test
+  dx: 20
+  assets:
+    - NonStructuralGenericTest
+- name: cashier_test
+  dx: 8
+  assets:
+    - NonStructuralGenericTest
+- name: surgery_test
+  dx: 24
+  assets:
+    - NonStructuralGenericTest
+- name: patient_rooms_test
+  dx: 40
+  assets:
+    - ContentsGenericTest

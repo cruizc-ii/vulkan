@@ -1,0 +1,22 @@
+groups:
+  - name: Rooms
+    pct: 0.01
+    priority: 1
+    units:
+      - bedroom
+      - bathroom
+  - name: Dietary
+    pct: 0.10
+    priority: 2
+    units:
+      - office
+  - name: MachineRoom
+    pct: 0.99
+    priority: 2
+    units:
+      - machine1
+  - name: NotIncluded
+    pct: 1.5
+    units:
+      - notincluded
+

@@ -1,0 +1,22 @@
+category: contents
+damage_states:
+- description: no damage
+  median: 1.0e-10
+  name: ds0
+  std: 0.01
+  vulnerability:
+    median: 1.0e-12
+    std: 0.01
+    type: lognormal
+- description: falling to the ground
+  median: 0.5
+  name: ds1
+  std: 0.2
+  vulnerability:
+    median: 0.4
+    std: 0.01
+    type: lognormal
+edp: pfa
+icon: small_cpu.png
+name: SmallCPU
+net_worth: 1.1

@@ -1,0 +1,10 @@
+- name: machine1
+  dx: 4.0
+  assets:
+    - ContentsGeneric
+    - UnknownAsset
+- name: machine1_test
+  dx: 4.0
+  assets:
+    - ContentsGenericTest
+    - UnknownAsset

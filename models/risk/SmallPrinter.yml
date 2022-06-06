@@ -1,0 +1,22 @@
+category: contents
+damage_states:
+- description: no damage
+  median: 1.0e-10
+  name: ds0
+  std: 0.01
+  vulnerability:
+    median: 1.0e-12
+    std: 0.01
+    type: lognormal
+- description: falling to the ground
+  median: 1.5
+  name: ds1
+  std: 0.3
+  vulnerability:
+    median: 0.55
+    std: 0.01
+    type: lognormal
+edp: pfa
+icon: small_printer.png
+name: SmallPrinter
+net_worth: 0.40

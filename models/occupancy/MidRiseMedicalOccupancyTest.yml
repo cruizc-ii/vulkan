@@ -1,0 +1,77 @@
+groups:
+  - name: Pharm
+    pct: 0.01
+    priority: 1
+    unique: yes
+    sticky: yes
+    units:
+      - cashier_test
+  - name: Dietary
+    pct: 0.04
+    priority: 2
+    unique: yes
+    sticky: yes
+    units:
+      - cashier_test
+  - name: Diagnostic
+    pct: 0.07
+    priority: 2
+    unique: yes
+    sticky: yes
+    units:
+      - room_test
+  - name: CentralSupply
+    pct: 0.13
+    priority: 2
+    unique: yes
+    sticky: yes
+    units:
+      - cashier_test
+  - name: ICU
+    pct: 0.18
+    unique: yes
+    priority: 4
+    sticky: yes
+    units:
+      - room_test
+  - name: Surgery
+    pct: 0.23
+    priority: 5
+    unique: yes
+    sticky: yes
+    units:
+      - surgery_test
+  - name: PatientRooms
+    pct: 0.35
+    priority: 3
+    sticky: yes
+    units:
+      - patient_rooms_test
+  - name: Lab
+    pct: 0.70
+    priority: 2
+    unique: yes
+    sticky: yes
+    units:
+      - room_test
+  - name: Admin
+    pct: 0.73
+    priority: 1
+    unique: yes
+    sticky: yes
+    units:
+      - cashier_test
+  - name: Staff
+    pct: 0.83
+    priority: 1
+    unique: yes
+    sticky: yes
+    units:
+      - cashier_test
+  - name: Mechanical
+    pct: 0.95
+    priority: 2
+    unique: yes
+    sticky: yes
+    units:
+      - machine_big_test

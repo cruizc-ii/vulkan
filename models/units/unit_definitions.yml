@@ -1,0 +1,23 @@
+- name: office
+  dx: 2
+  assets:
+    - NonStructuralGenericTest
+    - NonStructuralGenericTest
+- name: bathroom
+  dx: 1.5
+  assets:
+    - Toilet
+    - Toilet
+    - NonStructuralGenericRoofTilings
+    - NonStructuralGenericFloorFinishes
+    - NonStructuralGenericWallFinishes
+    - NonStructuralGenericPlumbing
+- name: office_test
+  dx: 2
+  assets:
+    - NonStructuralGenericTest
+    - NonStructuralGenericTest
+- name: bathroom_test
+  dx: 1.5
+  assets:
+    - ContentsGenericTest

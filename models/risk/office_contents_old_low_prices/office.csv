@@ -1,0 +1,29 @@
+name,icon,mode1,mode2,net_worth,qty,D,dx,dy,median,std
+CoffeeMachine,coffee_machine.png, o,s5,31,6,1.0,0.2,0.5,0.4,0.5
+DigitalCamera,digital_camera.png, s10,,333,3,0.8,0.16,0.9,0.3,0.4
+SmallCPU,small_cpu.png,o,,889,8,0.7,0.1,0.4,0.5,0.2
+DVDMachine,dvd_machine.png,s10,,200,8,0.8,0.18,0.06,0.35,0.3
+WaterDispenser,water_dispenser.png,o,,259,1,0.5,0.15,1.5,0.2,0.2
+FaxMachine,fax_machine.png,s10,,119,4,0.9,0.25,0.4,0.5,0.4
+FlowerVase,flower_vase.png,o,s5,28,8,1,0.05,0.2,0.3,0.3
+CopyMachine,copy_machine.png,o,,741,1,0.8,0.6,1.0,0.7,0.2
+MiniFridge,minifridge.png,o,,244,2,0.5,0.20,1.2,0.6,0.3
+Microwave,microwave.png,s10,,11,4,0.7,0.28,0.3,0.9,0.4
+SmallPrinter,small_printer.png,o,s10,228,2,1,0.25,0.45,1.5,0.3
+SlimJar,slim_jar.png,o,s10,15,2,1,0.05,0.3,0.2,0.1
+GlassCup,glass_cup.png,o,s10,64,6,1,0.04,0.2,0.3,0.1
+Laptop,laptop.png,s10,,711,4,1,0.18,0.2,0.5,0.25
+MediumShelf,medium_shelf.png,o,,488,8,0.3,0.10,2.0,0.8,0.5
+GlassBottle,glass_bottle.png,o,s5,17,2,1,0.06,0.3,0.5,0.5
+Minicomponent,minicomponent.png,o,s10,637,4,1,0.2,0.4,0.5,0.5
+22inMonitor,22_in_monitor.png,o,s10,185,8,1,0.05,0.4,0.3,0.01
+Multiprinter,multiprinter.png,o,s10,867,4,1,0.25,0.5,0.9,0.2
+60inPlotter,60_in_plotter.png,o,,4444,1,0.9,0.7,1.1,0.8,0.3
+Projector,projector.png,s10,,1156,2,1,0.2,0.15,0.4,0.4
+Radio,radio.png,s5,,109,2,1,0.3,0.15,0.6,0.2
+LargeOfficeChair,large_office_chair.png,o,,111,16,0,0.5,1.2,0.9,0.7
+Chair,chair.png,o,,170,8,0,0.3,1.0,0.8,0.7
+Telephone,telephone.png,s5,,45,10,0.3,0.4,0.08,0.5,0.5
+21inTV,21_in_tv.png,o,s10,222,1,1,0.3,0.5,0.8,0.2
+CoffeeCup,coffee_cup.png,s5,,4,12,1,0.08,0.10,0.8,0.1
+MediumTable,medium_table.png,o,,33,3,0.1,0.4,1.0,0.9,0.5

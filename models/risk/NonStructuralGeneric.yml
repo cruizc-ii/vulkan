@@ -1,0 +1,31 @@
+name: NonStructuralGeneric
+net_worth: 3.3000
+category: nonstructural
+edp: peak_drifts
+hidden: true
+icon: marble-tiles.jpg
+damage_states:
+  - name: ds0
+    description: 'no damage'
+    median: 1e-10
+    std: 0.01
+    vulnerability:
+      type: lognormal
+      median: 1e-12
+      std: 0.01
+  - name: ds1
+    description: 'partial dmg'
+    median: 0.8e-2
+    std: 0.36
+    vulnerability:
+      type: lognormal
+      median: 0.00307
+      std: 0.59
+  - name: ds2
+    description: 'complete dmg'
+    median: 0.01
+    std: 0.36
+    vulnerability:
+      type: lognormal
+      median: 0.0083
+      std: 0.59

@@ -10,6 +10,9 @@ import io
 from dataclasses import asdict
 import pandas as pd
 
+ROOT_DIR = Path(__file__).parent.parent
+MODELS_DIR = ROOT_DIR / "models"
+DESIGN_DIR = MODELS_DIR / "design"
 GRAVITY = 9.81
 
 
@@ -172,6 +175,15 @@ class NamedYamlMixin(YamlMixin):
         filepath = folder / f"{self.name}.yml"
         return super().to_file(filepath)
 
+    def delete(self, folder: Path) -> None:
+        filepath = folder / f"{self.name}.yml"
+        # folder = DESIGN_DIR / name
+        try:
+            Path.unlink(filepath)
+            # shutil.rmtree(folder)
+        except (FileNotFoundError, OSError) as e:
+            print(e)
+
 
 def save_file(name, content, directory):
     """Decode and store a file uploaded with Plotly Dash."""
@@ -186,3 +198,27 @@ def decode_hazard_csv(content, normalize=1) -> pd.DataFrame:
     df = pd.read_csv(io.StringIO(decoded.decode("utf-8")), sep="\s+", names=["x", "y"])
     df.x = df.x / normalize
     return df
+
+
+def UploadComponent(id, msg: str = "Upload design criterion."):
+    # return html.Div(
+    #     [
+    #         dcc.Upload(
+    #             id=id,
+    #             children=html.Div([msg]),
+    #             style={
+    #                 "width": "100%",
+    #                 "height": "60px",
+    #                 "lineHeight": "60px",
+    #                 "borderWidth": "1px",
+    #                 "borderStyle": "dashed",
+    #                 "borderRadius": "5px",
+    #                 "textAlign": "center",
+    #                 "margin": "10px",
+    #             },
+    #             multiple=False,
+    #         ),
+    #     ],
+    #     style={"max-width": "500px"},
+    # )
+    pass

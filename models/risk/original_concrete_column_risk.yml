@@ -1,0 +1,59 @@
+name: concrete_column
+edp: peak_drifts
+damage_states:
+  - name: ds0
+    description: 'no damage'
+    median: 1e-10
+    std: 0.01
+    vulnerability:
+      type: lognormal
+      median: 1e-10
+      std: 0.01
+  - name: ds1
+    description: 'micro crack'
+    median: 0.008
+    std: 0.36
+    vulnerability:
+      type: lognormal
+      median: 0.0837
+      std: 0.59
+  - name: ds2
+    description: 'small crack'
+    median: 0.01
+    std: 0.36
+    vulnerability:
+      type: lognormal
+      median: 0.2101
+      std: 0.59
+  - name: ds3
+    description: 'crack'
+    median: 0.015
+    std: 0.46
+    vulnerability:
+      type: lognormal
+      median: 0.3263
+      std: 0.63
+  - name: ds4
+    description: 'micro'
+    median: 0.03
+    std: 0.20
+    vulnerability:
+      type: lognormal
+      median: 0.803
+      std: 0.67
+  - name: lvcc
+    description: 'loss vertical carrying capacity'
+    median: 0.0388
+    std: 0.30
+    vulnerability:
+      type: lognormal
+      median: 1.994
+      std: 0.3
+  - name: sidesway
+    description: 'complete lateral collapse'
+    median: 0.10
+    std: 0.03
+    vulnerability:
+      type: lognormal
+      median: 3.4903
+      std: 0.03

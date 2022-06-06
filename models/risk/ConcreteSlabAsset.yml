@@ -1,0 +1,12 @@
+name: ConcreteColumnAsset
+category: structural
+edp: peak_drifts
+damage_states:
+  - name: ds0
+    description: 'no damage'
+    median: 1e-10
+    std: 0.01
+    vulnerability:
+      type: lognormal
+      median: 1e-10
+      std: 0.0.1
