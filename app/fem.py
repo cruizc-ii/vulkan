@@ -275,7 +275,7 @@ class FiniteElementModel(ABC, YamlMixin):
         from app.occupancy import BuildingOccupancy
 
         if self.occupancy is None:
-            self.occupancy = BuildingOccupancy.DEFAULT_MODEL
+            self.occupancy = BuildingOccupancy.DEFAULT
         if isinstance(self.nodes[0], dict):
             self.nodes = [Node(**data) for data in self.nodes]
         if isinstance(self.elements[0], dict):
@@ -1072,7 +1072,7 @@ class BilinFrame(FiniteElementModel):
         from app.occupancy import BuildingOccupancy
 
         if self.occupancy is None:
-            self.occupancy = BuildingOccupancy.DEFAULT_MODEL
+            self.occupancy = BuildingOccupancy.DEFAULT
         if isinstance(self.nodes[0], dict):
             self.nodes = [Node(**data) for data in self.nodes]
         if isinstance(self.elements[0], dict):
@@ -1154,7 +1154,7 @@ class IMKFrame(FiniteElementModel):
 
 
 class FEMFactory:
-    DEFAULT_MODEL = PlainFEM.__name__
+    DEFAULT = PlainFEM.__name__
     options = {
         PlainFEM.__name__: PlainFEM,
         RigidBeamFEM.__name__: RigidBeamFEM,
@@ -1164,7 +1164,7 @@ class FEMFactory:
     }
 
     def __new__(cls, **data) -> FiniteElementModel:
-        model = data.get("model", cls.DEFAULT_MODEL)
+        model = data.get("model", cls.DEFAULT)
         return cls.options[model](**data)
 
     @classmethod

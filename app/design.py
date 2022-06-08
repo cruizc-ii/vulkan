@@ -72,7 +72,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         if self.occupancy is None:
             from app.occupancy import BuildingOccupancy
 
-            self.occupancy = BuildingOccupancy.DEFAULT_MODEL
+            self.occupancy = BuildingOccupancy.DEFAULT
 
         if len(self.masses) == 1:
             self.masses = [self.masses[0] for _ in range(self.num_storeys)]
@@ -195,7 +195,6 @@ class BuildingSpecification(ABC, NamedYamlMixin):
             results_dir=results_dir, criteria=self._design_criteria, fem=fem
         )
         if pushover:
-            print(f"{results_dir=}")
             self.fem.pushover(results_path=results_dir)
 
     def design(
@@ -239,5 +238,7 @@ class ReinforcedConcreteFrame(BuildingSpecification):
     Ibeams: Optional[float] = 0.0015
 
     def __post_init__(self):
+        # WARNING: this is an inconsistency with out design procedures
+        # each BC defines its own Ec, but this property is independent of legal matters!
         self.Ec = 4.4e6 * (self.fc / 1e3) ** 0.5
         return super().__post_init__()

@@ -452,8 +452,8 @@ class StructuralResultView(YamlMixin):
 class Recorder:
     path: Path
     fem: "FiniteElementModel"
-    model_str: str = None
-    view: StructuralResultView = None
+    model_str: Optional[str] = None
+    view: Optional[StructuralResultView] = None
 
     def __post_init__(self) -> None:
         os.makedirs(self.abspath, exist_ok=True)

@@ -274,6 +274,8 @@ class DesignCriterionFactory:
         CDMX2017Q1.__name__: CDMX2017Q1,
     }
 
+    DEFAULT: str = CDMX2017Q1.__name__
+
     def __new__(cls, name) -> DesignCriterion:
         return cls.seeds[name]
 
@@ -282,8 +284,8 @@ class DesignCriterionFactory:
         cls.seeds[name] = seed
 
     @classmethod
-    def criteria(cls) -> list:
-        return [{"label": name, "value": name} for name, _ in cls.seeds.items()]
+    def options(cls) -> list:
+        return list(cls.seeds.keys())
 
     @classmethod
     def default_criteria(cls) -> list:

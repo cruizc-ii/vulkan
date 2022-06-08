@@ -291,7 +291,7 @@ class OccupancyModel(YamlMixin):
                     if asset.edp not in summary_edps:
                         asset.node = g.closest_node_id
         except AssetNotFoundException as e:
-            print(f'_generate_assets_from_groups: asset "{asset_str}" not found')
+            print(f'_generate_assets_from_groups: asset "{asset_str}" not found', e)
         return assets
 
     def build(self, fem: FiniteElementModel) -> list[Asset]:
@@ -323,15 +323,14 @@ class OccupancyModel(YamlMixin):
 class BuildingOccupancy:
     fem: FiniteElementModel
     model_str: str
-    _model: OccupancyModel = None
+    _model: Optional[OccupancyModel] = None
 
-    # DEFAULT_MODEL = "MidRiseMedicalOccupancy.yml"
-    DEFAULT_MODEL = "MidRisePrivateOffice.yml"
+    DEFAULT: str = "MidRisePrivateOffice.yml"
 
     @classmethod
     def options(cls) -> dict:
         options = find_files(OCCUPANCY_MODELS_PATH, only_yml=True)
-        return [{"label": name.split(".")[0], "value": name} for name in options]
+        return options
 
     def __post_init__(self):
         options = find_files(OCCUPANCY_MODELS_PATH, only_yml=True)
