@@ -10,7 +10,7 @@ from app.assets import (
 from dataclasses import dataclass, field
 import numpy as np
 from pathlib import Path
-from app.utils import GRAVITY, SummaryEDP, YamlMixin
+from app.utils import GRAVITY, SummaryEDP, YamlMixin, ASSETS_PATH
 from enum import Enum
 import pandas as pd
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line, Pie
@@ -296,7 +296,7 @@ class FiniteElementModel(ABC, YamlMixin):
         self.validate()
 
     @classmethod
-    def from_spec(cls, spec: "BuildingSpecification") -> "FiniteElementModel":
+    def from_spec(cls, spec) -> "FiniteElementModel":
         nodes = [Node(id=id, **info) for id, info in spec.nodes.items()]
         elements = ElasticBeamColumn.from_adjacency(spec._adjacency)
         fem = cls(
@@ -340,6 +340,22 @@ class FiniteElementModel(ABC, YamlMixin):
             self.elements_net_worth
             + self.nonstructural_net_worth
             + self.contents_net_worth
+        )
+
+    @property
+    def eigen_df(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            dict(
+                periods=self.periods,
+                freqs=self.frequencies,
+                values=self.values,
+                omegas=self.omegas,
+                mass=self.masses,
+                weights=self.weights,
+                loads=self.uniform_beam_loads,
+                loads_kPa=self.uniform_area_loads_kPa,
+            ),
+            index=range(1, len(self.periods) + 1),
         )
 
     @property
@@ -515,7 +531,7 @@ class FiniteElementModel(ABC, YamlMixin):
         from app.strana import StructuralAnalysis, StructuralResultView
 
         strana = StructuralAnalysis(results_path, fem=self)
-        view: StructuralResultView = strana.pushover(drift=drift)
+        view = strana.pushover(drift=drift)
         self._pushover_view = view
         return view
 
@@ -615,7 +631,6 @@ class FiniteElementModel(ABC, YamlMixin):
         ls = [beam.length for beam in self.beams]
         return sum(ls)
 
-    @property
     def cytoscape(self) -> tuple[list[dict], list[dict]]:
         ASSET_Y_OFFSET = 25
         SCALE = 100
@@ -630,7 +645,6 @@ class FiniteElementModel(ABC, YamlMixin):
             }
             for node in self.nodes
         ]
-
         fig += [
             {
                 "data": {
@@ -646,11 +660,11 @@ class FiniteElementModel(ABC, YamlMixin):
         fig += [
             {
                 "data": {
-                    "id": np.random.random(),
+                    "id": ix,
                     "label": content.name,
-                    "url": FLASK_ASSETS_PATH + content.icon if content.icon else None,
+                    "url": ASSETS_PATH + content.icon if content.icon else "",
                 },
-                "classes": "contents" if content.icon else None,
+                "classes": "contents" if content.icon else "",
                 "position": {
                     # "x": (SCALE * (content.x + 2 * np.random.random()))
                     # if content.x is not None
@@ -660,17 +674,17 @@ class FiniteElementModel(ABC, YamlMixin):
                     - ASSET_Y_OFFSET,
                 },
             }
-            for content in self.contents
+            for ix, content in enumerate(self.contents, len(fig))
             if not content.hidden
         ]
         fig += [
             {
                 "data": {
-                    "id": np.random.random(),
+                    "id": iy,
                     "label": asset.name,
-                    "url": FLASK_ASSETS_PATH + asset.icon if asset.icon else None,
+                    "url": ASSETS_PATH + asset.icon if asset.icon else "",
                 },
-                "classes": "nonstructural" if asset.icon else None,
+                "classes": "nonstructural" if asset.icon else "",
                 "position": {
                     "x": SCALE * asset.x if asset.x is not None else 0,
                     # else SCALE * np.random.random() * self.length,
@@ -678,36 +692,25 @@ class FiniteElementModel(ABC, YamlMixin):
                     - ASSET_Y_OFFSET,
                 },
             }
-            for asset in self.nonstructural_elements
+            for iy, asset in enumerate(self.nonstructural_elements, len(fig))
             if not asset.hidden
         ]
-        # add floor line
-        # fig += [
-        #     {
-        #         "data": {"id": -2, },
-        #         "position": {"x": -400, "y": 0},
-        #     },
-        #     {
-        #         "data": {"id": -1, },
-        #         "position": {"x": 400, "y": 0},
-        #     },
-        # ]
-        # fig += [
-        #     {"data": {"source": -2, "target": -1, "k": 1.0 }}
-        # ]
+
         style = [
             {"selector": "edge", "style": {"label": "data(tag)"}},
             {"selector": "edge", "style": {"width": "data(r)"}},  # width of elements
+            {"selector": "node", "style": {"label": "data(label)"}},
+            {
+                "selector": ".fixed",
+                "style": {"shape": "rectangle", "background-color": "#444242"},
+            },
             {
                 "selector": ".contents",
                 "style": {
-                    # "shape": "rectangle",
                     "background-image": "data(url)",
                     "background-fit": "cover cover",
                     "width": 50,
                     "height": 50,
-                    # "background-opacity": 0.1,
-                    # 'background-fit': 'cover',
                 },
             },  # contents
             {
@@ -718,14 +721,7 @@ class FiniteElementModel(ABC, YamlMixin):
                     "background-fit": "cover cover",
                     "width": 50,
                     "height": 50,
-                    # 'background-fit': 'cover',
                 },
-            },  # contents
-            # {"selector": ".contents", "style": {'background-image': 'data(url)'}}, # contents
-            {"selector": "node", "style": {"label": "data(label)"}},
-            {
-                "selector": ".fixed",
-                "style": {"shape": "rectangle", "background-color": "#444242"},
             },
         ]
         return fig, style
@@ -1039,7 +1035,7 @@ class ShearModel(FiniteElementModel):
 
         # for displacement-based design, we need something to multiple D_n(t) against.
         # this is similar as S but without masses!
-        U = Phi @ G
+        # U = Phi @ G
         view.gamma = G
         view.s = S
         view.S = S

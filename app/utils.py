@@ -13,6 +13,7 @@ import pandas as pd
 ROOT_DIR = Path(__file__).parent.parent
 MODELS_DIR = ROOT_DIR / "models"
 DESIGN_DIR = MODELS_DIR / "design"
+ASSETS_PATH = "https://vulkan1.s3.amazonaws.com/"
 GRAVITY = 9.81
 
 

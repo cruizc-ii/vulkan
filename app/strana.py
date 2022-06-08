@@ -380,21 +380,21 @@ class StructuralResultView(YamlMixin):
         fig.update_layout(xaxis_title="t (s)", yaxis_title="PFA/PGA")
         return fig
 
-    @property
-    def timehistory_figures(self) -> list[dcc.Graph]:
-        """
-        TODO; this is interesting.. a better approach is to
-        define DRIFTS.csv NODE-ACCEL.csv as EDPs.
-        filenames <-> EDP and we could just
-        use a mapper
-        """
-        figs = []
-        figs.append(self.drifts_plot())
-        # figs.append(self.moments_plot())
-        figs.append(self.floor_accels_plot())
-        figs.append(self.floor_accels_plot_in_g())
-        figs.append(self.normalized_floor_accels_plot())
-        return [dcc.Graph(figure=f) for f in figs]
+    # @property
+    # def timehistory_figures(self) -> list[dcc.Graph]:
+    #     """
+    #     TODO; this is interesting.. a better approach is to
+    #     define DRIFTS.csv NODE-ACCEL.csv as EDPs.
+    #     filenames <-> EDP and we could just
+    #     use a mapper
+    #     """
+    #     figs = []
+    #     figs.append(self.drifts_plot())
+    #     # figs.append(self.moments_plot())
+    #     figs.append(self.floor_accels_plot())
+    #     figs.append(self.floor_accels_plot_in_g())
+    #     figs.append(self.normalized_floor_accels_plot())
+    #     return [dcc.Graph(figure=f) for f in figs]
 
     def view_peak_drifts(self) -> DataFrame:
         abs_drifts = self.view_drifts().abs()
@@ -860,8 +860,7 @@ class StructuralAnalysis:
         with open(results_path, "w") as f:
             f.write(recorder.tcl_string)
         os.chmod(results_path, 0o777)
-        result = subprocess.call(str(results_path.resolve()), shell=True)
-        # print(f"run result {result}")
+        subprocess.call(str(results_path.resolve()), shell=True)
         return recorder.view
 
     def get_stiffness_matrix(self) -> np.ndarray:
@@ -925,7 +924,7 @@ class StructuralAnalysis:
         )
         return self.run(recorder=recorder)
 
-    def pushover(self, drift: float = 0.05) -> Recorder:
+    def pushover(self, drift: float = 0.05):
         recorder = PushoverRecorder(self.pushover_path, fem=self.fem, drift=drift)
         return self.run(recorder=recorder)
 
@@ -987,12 +986,12 @@ class IDA(NamedYamlMixin):
         try:
             if self.hazard_abspath and not self._hazard:
                 self._hazard: Hazard = Hazard.from_file(self.hazard_abspath)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             raise HazardNotFoundException
         try:
             if self.design_abspath and not self._design:
                 self._design = ReinforcedConcreteFrame.from_file(self.design_abspath)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             raise SpecNotFoundException
 
         if self.standard:
