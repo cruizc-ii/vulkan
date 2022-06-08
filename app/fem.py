@@ -37,7 +37,7 @@ class FEMValidationException(Exception):
 
 @dataclass
 class FE(YamlMixin):
-    id: str = None  # opensees tag
+    id: Optional[str] = None  # opensees tag
 
     @staticmethod
     def string_ids_for_list(fems: list["FE"]) -> str:
@@ -255,7 +255,7 @@ class FiniteElementModel(ABC, YamlMixin):
     damping: float
     model: str = "ABC"
     num_frames: int = 1
-    occupancy: str = None
+    occupancy: Optional[str] = None
     periods: list = field(default_factory=list)
     frequencies: list = field(default_factory=list)
     omegas: list = field(default_factory=list)
@@ -268,6 +268,7 @@ class FiniteElementModel(ABC, YamlMixin):
     _transf_col: int = 2
     nonstructural_elements: list[Asset] = field(default_factory=list)
     contents: list[Asset] = field(default_factory=list)
+    pushover_abs_path: Optional[str] = None
     _pushover_view = None
 
     def __post_init__(self):
@@ -293,6 +294,14 @@ class FiniteElementModel(ABC, YamlMixin):
             self.build_and_place_assets()
 
         self.model = self.__class__.__name__
+
+        if self.pushover_abs_path:
+            from app.strana import StructuralResultView
+
+            self._pushover_view = StructuralResultView(
+                abs_folder=self.pushover_abs_path
+            )
+
         self.validate()
 
     @classmethod
@@ -528,10 +537,12 @@ class FiniteElementModel(ABC, YamlMixin):
         return view
 
     def pushover(self, results_path: Path, drift: float = 0.05):
-        from app.strana import StructuralAnalysis, StructuralResultView
+        from app.strana import StructuralAnalysis
+        from app.utils import AnalysisTypes
 
         strana = StructuralAnalysis(results_path, fem=self)
         view = strana.pushover(drift=drift)
+        self.pushover_abs_path = str(results_path / AnalysisTypes.PUSHOVER.value)
         self._pushover_view = view
         return view
 
@@ -543,17 +554,7 @@ class FiniteElementModel(ABC, YamlMixin):
     ):
         from app.strana import StructuralResultView
 
-        if not force:
-            # todo@carlo optimization for not running pushover always unless force is True
-            # try:
-            #     view = StructuralResultView(abs_folder=results_path)
-            #     reactions = view.reactions()
-            #     V = reactions["V"].values.flatten()
-            #     roof_disp = view.roof_displacements()
-            # except FileNotFoundError:
-            if not self._pushover_view:
-                self.pushover(results_path=results_path, drift=drift)
-        else:
+        if force or not self._pushover_view:
             self.pushover(results_path=results_path, drift=drift)
 
         df, ndf = self.pushover_dfs
@@ -613,7 +614,7 @@ class FiniteElementModel(ABC, YamlMixin):
     def uniform_beam_loads(self) -> list[float]:
         masses_per_storey = np.array(self.masses)
         beam_loads = GRAVITY * masses_per_storey / self.length
-        return beam_loads
+        return beam_loads.tolist()
 
     @property
     def height(self) -> float:

@@ -185,12 +185,18 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         return f"{self.total_mass * GRAVITY:.1f}"
 
     def force_design(
-        self, results_dir: Path = None, seed_class: FiniteElementModel = PlainFEM
+        self,
+        results_dir: Path = None,
+        seed_class: FiniteElementModel = PlainFEM,
+        pushover: bool = False,
     ) -> None:
         fem = seed_class.from_spec(self)
         self.fems = self.design(
             results_dir=results_dir, criteria=self._design_criteria, fem=fem
         )
+        if pushover:
+            print(f"{results_dir=}")
+            self.fem.pushover(results_path=results_dir)
 
     def design(
         self,

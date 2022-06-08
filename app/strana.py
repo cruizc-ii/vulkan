@@ -44,12 +44,12 @@ class StructuralResultView(YamlMixin):
     frequencies: Optional[list] = None
     peak_drifts: Optional[list] = None
     peak_floor_accels: Optional[list] = None
-    record: Record = None
-    scale: float = None
+    record: Optional[Record] = None
+    scale: Optional[float] = None
 
     _DEFAULT_NAME = "results.yml"
     _K_STATIC_NAME = "K-static.csv"
-    _cache_modal_results: dict = None
+    _cache_modal_results: Optional[dict] = None
     _init: bool = False
 
     def __post_init__(self) -> None:

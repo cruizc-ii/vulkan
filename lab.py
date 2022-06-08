@@ -102,7 +102,8 @@ with st.sidebar:
                     bays=bays,
                 )
                 time.sleep(2)
-                design.force_design(DESIGN_DIR)
+                design.force_design(DESIGN_DIR, pushover=True)
+                design.fem.pushover_abs_path
                 design.to_file(DESIGN_DIR)
             st.success("design successful")
 
