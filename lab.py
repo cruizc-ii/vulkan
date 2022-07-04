@@ -1,12 +1,13 @@
 import streamlit as st
 from app.criteria import DesignCriterion, DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
+from app.hazard import RECORDS_DIR, Hazard, HazardCurveFactory, Record
 from app.utils import find_files
 from pathlib import Path
 from st_cytoscape import cytoscape
 import time
 import shutil
-from app.utils import ROOT_DIR, DESIGN_DIR, MODELS_DIR
+from app.utils import ROOT_DIR, DESIGN_DIR, MODELS_DIR, HAZARD_DIR
 import pandas as pd
 import numpy as np
 from app.occupancy import BuildingOccupancy
@@ -21,6 +22,7 @@ st.set_page_config(
 
 
 padding_top = 2
+DEFAULT_MODULE = 2
 
 st.markdown(
     f"""
@@ -33,7 +35,10 @@ st.markdown(
 )  # remove unnecessary padding at top
 
 if "module" not in st.session_state:
-    st.session_state.module = 1
+    st.session_state.module = DEFAULT_MODULE
+
+if "first_render" not in st.session_state:
+    st.session_state.first_render = True
 
 
 def switch_module(delta: int):
@@ -115,7 +120,6 @@ with st.sidebar:
         bays = [float(s) for s in bays_input.split(",")]
         cumbays = "sum: " + ",".join([str(b) for b in np.array(bays).cumsum().tolist()])
         cumbays
-
         occupancy = st.selectbox(
             "occupancy class",
             BuildingOccupancy.options(),
@@ -165,6 +169,61 @@ with st.sidebar:
         if design:
             elements, stylesheet = design.fem.cytoscape()
 
+    if st.session_state.module == 2:
+        hazards = find_files(HAZARD_DIR)
+        hazard = Hazard(
+            name="sample_hazard",
+        )
+        file = st.selectbox("select a hazard", options=hazards)
+        if file:
+            hazard = Hazard.from_file(HAZARD_DIR / file)
+        name = st.text_input(
+            "give it a name",
+            value=file.split(".")[0] if file else "",
+        )
+        curve_type = st.selectbox(
+            "select a curve type",
+            options=HazardCurveFactory.options(),
+            index=HazardCurveFactory.options().index(hazard._curve.name),
+        )
+        st.subheader(f"Records ({len(hazard.records)})")
+        record_files = find_files(RECORDS_DIR, only_yml=False, only_csv=True)
+        record_name = st.selectbox("add a record", options=record_files)
+        if record_name and not st.session_state.first_render:
+            record_path = str((RECORDS_DIR / record_name).resolve())
+            record = Record(record_path)
+            hazard.add_record(record)
+            hazard.to_file(HAZARD_DIR)
+        left, right = st.columns(2)
+        remove_all = right.button("remove all 🗑️", help="remove all records")
+        # if remove_all:
+        #     with st.spinner("deleting building"):
+        #         time.sleep(2)
+        #         design.delete(DESIGN_DIR)
+        #         design = None
+
+        add_all = left.button("add all", help="add all records")
+        # if add_all:
+        #     st.error("params missing or incorrect")
+        # st.success("design successful")
+        selected_ix = None
+        for ix, r in enumerate(hazard.records):
+            with st.container():
+                c1, c2, c3 = st.columns([3, 1, 1])
+                c1.write(r.name)
+                view_record = c2.button("view", key=f"record{ix}")
+                if view_record:
+                    selected_ix = ix
+                rm = c3.button("🗑️", key=f"record{ix}")
+                if rm:
+                    rec = hazard.records[ix]
+                    record_path = str((RECORDS_DIR / rec.name).resolve())
+                    hazard.remove_record(record_path)
+                    hazard.to_file(HAZARD_DIR)
+                    st.success("record removed")
+
+            st.session_state.first_render = False
+
 
 if st.session_state.module == 1:
     if design:
@@ -211,3 +270,13 @@ if st.session_state.module == 1:
             col2.plotly_chart(nfig)
             df = pd.DataFrame(design.fem.pushover_stats, index=[0])
             st.table(df)
+
+
+if st.session_state.module == 2:
+    if hazard:
+        fig = hazard.rate_figure
+        st.plotly_chart(fig)
+        if selected_ix is not None:
+            record = hazard.records[selected_ix]
+            st.plotly_chart(record.figure)
+            st.plotly_chart(record.spectra)

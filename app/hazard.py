@@ -14,6 +14,7 @@ from dataclasses import dataclass, asdict, field, fields
 from pathlib import Path
 import plotly.express as px
 from app.utils import NamedYamlMixin, YamlMixin, UploadComponent
+from typing import Optional
 import yaml
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent
@@ -97,7 +98,7 @@ class Record:
     path: str
     dt: float = 0.01
     scale: float = 1.0
-    name: str = None
+    name: str | None = None
     kind: RecordKind = field(default=RecordKind.ACCEL.value)
     _spectra: pd.DataFrame = None
     _df: pd.DataFrame = None
@@ -218,9 +219,9 @@ class Record:
 class Hazard(NamedYamlMixin):
     name: str
     records: list[Record] = field(default_factory=list)
-    kind: RecordKind = RecordKind.ACCEL.value
-    curve: dict = None
-    _curve: "HazardCurve" = None
+    kind: str = RecordKind.ACCEL.value
+    curve: Optional[dict] = None
+    _curve: Optional["HazardCurveFactory"] = None
 
     def __post_init__(self):
         if len(self.records) > 0 and isinstance(self.records[0], dict):
@@ -231,14 +232,16 @@ class Hazard(NamedYamlMixin):
     def get_simulated_timehistory(self, num_simulations: int = 10) -> TimeHistorySeries:
         return self._curve.get_simulated_timehistory(num_simulations)
 
-    def add_record(self, record: Record):
+    def add_record(self, record: Record) -> bool:
         paths = [r.path for r in self.records]
         if record.path in paths:
+            print(paths)
+            print("record path in paths")
             return False
         self.records.append(record)
         return True
 
-    def delete_record(self, record_path):
+    def remove_record(self, record_path: str) -> bool:
         self.records = [r for r in self.records if r.path != record_path]
         return True
 
@@ -251,7 +254,7 @@ class Hazard(NamedYamlMixin):
 
 
 @dataclass
-class HazardCurve(ABC, YamlMixin):
+class HazardCurveFactory(ABC, YamlMixin):
     """
     implement x and y as arrays.
     x = Sa (usually but can be any intensity)
@@ -260,9 +263,9 @@ class HazardCurve(ABC, YamlMixin):
     """
 
     name: str
-    x: list = None
-    y: list = None
-    _df: pd.DataFrame = None
+    x: Optional[list] = None
+    y: Optional[list] = None
+    _df: Optional[pd.DataFrame] = None
     _IDA_LINSPACE_BINS: int = 10
 
     def __post_init__(self):
@@ -389,7 +392,7 @@ class HazardCurve(ABC, YamlMixin):
 
 
 @dataclass
-class ParetoCurve(HazardCurve):
+class ParetoCurve(HazardCurveFactory):
     """
     specify html input fields with metadata attr
     """
@@ -413,7 +416,9 @@ class ParetoCurve(HazardCurve):
         super().__post_init__()
 
     @property
-    # def html(self):
+    def html(self):
+        pass
+
     #     return html.Div(
     #         [
     #             html.H4("Parameters", className="mt-2"),
@@ -439,10 +444,10 @@ class ParetoCurve(HazardCurve):
 
     def get_simulated_timehistory(
         self, num_simulations: int = 10, decimals: int = 4
-    ) -> TimeHistorySeries:
+    ) -> "TimeHistorySeries":
         # simulating WITHOUT decimals leads to continuous values.. which rank(pct=True) will return a correct CDF
         # otherwise we would need to groupby().agg(count) to count the freq of each value (since if we are rounding there WILL be duplicates)
-        # let's sample from R for now..
+        # let's sample from Reals for now..
         years_random_linspace = np.random.rand(num_simulations)
         Sa_random_linspace = np.random.rand(num_simulations)
         years = -1 * np.log(1 - years_random_linspace) / self.v0
@@ -455,7 +460,7 @@ class ParetoCurve(HazardCurve):
 
 
 @dataclass
-class UserDefinedCurve(HazardCurve):
+class UserDefinedCurve(HazardCurveFactory):
     name: str = "user"
 
 
@@ -482,13 +487,16 @@ class UserDefinedCurve(HazardCurve):
 
 
 class HazardCurveFactory:
-
     models = {"pareto": ParetoCurve, "user": UserDefinedCurve}
 
-    def __new__(cls, **data) -> HazardCurve:
+    def __new__(cls, **data) -> HazardCurveFactory:
         name = data["name"]
         return cls.models[name](**data)
 
     @classmethod
     def add(cls, name, seed):
         cls.models[name] = seed
+
+    @classmethod
+    def options(cls):
+        return list(cls.models.keys())
