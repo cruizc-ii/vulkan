@@ -196,16 +196,23 @@ with st.sidebar:
             hazard.to_file(HAZARD_DIR)
         left, right = st.columns(2)
         remove_all = right.button("remove all 🗑️", help="remove all records")
-        # if remove_all:
-        #     with st.spinner("deleting building"):
-        #         time.sleep(2)
-        #         design.delete(DESIGN_DIR)
-        #         design = None
+        if remove_all:
+            with st.spinner("removing..."):
+                time.sleep(2)
+                hazard.records = []
+            hazard.to_file(HAZARD_DIR)
+            st.success("removed all records successfully")
 
         add_all = left.button("add all", help="add all records")
-        # if add_all:
-        #     st.error("params missing or incorrect")
-        # st.success("design successful")
+        if add_all:
+            with st.spinner("adding..."):
+                time.sleep(2)
+                for path in record_files:
+                    record_path = str((RECORDS_DIR / path).resolve())
+                    record = Record(record_path)
+                    hazard.add_record(record)
+            hazard.to_file(HAZARD_DIR)
+            st.success("added all records successfully")
         selected_ix = None
         for ix, r in enumerate(hazard.records):
             with st.container():
@@ -278,5 +285,9 @@ if st.session_state.module == 2:
         st.plotly_chart(fig)
         if selected_ix is not None:
             record = hazard.records[selected_ix]
+            st.plotly_chart(record.figure)
+            st.plotly_chart(record.spectra)
+        elif len(hazard.records) > 0:
+            record = hazard.records[0]
             st.plotly_chart(record.figure)
             st.plotly_chart(record.spectra)
