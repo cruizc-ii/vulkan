@@ -180,11 +180,14 @@ with st.sidebar:
         name = st.text_input(
             "give it a name",
             value=file.split(".")[0] if file else "",
+            help="to save just add or remove records",
         )
+        hazard.name = name
+        hazard.curve.html(st)
         curve_type = st.selectbox(
             "select a curve type",
             options=HazardCurveFactory.options(),
-            index=HazardCurveFactory.options().index(hazard._curve.name),
+            index=HazardCurveFactory.options().index(hazard.curve.name),
         )
         st.subheader(f"Records ({len(hazard.records)})")
         record_files = find_files(RECORDS_DIR, only_yml=False, only_csv=True)
@@ -194,8 +197,23 @@ with st.sidebar:
             record = Record(record_path)
             hazard.add_record(record)
             hazard.to_file(HAZARD_DIR)
-        left, right = st.columns(2)
-        remove_all = right.button("remove all 🗑️", help="remove all records")
+        left, middle, right = st.columns(3)
+        sample = left.button("sample 5", help="grab 5 at random")
+        if sample:
+            with st.spinner("sampling..."):
+                import random
+
+                time.sleep(1)
+                untouched = [r for r in record_files if r not in hazard.record_names]
+                samples = random.sample(untouched, 5)
+                for path in samples:
+                    record_path = str((RECORDS_DIR / path).resolve())
+                    record = Record(record_path)
+                    hazard.add_record(record)
+            hazard.to_file(HAZARD_DIR)
+            st.success("sampled records successfully")
+
+        remove_all = right.button("🗑️ rm all", help="remove all records")
         if remove_all:
             with st.spinner("removing..."):
                 time.sleep(2)
@@ -203,7 +221,7 @@ with st.sidebar:
             hazard.to_file(HAZARD_DIR)
             st.success("removed all records successfully")
 
-        add_all = left.button("add all", help="add all records")
+        add_all = middle.button("add all", help="add all records")
         if add_all:
             with st.spinner("adding..."):
                 time.sleep(2)
@@ -280,8 +298,11 @@ if st.session_state.module == 1:
 
 
 if st.session_state.module == 2:
+    left, right = st.columns(2)
+    logx = left.checkbox("log x", value=True)
+    logy = right.checkbox("log y", value=True)
     if hazard:
-        fig = hazard.rate_figure
+        fig = hazard.rate_figure(logx=logx, logy=logy)
         st.plotly_chart(fig)
         if selected_ix is not None:
             record = hazard.records[selected_ix]

@@ -16,6 +16,7 @@ import plotly.express as px
 from app.utils import NamedYamlMixin, YamlMixin, UploadComponent
 from typing import Optional
 import yaml
+import streamlit
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent
 RECORDS_DIR = ROOT_DIR / "records"
@@ -59,7 +60,7 @@ class RecordKind(Enum):
 class Spectra:
     path: str
     scale: float = 1.0
-    _df: pd.DataFrame = None
+    _df: pd.DataFrame | None = None
 
     def validate(self):
         dataframe_schema.validate(self._df)
@@ -99,7 +100,7 @@ class Record:
     dt: float = 0.01
     scale: float = 1.0
     name: str | None = None
-    kind: RecordKind = field(default=RecordKind.ACCEL.value)
+    kind: str = field(default=RecordKind.ACCEL.value)
     _spectra: pd.DataFrame = None
     _df: pd.DataFrame = None
 
@@ -220,23 +221,23 @@ class Hazard(NamedYamlMixin):
     name: str
     records: list[Record] = field(default_factory=list)
     kind: str = RecordKind.ACCEL.value
-    curve: Optional[dict] = None
-    _curve: Optional["HazardCurveFactory"] = None
+    curve: dict | "HazardCurve" | None = None
+    # _curve: Optional["HazardCurve"] = None
 
     def __post_init__(self):
         if len(self.records) > 0 and isinstance(self.records[0], dict):
             self.records = [Record(**data) for data in self.records]
         if isinstance(self.curve, dict):
-            self._curve = HazardCurveFactory(**self.curve)
+            self.curve = HazardCurveFactory(**self.curve)
 
-    def get_simulated_timehistory(self, num_simulations: int = 10) -> TimeHistorySeries:
-        return self._curve.get_simulated_timehistory(num_simulations)
+    def get_simulated_timehistory(
+        self, num_simulations: int = 10
+    ) -> "TimeHistorySeries":
+        return self.curve.get_simulated_timehistory(num_simulations)
 
     def add_record(self, record: Record) -> bool:
         paths = [r.path for r in self.records]
         if record.path in paths:
-            print(paths)
-            print("record path in paths")
             return False
         self.records.append(record)
         return True
@@ -246,15 +247,19 @@ class Hazard(NamedYamlMixin):
         return True
 
     def intensities_for_idas(self):
-        return self._curve.intensities_for_idas()
+        return self.curve.intensities_for_idas()
+
+    @property
+    def record_names(self) -> list[str]:
+        return [r.name for r in self.records]
 
     @property
     def rate_figure(self):
-        return self._curve.figure
+        return self.curve.figure
 
 
 @dataclass
-class HazardCurveFactory(ABC, YamlMixin):
+class HazardCurve(ABC, YamlMixin):
     """
     implement x and y as arrays.
     x = Sa (usually but can be any intensity)
@@ -286,18 +291,21 @@ class HazardCurveFactory(ABC, YamlMixin):
         """
         pass
 
-    @property
-    def figure(self):
+    def figure(self, logx=True, logy=True):
         fig = Figure()
         trace = Scattergl(x=self.x, y=self.y, marker=dict(color="LightSkyBlue"))
         fig.add_trace(trace)
         fig.update_layout(
             xaxis_title="Sa",
             yaxis_title="1/yr",
-            title_text="Rate of exceedance.",
-            xaxis_type="log",
-            yaxis_type="log",
+            title_text="rate of exceedance.",
+            # xaxis_type="log",
+            # yaxis_type="log",
         )
+        if logx:
+            fig.update_xaxes(type="log")
+        if logy:
+            fig.update_yaxes(type="log")
         return fig
 
     def interpolate_rate_for_values(self, values: list[float]) -> list[float]:
@@ -392,16 +400,15 @@ class HazardCurveFactory(ABC, YamlMixin):
 
 
 @dataclass
-class ParetoCurve(HazardCurveFactory):
-    """
-    specify html input fields with metadata attr
-    """
-
+class ParetoCurve(HazardCurve):
     name: str = "pareto"
-    v0: float = field(default=2.0, metadata={"input": True, "unit": "1/yr"})
-    a0: float = field(default=0.05, metadata={"input": True, "unit": "(g)"})
-    r: float = field(default=2.0, metadata={"input": True, "unit": ""})
-    amax: float = field(default=3.0, metadata={"input": True, "unit": "(g)"})
+    v0: float = field(
+        default=2.0,
+        metadata={"input": True, "units": "1/yr", "help": "this is help text"},
+    )
+    a0: float = field(default=0.05, metadata={"input": True, "units": "(g)"})
+    r: float = field(default=2.0, metadata={"input": True, "units": ""})
+    amax: float = field(default=3.0, metadata={"input": True, "units": "(g)"})
     _DEFAULT_POINTS = 200
 
     def __post_init__(self) -> None:
@@ -415,32 +422,30 @@ class ParetoCurve(HazardCurveFactory):
             self.y = y.tolist()
         super().__post_init__()
 
-    @property
-    def html(self):
-        pass
-
-    #     return html.Div(
-    #         [
-    #             html.H4("Parameters", className="mt-2"),
-    #         ]
-    #         + [
-    #             dbc.InputGroup(
-    #                 [
-    #                     dbc.InputGroupAddon(f"{f.name}  ", addon_type="prepend"),
-    #                     dbc.Input(
-    #                         id={"type": "hazard-model-input-args", "index": ix},
-    #                         value=f"{getattr(self, f.name)}",
-    #                         key=f"{f.name}",
-    #                     ),
-    #                     dbc.InputGroupAddon(
-    #                         f" {f.metadata.get('unit')}", addon_type="append"
-    #                     ),
-    #                 ]
-    #             )
-    #             for ix, f in enumerate(fields(self))
-    #             if f.metadata.get("input")
-    #         ]
-    #     )
+    def html(self, st: streamlit) -> None:
+        input_fields = [f for f in fields(self) if f.metadata.get("input")]
+        for f in input_fields:
+            meta = f.metadata
+            help = meta.get("help")
+            units = meta.get("units")
+            name = f.name + f" {units}"
+            # min_value = meta.get("min_value")
+            # step = meta.get("step")
+            # max_value = meta.get("max_value")
+            # format = meta.get("format")
+            changed = st.number_input(
+                name,
+                # min_value=min_value,
+                # step=step or 1,
+                # max_value=max_value,
+                # format=format or "%d",
+                help=help,
+                value=getattr(self, f.name) or f.default,
+            )
+            print(f.name, changed, getattr(self, f.name))
+            if changed != getattr(self, f.name):
+                # st.write(f.name, changed)
+                setattr(self, f.name, changed)
 
     def get_simulated_timehistory(
         self, num_simulations: int = 10, decimals: int = 4
@@ -460,12 +465,12 @@ class ParetoCurve(HazardCurveFactory):
 
 
 @dataclass
-class UserDefinedCurve(HazardCurveFactory):
+class UserDefinedCurve(HazardCurve):
     name: str = "user"
 
 
 #     @property
-#     def html(self):
+#     def html(self, st: streamlit) -> None:
 #         return html.Div(
 #             [
 #                 dbc.InputGroup(
@@ -489,7 +494,7 @@ class UserDefinedCurve(HazardCurveFactory):
 class HazardCurveFactory:
     models = {"pareto": ParetoCurve, "user": UserDefinedCurve}
 
-    def __new__(cls, **data) -> HazardCurveFactory:
+    def __new__(cls, **data) -> HazardCurve:
         name = data["name"]
         return cls.models[name](**data)
 
