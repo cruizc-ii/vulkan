@@ -468,27 +468,29 @@ class ParetoCurve(HazardCurve):
 class UserDefinedCurve(HazardCurve):
     name: str = "user"
 
-
-#     @property
-#     def html(self, st: streamlit) -> None:
-#         return html.Div(
-#             [
-#                 dbc.InputGroup(
-#                     [
-#                         dbc.InputGroupAddon("Normalize Sa   ", addon_type="prepend"),
-#                         dbc.Input(
-#                             id="normalize-accels-input",
-#                             placeholder="1.0",
-#                             value=1,
-#                             type="number",
-#                         ),
-#                     ]
-#                 ),
-#                 UploadComponent(
-#                     id="upload-hazard-file", msg="Upload a comma-separated file a,v(a)"
-#                 ),
-#             ]
-#         )
+    def html(self, st: streamlit = None) -> None:
+        """
+        TODO: return a file uploader
+        """
+        #         return html.Div(
+        #             [
+        #                 dbc.InputGroup(
+        #                     [
+        #                         dbc.InputGroupAddon("Normalize Sa   ", addon_type="prepend"),
+        #                         dbc.Input(
+        #                             id="normalize-accels-input",
+        #                             placeholder="1.0",
+        #                             value=1,
+        #                             type="number",
+        #                         ),
+        #                     ]
+        #                 ),
+        #                 UploadComponent(
+        #                     id="upload-hazard-file", msg="Upload a comma-separated file a,v(a)"
+        #                 ),
+        #             ]
+        #         )
+        return
 
 
 class HazardCurveFactory:
