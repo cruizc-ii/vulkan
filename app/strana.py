@@ -1038,7 +1038,7 @@ class IDA(NamedYamlMixin):
                 scale_factor = results_to_meters * record.get_scale_factor(
                     period=period, intensity=intensity
                 )
-                rate_inf, rate_sup = self._hazard._curve.interpolate_rate_for_values(
+                rate_inf, rate_sup = self._hazard.curve.interpolate_rate_for_values(
                     [inf, sup]
                 )
                 freq = rate_inf - rate_sup
@@ -1136,6 +1136,6 @@ class RSA(StructuralAnalysis):
             recorder = self.static(f)
             moments.append(recorder.view_column_design_moments())
         M = np.array(moments).T
-        peak_moments = np.sqrt(np.sum(M ** 2, axis=1))
-        peak_shears = np.sqrt(np.sum(shears ** 2, axis=1))
+        peak_moments = np.sqrt(np.sum(M**2, axis=1))
+        peak_shears = np.sqrt(np.sum(shears**2, axis=1))
         return peak_moments.tolist(), peak_shears.tolist(), float(cs)

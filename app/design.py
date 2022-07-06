@@ -34,7 +34,6 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     design_criteria: list[str] = field(
         default_factory=DesignCriterionFactory.default_criteria
     )
-    fems: Optional[list[str]] = None
 
     design_spectra: dict[dict[str, str], str] = field(default_factory=dict)
 
