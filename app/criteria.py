@@ -2,7 +2,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from app.hazard import Spectra
 from app.utils import GRAVITY
-from app.assets import Asset
 from dataclasses import dataclass
 from typing import Any, Optional
 import numpy as np
@@ -15,10 +14,8 @@ from app.fem import (
     PlainFEM,
 )
 from pathlib import Path
-from app.utils import ROOT_DIR
 
 METERS_TO_FEET = 1 / 0.3048
-RESULTS_DIR = ROOT_DIR / "results"
 
 
 def put_mass(nodes_with_mass, masses):
@@ -60,7 +57,7 @@ class EulerShearPre(DesignCriterion):
         mdof = ShearModel.from_spec(self.specification)
         storeys = np.array(self.specification.storeys)
         radii = 1.414 * storeys / self.EULER_LAMBDA
-        Ixs = (np.pi * radii ** 4) / 4
+        Ixs = (np.pi * radii**4) / 4
         cols_st = mdof.columns_by_storey
         for Ix, columns, radius in zip(Ixs, cols_st, radii):
             for col in columns:
@@ -87,7 +84,7 @@ class CodeMassesPre(DesignCriterion):
             [
                 self.CODE_UNIFORM_LOADS_kPA
                 * self.SLAB_AREA_PERCENTAGE
-                * self.fem.length ** 2
+                * self.fem.length**2
                 / GRAVITY
                 for _ in range(self.fem.num_modes)
             ]
@@ -122,14 +119,14 @@ class LoeraPre(DesignCriterion):
                 self.WORKING_STRESS_PCT * self.specification.fc
             )
             radius = np.sqrt(area_needed / np.pi)
-            Ix = (np.pi * radius ** 4) / 4
+            Ix = (np.pi * radius**4) / 4
             for col in columns:
                 col.Ix = float(Ix) * self._COLUMN_CRACKED_INERTIAS
                 col.radius = float(radius)
 
             for beam in beams:
                 beam.Ix = (
-                    float(Ix / self.BEAM_TO_COLUMN_RATIO ** 4)
+                    float(Ix / self.BEAM_TO_COLUMN_RATIO**4)
                     * self._BEAM_CRACKED_INERTIAS
                 )
                 beam.radius = float(radius * self.BEAM_TO_COLUMN_RATIO)
@@ -219,7 +216,7 @@ class ShearRSA(DesignCriterion):
         spectra: Spectra = self.specification._design_spectra[self.__class__.__name__]
         As = np.array(spectra.get_ordinates_for_periods(fem.periods))
         forces = S.dot(np.eye(len(As)) * As)
-        peak_forces = np.sqrt(np.sum(forces ** 2, axis=1))
+        peak_forces = np.sqrt(np.sum(forces**2, axis=1))
         fem.extras["S"] = S
         fem.extras["forces"] = forces.tolist()
         fem.extras["design_forces"] = peak_forces.tolist()

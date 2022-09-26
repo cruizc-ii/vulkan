@@ -4,8 +4,7 @@ import os
 import subprocess
 import pathlib
 from posixpath import basename
-import pandas as pd
-from pandas.core import series
+from pandas import DataFrame, Series, read_csv
 import pandera as pa
 import numpy as np
 from enum import Enum
@@ -14,9 +13,10 @@ from dataclasses import dataclass, asdict, field, fields
 from pathlib import Path
 import plotly.express as px
 from app.utils import NamedYamlMixin, YamlMixin, UploadComponent
-from typing import Optional
 import yaml
 import streamlit
+from typing_extensions import TypeAlias
+
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent
 RECORDS_DIR = ROOT_DIR / "records"
@@ -28,8 +28,8 @@ SV_SPECTRA_DIR = RECORDS_DIR / "Sv_spectra"
 ACCEL_SPECTRA_DIR = RECORDS_DIR / "accel_spectra"
 VEL_SPECTRA_DIR = RECORDS_DIR / "vel_spectra"
 
-TimeHistoryDataFrame = pd.DataFrame
-TimeHistorySeries = pd.Series
+TimeHistoryDataFrame: TypeAlias = DataFrame
+TimeHistorySeries: TypeAlias = Series
 
 try:
     with open(CONFIG_FILE) as f:
@@ -60,23 +60,21 @@ class RecordKind(Enum):
 class Spectra:
     path: str
     scale: float = 1.0
-    _df: pd.DataFrame | None = None
+    _df: TimeHistoryDataFrame = field(default_factory=TimeHistoryDataFrame)
 
     def validate(self):
         dataframe_schema.validate(self._df)
 
     @classmethod
-    def from_csv(cls, path: str, scale: float = None, **csv_kwargs):
-        df = pd.read_csv(
+    def from_csv(cls, path: str, scale: float = 1.0, **csv_kwargs):
+        df = read_csv(
             path, header=None, names=["Sa"], index_col=0, sep=" ", **csv_kwargs
         )
         instance = cls(path=path, scale=scale, _df=df)
         return instance
 
     def __post_init__(self):
-        self._df = pd.read_csv(
-            self.path, header=None, names=["Sa"], index_col=0, sep=" "
-        )
+        self._df = read_csv(self.path, header=None, names=["Sa"], index_col=0, sep=" ")
         self.validate()
         self._df = self.scale * self._df
         self.maxValue = np.max(self._df.values)
@@ -101,8 +99,8 @@ class Record:
     scale: float = 1.0
     name: str | None = None
     kind: str = field(default=RecordKind.ACCEL.value)
-    _spectra: pd.DataFrame = None
-    _df: pd.DataFrame = None
+    _spectra: DataFrame = None
+    _df: DataFrame = None
 
     def validate(self):
         series_schema.validate(self._df)
@@ -111,7 +109,7 @@ class Record:
         self.name = os.path.basename(Path(self.path).name)
         self.dt = config_file.get(self.name, {}).get("dt", self.dt)
         self.scale = config_file.get(self.name, {}).get("scale", self.scale)
-        self._df = pd.read_csv(self.path, header=None).squeeze("columns")
+        self._df = read_csv(self.path, header=None).squeeze("columns")
         self.validate()
         n = len(self._df)
         self.duration = (n - 1) * self.dt
@@ -124,7 +122,7 @@ class Record:
         self.maxAbs = np.max((np.abs(self.maxValue), np.abs(self.minValue)))
         try:
             spectra_path = SA_SPECTRA_DIR / self.name
-            spectra = pd.read_csv(
+            spectra = read_csv(
                 spectra_path, header=None, names=["Sa"], index_col=0, sep=" "
             )
             dataframe_schema.validate(spectra)
@@ -134,7 +132,7 @@ class Record:
             run_string = f"{SDOF_API_PATH} name={self.name} record={self.path} outputdir={spectra_outpath} spectra=true Sa=t damping=0.05 dt={self.dt} scale={self.scale}"
             failure = subprocess.call(run_string, shell=True)
             if not failure:
-                spectra = pd.read_csv(
+                spectra = read_csv(
                     spectra_path, header=None, names=["Sa"], index_col=0, sep=" "
                 )
                 dataframe_schema.validate(spectra)
@@ -221,19 +219,19 @@ class Hazard(NamedYamlMixin):
     name: str
     records: list[Record] = field(default_factory=list)
     kind: str = RecordKind.ACCEL.value
-    curve: dict | "HazardCurve" | None = None
-    # _curve: Optional["HazardCurve"] = None
+    curve: str | dict | None = None
+    _curve: "HazardCurve" | None = None
 
     def __post_init__(self):
         if len(self.records) > 0 and isinstance(self.records[0], dict):
             self.records = [Record(**data) for data in self.records]
         if isinstance(self.curve, dict):
-            self.curve = HazardCurveFactory(**self.curve)
+            self._curve = HazardCurveFactory(**self.curve)
+        if isinstance(self.curve, str):
+            self._curve = HazardCurveFactory(name=self.curve)
 
-    def get_simulated_timehistory(
-        self, num_simulations: int = 10
-    ) -> "TimeHistorySeries":
-        return self.curve.get_simulated_timehistory(num_simulations)
+    def simulate_intensities(self, n: int = 10) -> "TimeHistorySeries":
+        return self._curve.simulate_intensities(n)
 
     def add_record(self, record: Record) -> bool:
         paths = [r.path for r in self.records]
@@ -251,32 +249,37 @@ class Hazard(NamedYamlMixin):
 
     @property
     def record_names(self) -> list[str]:
-        return [r.name for r in self.records]
+        return [r.name for r in self.records if r.name]
 
     @property
     def rate_figure(self):
-        return self.curve.figure
+        return self._curve.figure
 
 
 @dataclass
 class HazardCurve(ABC, YamlMixin):
     """
-    implement x and y as arrays.
-    x = Sa (usually but can be any intensity)
-    y = 1/yr
-    call super().__post_init__() to build the _df
+    describes annual rates of exceedance of intensity 'a'
+    x = intensity (usually Sa)
+    y = 1/unit_of_time usually 1/yr
+    ALWAYS call super().__post_init__() to build the _df
     """
 
     name: str
-    x: Optional[list] = None
-    y: Optional[list] = None
-    _df: Optional[pd.DataFrame] = None
+    x: list | None = None
+    y: list | None = None
+    v0: float | None = None
+    _df: DataFrame = field(default_factory=DataFrame)
     _IDA_LINSPACE_BINS: int = 10
 
+    def __str__(self) -> str:
+        return str(self._df)
+
     def __post_init__(self):
-        if self._df is None:
+        if self._df.size == 0:
             if self.y and self.x:
-                self._df = pd.DataFrame(dict(a=self.y), index=self.x)
+                self.v0 = self.y[0]
+                self._df = DataFrame(dict(y=self.y), index=self.x)
                 dataframe_schema.validate(self._df)
         else:
             dataframe_schema.validate(self._df)
@@ -298,7 +301,7 @@ class HazardCurve(ABC, YamlMixin):
         fig.update_layout(
             xaxis_title="Sa",
             yaxis_title="1/yr",
-            title_text="rate of exceedance.",
+            title_text="annual rate of exceedance.",
             # xaxis_type="log",
             # yaxis_type="log",
         )
@@ -309,34 +312,28 @@ class HazardCurve(ABC, YamlMixin):
         return fig
 
     def interpolate_rate_for_values(self, values: list[float]) -> list[float]:
-        df = self._df
+        df: DataFrame = self._df
         merged = df.index.union(values)
         df = df.reindex(merged)
         df = df.sort_index()
         df = df.interpolate(method="linear", limit_direction="both", limit=1)
-        sas = df["a"].loc[values].to_list()
+        sas = df["y"].loc[values].to_list()
         return sas
 
-    def samples(self, n: int = None, range_space: np.ndarray = None) -> list[float]:
+    def samples(
+        self, n: int = _IDA_LINSPACE_BINS, range_space: np.ndarray = None
+    ) -> list[float]:
         """
         range_space is the range of the CDF that we try to sample,
-        if None then we sample uniformly
+        if None then we sample using Uni[0, 1] using n samples
         """
-        if not n:
-            n = self._IDA_LINSPACE_BINS
         df = self._df
-        v0 = df["a"].iloc[0]
-        self.v0 = v0
-        df["S"] = df / v0  # normalize to get survival function
-        if range_space is None:
-            range_space = np.random.uniform(
-                0, 1, n
-            )  # from 0 to 1 (we are sampling using the range of the CDF)
-
+        df["S"] = df / self.v0  # normalize v(a) to get survival function
+        range_space = np.random.uniform(0, 1, n) if range_space is None else range_space
         df["cdf"] = 1 - df["S"]
         df.index.name = "Sa"
         df = df.reset_index()
-        df = df.set_index(df.cdf)
+        df = df.set_index(df["cdf"])
         idx1 = df.index
         merged = idx1.union(range_space)
         df = df.reindex(merged)
@@ -345,15 +342,15 @@ class HazardCurve(ABC, YamlMixin):
         sas = df["Sa"].loc[range_space].to_list()
         return sas
 
-    def get_simulated_timehistory(self, num_simulations: int = 10) -> TimeHistorySeries:
-        sas = self.samples(n=num_simulations)
+    def simulate_intensities(self, n: int = 10) -> "TimeHistorySeries":
+        sas = self.samples(n=n)
         df = self._df
         ix = df.index
         merged = ix.union(sas)
         df = df.reindex(merged)
         df = df.sort_index()
         df = df.interpolate(method="linear").dropna(axis=0, how="any")
-        years_random_linspace = np.random.rand(num_simulations)
+        years_random_linspace = np.random.rand(n)
         years = -1 * np.log(1 - years_random_linspace) / self.v0
         years = years.cumsum()
         # years = 1./df['a'].loc[sas]
@@ -362,7 +359,8 @@ class HazardCurve(ABC, YamlMixin):
         return df
 
     def intensities_for_idas(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        start, stop = self._df.index.min(), self._df.index.max()
+        df: DataFrame = self._df
+        start, stop = df.index.min(), df.index.max()
         linspace, step = np.linspace(
             start=start, stop=stop, num=self._IDA_LINSPACE_BINS, retstep=True
         )
@@ -370,32 +368,26 @@ class HazardCurve(ABC, YamlMixin):
         infs = linspace - step / 2
         return linspace, sups, infs
 
-    # def intensities_for_idas(self) -> np.ndarray:
-    #     unif = np.random.uniform(0, 1, self._IDA_LINSPACE_SAMPLE)
-    #     skewed = np.array([0.9, 0.95, 0.99, 0.9999])
-    #     range_space = np.concatenate([unif, skewed])
-    #     sas = self.samples(range_space=range_space)
-    #     # sas += [1.0, 1.5, 2.0, 3.0]
-    #     sas = sorted(sas)
-    #     return sas
-
     @staticmethod
     def rate_of_exceedance(
-        array: np.ndarray, years=None, name: str = "values", method: str = "average"
-    ) -> pd.DataFrame:
+        array: np.ndarray,
+        years: bool | float | None = None,
+        name: str = "values",
+        method: str = "average",
+    ) -> DataFrame:
         """
-        array must have repeated values otherwise this wont work
+        array MUST have repeated values otherwise this wont work ..??
         returns a normalized dataframe with the rate of exceedance
         converts array into dataframe -> cdf -> 1-v/v0 = CDF
         """
-        df = pd.DataFrame(pd.Series(array, name=name).dropna())
+        df = DataFrame(Series(array, name=name).dropna())
         df["cdf"] = df.rank(method="average", pct=True)
         df.sort_values(name, inplace=True)
-        events = df[name].size
-        if not years:
-            years = events
-        df["v"] = (1 - df.cdf) * events / years
-        df["pdf"] = pd.Series(array)
+        # num_events = df[name].size
+        num_events = len(array)
+        years = num_events if not years else years
+        df["v"] = (1 - df.cdf) * num_events / years
+        df["pdf"] = Series(array)
         return df
 
 
@@ -409,7 +401,7 @@ class ParetoCurve(HazardCurve):
     a0: float = field(default=0.05, metadata={"input": True, "units": "(g)"})
     r: float = field(default=2.0, metadata={"input": True, "units": ""})
     amax: float = field(default=3.0, metadata={"input": True, "units": "(g)"})
-    _DEFAULT_POINTS = 200
+    _DEFAULT_POINTS: int = 100
 
     def __post_init__(self) -> None:
         if not self.x:
@@ -422,7 +414,7 @@ class ParetoCurve(HazardCurve):
             self.y = y.tolist()
         super().__post_init__()
 
-    def html(self, st: streamlit) -> None:
+    def html(self, st: "streamlit") -> None:
         input_fields = [f for f in fields(self) if f.metadata.get("input")]
         for f in input_fields:
             meta = f.metadata
@@ -442,19 +434,18 @@ class ParetoCurve(HazardCurve):
                 help=help,
                 value=getattr(self, f.name) or f.default,
             )
-            print(f.name, changed, getattr(self, f.name))
+            # print(f.name, changed, getattr(self, f.name))
             if changed != getattr(self, f.name):
                 # st.write(f.name, changed)
                 setattr(self, f.name, changed)
 
-    def get_simulated_timehistory(
-        self, num_simulations: int = 10, decimals: int = 4
+    def simulate_intensities(
+        self, n: int = 10, decimals: int = 4
     ) -> "TimeHistorySeries":
-        # simulating WITHOUT decimals leads to continuous values.. which rank(pct=True) will return a correct CDF
+        # simulating WITHOUT rounding decimals leads to continuous values for which rank(pct=True) will return a correct CDF.
         # otherwise we would need to groupby().agg(count) to count the freq of each value (since if we are rounding there WILL be duplicates)
-        # let's sample from Reals for now..
-        years_random_linspace = np.random.rand(num_simulations)
-        Sa_random_linspace = np.random.rand(num_simulations)
+        years_random_linspace = np.random.rand(n)
+        Sa_random_linspace = np.random.rand(n)
         years = -1 * np.log(1 - years_random_linspace) / self.v0
         years = years.cumsum()
         Sa = self.a0 / np.sqrt(1 - Sa_random_linspace)
@@ -468,7 +459,7 @@ class ParetoCurve(HazardCurve):
 class UserDefinedCurve(HazardCurve):
     name: str = "user"
 
-    def html(self, st: streamlit = None) -> None:
+    def html(self, st: streamlit) -> None:
         """
         TODO: return a file uploader
         """

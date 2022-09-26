@@ -176,7 +176,7 @@ class ElasticBeamColumn(FE, RiskAsset):
 
     @property
     def area(self) -> float:
-        return 3.1416 * self.radius ** 2
+        return 3.1416 * self.radius**2
 
     @property
     def volume(self) -> float:
@@ -185,6 +185,9 @@ class ElasticBeamColumn(FE, RiskAsset):
     def get_and_set_net_worth(self) -> float:
         """
         this is where size, steel % matters
+
+        regression: prices per m2 of slab as function of thickness
+        price_m2 = 7623 * thickness
         """
         net_worth = (
             (1 + ((self.Q - 1) * 0.08)) * self._DOLLARS_PER_UNIT_VOLUME * self.volume
@@ -197,7 +200,7 @@ class ElasticBeamColumn(FE, RiskAsset):
         return self.net_worth
 
     def get_k(self) -> float:
-        return 12 * self.E * self.Ix / self.length ** 3
+        return 12 * self.E * self.Ix / self.length**3
 
     def __str__(self) -> str:
         return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A} {self.E} {self.Ix} {self.transf}\n"
@@ -605,7 +608,7 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @property
     def uniform_area_loads_kPa(self) -> list[float]:
-        area = self.length ** 2
+        area = self.length**2
         masses_per_storey = np.array(self.masses)
         loads_per_storey = GRAVITY * masses_per_storey / area
         return loads_per_storey
@@ -930,7 +933,7 @@ class PlainFEM(FiniteElementModel):
         for floor, beams in enumerate(self.beams_by_storey, 1):
             for beam in beams:
                 slab = RiskModelFactory("ConcreteSlabAsset")
-                slab.net_worth = 3000 * (2 * beam.length ** 2)
+                slab.net_worth = 3000 * (2 * beam.length**2)
                 #  * beam.radius doesn't work here.. fem is not designed yet!
                 slab.floor = floor
                 slabs.append(slab)
@@ -1006,7 +1009,7 @@ class ShearModel(FiniteElementModel):
         G = np.diag(gamma)
         # matrix of effective modal masses (s) column_n contains the effective masses for mode_n for each storey (row)
         S = Phi @ M @ G  # as if 'weighing' each col of Phi by the product m_j g_j
-        effective_masses = G ** 2  # since M_n = 1
+        effective_masses = G**2  # since M_n = 1
         gi = np.diag(1.0 / gamma)
         effective_heights = gi @ Phi.T @ H @ M @ ones
         Ones = np.tri(N).T

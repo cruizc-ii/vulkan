@@ -1,72 +1,57 @@
 curve:
   name: user
   x:
-    - 0.08154943934760449
-    - 0.09612793068297656
-    - 0.11331294597349643
-    - 0.13356880733944954
-    - 0.15744750254841997
-    - 0.18559429153924567
-    - 0.21877268093781857
-    - 0.257881753312946
-    - 0.30398267074413865
-    - 0.3583261977573904
-    - 0.4223832823649337
-    - 0.49789194699286443
-    - 0.5869001019367992
-    - 0.6918185524974516
-    - 0.8154943934760448
+  - 0.08154943934760449
+  - 0.09612793068297656
+  - 0.11331294597349643
+  - 0.13356880733944954
+  - 0.15744750254841997
+  - 0.18559429153924567
+  - 0.21877268093781857
+  - 0.257881753312946
+  - 0.30398267074413865
+  - 0.3583261977573904
+  - 0.4223832823649337
+  - 0.49789194699286443
+  - 0.5869001019367992
+  - 0.6918185524974516
+  - 0.8154943934760448
   y:
-    - 0.113575
-    - 0.0880331
-    - 0.0670603
-    - 0.0500992
-    - 0.0366378
-    - 0.0261847
-    - 0.0182632
-    - 0.0124165
-    - 0.00822034
-    - 0.00529544
-    - 0.00331714
-    - 0.00201961
-    - 0.00119472
-    - 0.000686557
-    - 0.000383251
+  - 0.113575
+  - 0.0880331
+  - 0.0670603
+  - 0.0500992
+  - 0.0366378
+  - 0.0261847
+  - 0.0182632
+  - 0.0124165
+  - 0.00822034
+  - 0.00529544
+  - 0.00331714
+  - 0.00201961
+  - 0.00119472
+  - 0.000686557
+  - 0.000383251
 kind: acc
 name: cdmx_hazard
 records:
-  - dt: 0.01
-    kind: acc
-    name: 100_SCT190917.csv
-    path: /Users/carlo/vulkan/records/100_SCT190917.csv
-    scale: 1.0
-  - dt: 0.005
-    kind: acc
-    name: 10_BA241093EW.csv
-    path: /Users/carlo/vulkan/records/10_BA241093EW.csv
-    scale: 1.0
-  - dt: 0.005
-    kind: acc
-    name: 11_TL101294_2EW.csv
-    path: /Users/carlo/vulkan/records/11_TL101294_2EW.csv
-    scale: 1.0
-  - dt: 0.01
-    kind: acc
-    name: 12_ROM140995NS.csv
-    path: /Users/carlo/vulkan/records/12_ROM140995NS.csv
-    scale: 1.0
-  - dt: 0.005
-    kind: acc
-    name: 13_CA101294NS.csv
-    path: /Users/carlo/vulkan/records/13_CA101294NS.csv
-    scale: 1.0
-  - dt: 0.005
-    kind: acc
-    name: 14_VM241093EW.csv
-    path: /Users/carlo/vulkan/records/14_VM241093EW.csv
-    scale: 1.0
-  - dt: 0.005
-    kind: acc
-    name: 15_BA241093NS.csv
-    path: /Users/carlo/vulkan/records/15_BA241093NS.csv
-    scale: 1.0
+- dt: 0.005
+  kind: acc
+  name: 10_BA241093EW.csv
+  path: /Users/carlo/vulkan/records/10_BA241093EW.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: 20_ROMBS101294NS.csv
+  path: /Users/carlo/vulkan/records/20_ROMBS101294NS.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: 21_XP101294EW.csv
+  path: /Users/carlo/vulkan/records/21_XP101294EW.csv
+  scale: 1.0
+- dt: 0.02
+  kind: acc
+  name: elCentro.csv
+  path: /Users/carlo/vulkan/records/elCentro.csv
+  scale: -1

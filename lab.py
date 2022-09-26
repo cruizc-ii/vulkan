@@ -1,16 +1,20 @@
 import streamlit as st
-from app.criteria import DesignCriterion, DesignCriterionFactory
+from app.criteria import DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
 from app.hazard import RECORDS_DIR, Hazard, HazardCurveFactory, Record
-from app.utils import find_files
-from pathlib import Path
-from st_cytoscape import cytoscape
-import time
-import shutil
-from app.utils import ROOT_DIR, DESIGN_DIR, MODELS_DIR, HAZARD_DIR
+from app.strana import (
+    STRANA_DIR,
+    IDA,
+    HazardNotFoundException,
+    SpecNotFoundException,
+    StructuralResultView,
+)
+from app.utils import DESIGN_DIR, MODELS_DIR, HAZARD_DIR, RESULTS_DIR, find_files
+from app.occupancy import BuildingOccupancy
 import pandas as pd
 import numpy as np
-from app.occupancy import BuildingOccupancy
+import time
+from st_cytoscape import cytoscape
 
 
 st.set_page_config(
@@ -22,7 +26,7 @@ st.set_page_config(
 
 
 padding_top = 2
-DEFAULT_MODULE = 2
+DEFAULT_MODULE = 3
 
 st.markdown(
     f"""
@@ -36,6 +40,8 @@ st.markdown(
 
 if "module" not in st.session_state:
     st.session_state.module = DEFAULT_MODULE
+    st.session_state.design_abspath = ""
+    st.session_state.hazard_abspath = ""
 
 if "first_render" not in st.session_state:
     st.session_state.first_render = True
@@ -69,6 +75,7 @@ with st.sidebar:
         )
         file = st.selectbox("select a building", options=buildings)
         if file:
+            st.session_state.design_abspath = DESIGN_DIR / file
             design = ReinforcedConcreteFrame.from_file(DESIGN_DIR / file)
         name = st.text_input(
             "give it a name",
@@ -156,7 +163,7 @@ with st.sidebar:
                     name=name,
                     storeys=storeys,
                     bays=bays,
-                    num_frames=num_frames,
+                    num_frames=int(num_frames),
                     fc=fc * 1000,
                     damping=damping / 100,
                     occupancy=occupancy,
@@ -176,6 +183,7 @@ with st.sidebar:
         )
         file = st.selectbox("select a hazard", options=hazards)
         if file:
+            st.session_state.hazard_abspath = HAZARD_DIR / file
             hazard = Hazard.from_file(HAZARD_DIR / file)
         name = st.text_input(
             "give it a name",
@@ -183,11 +191,11 @@ with st.sidebar:
             help="to save just add or remove records",
         )
         hazard.name = name
-        hazard.curve.html(st)
+        hazard._curve.html(st)
         curve_type = st.selectbox(
             "select a curve type",
             options=HazardCurveFactory.options(),
-            index=HazardCurveFactory.options().index(hazard.curve.name),
+            index=HazardCurveFactory.options().index(hazard._curve.name),
         )
         st.subheader(f"Records ({len(hazard.records)})")
         record_files = find_files(RECORDS_DIR, only_yml=False, only_csv=True)
@@ -248,6 +256,92 @@ with st.sidebar:
                     st.success("record removed")
 
             st.session_state.first_render = False
+
+    if st.session_state.module == 3:
+        stranas = find_files(STRANA_DIR)
+        design_missing = False
+        hazard_missing = False
+        selected_ix = None
+        file = st.selectbox("select an analysis", options=stranas)
+        name = st.text_input(
+            "give it a name",
+            value=file.split(".")[0] if file else "default ida",
+            help="to save just run",
+        )
+        try:
+            ida = IDA(
+                name="default ida",
+                design_abspath=str(st.session_state.design_abspath),
+                hazard_abspath=str(st.session_state.hazard_abspath),
+            )
+            ida.name = name
+        except HazardNotFoundException:
+            ida = IDA(name="default_ida", design_abspath=None, hazard_abspath=None)
+            hazard_missing = True
+        except SpecNotFoundException:
+            ida = IDA(name="default_ida", design_abspath=None, hazard_abspath=None)
+            design_missing = True
+
+        if file:
+            ida = IDA.from_file(STRANA_DIR / file)
+
+        if not (design_missing or hazard_missing):
+            start = st.number_input(
+                r"start Sa (g)",
+                value=ida.start,
+                min_value=0.0,
+                step=ida.step,
+                max_value=10.0,
+                format="%g",
+                help="starting Sa (g)",
+            )
+            stop = st.number_input(
+                r"stop Sa (g)",
+                value=ida.stop,
+                min_value=0.0,
+                step=ida.step,
+                max_value=10.0,
+                format="%g",
+                help="stop Sa (g)",
+            )
+            step = st.number_input(
+                r"step Sa (g)",
+                value=ida.step,
+                min_value=0.005,
+                step=0.1,
+                max_value=10.0,
+                format="%g",
+                help="step Sa (g)",
+            )
+            run = st.button("run IDA", help="run with chosen Sa")
+            standard = st.button(
+                "run standard", help="means that Sa are chosen for you"
+            )
+            if run or standard:
+                with st.spinner("running..."):
+                    time.sleep(1)
+                    ida = IDA(
+                        **{
+                            **ida.to_dict,
+                            "start": start,
+                            "stop": stop,
+                            "step": step,
+                            "name": name,
+                            "standard": standard,
+                        },
+                    )
+                    ida.run_parallel(results_dir=RESULTS_DIR)
+                    ida.to_file(STRANA_DIR)
+
+                st.success("analysis successful")
+
+            for ix, r in enumerate(ida.results):
+                with st.container():
+                    c1, c2 = st.columns([5, 1])
+                    c1.write(f'{r["record"]} - {r["intensity"]:.4f}g')
+                    view_result = c2.button("view", key=f"record{ix}")
+                    if view_result:
+                        selected_ix = ix
 
 
 if st.session_state.module == 1:
@@ -312,3 +406,18 @@ if st.session_state.module == 2:
             record = hazard.records[0]
             st.plotly_chart(record.figure)
             st.plotly_chart(record.spectra)
+
+
+if st.session_state.module == 3:
+    if design_missing:
+        st.warning("Please select a design")
+    if hazard_missing:
+        st.warning("Please select a hazard")
+    if ida:
+        st.plotly_chart(ida.view_ida_curves())
+        if selected_ix is not None:
+            filepath = ida.results[selected_ix]["path"]
+            view = StructuralResultView.from_file(filepath)
+            figures = view.timehistory_figures
+            for fig in figures:
+                st.plotly_chart(fig)
