@@ -1,15 +1,9 @@
 from unittest.case import TestCase
-from pathlib import Path
+from app.criteria import CodeMassesPre, DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
-
-
-TEST_PATH = Path(__file__).resolve().parent
-DESIGN_FIXTURES_PATH = TEST_PATH / "design_fixtures"
-FEM_FIXTURES_PATH = TEST_PATH / "fem_fixtures"
-RESULTS_DIR = TEST_PATH / "results"
-RECORDS_DIR = TEST_PATH.parent / "records"
-HYP_DESIGN_FIXTURES_PATH = DESIGN_FIXTURES_PATH / "hypothesis"
-DESIGN_MODELS_PATH = TEST_PATH.parent / "models" / "design"
+from app.fem import FiniteElementModel
+from .test import DESIGN_FIXTURES_PATH, DESIGN_MODELS_PATH
+import numpy as np
 
 
 class BuildingSpecificationTest(TestCase):
@@ -41,6 +35,305 @@ class BuildingSpecificationTest(TestCase):
         new = ReinforcedConcreteFrame.from_file(
             DESIGN_FIXTURES_PATH / f"{spec.name}.yml"
         )
+        self.assertDictEqual(spec.to_dict, new.to_dict)
+        self.assertEqual(len(new.fems), len(DesignCriterionFactory.default_criteria()))
+        self.assertTrue(all([isinstance(f, FiniteElementModel) for f in new.fems]))
 
-        # self.assertEqual(len(new.fems), len(DesignCriterionFactory.default_criteria()))
-        # self.assertTrue(all([isinstance(f, FiniteElementModel) for f in new.fems]))
+
+class ChopraElasticPeriodsTest(TestCase):
+    """
+    it should modify masses on the fem and spec instance to produce realistic periods
+    """
+
+    maxDiff = None
+    file = None
+    path = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.path = DESIGN_FIXTURES_PATH
+        cls.file = cls.path / "chopra-design-spec.yml"
+
+    def test_produces_correct_periods(self):
+        """it should load a spec and produce a realistic design"""
+        spec = ReinforcedConcreteFrame.from_file(self.file)
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_periods = [0.2, 0.08]
+        self.assertTrue(np.allclose(expected_periods, spec.fem.periods, rtol=0.2))
+        self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
+
+
+class EulerShearPreDesignTest(TestCase):
+    """
+    it should set inertias and radii to realistic values
+    """
+
+    file = None
+    path = None
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.path = DESIGN_FIXTURES_PATH
+        cls.file = cls.path / "euler-design-spec.yml"
+
+    def test_produces_correct_stiffnesses(self):
+        """it should load a spec and produce a realistic design"""
+        spec = ReinforcedConcreteFrame.from_file(self.file)
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_inertias = [0.00065564, 0.00065564]
+        expected_radii = [0.17, 0.17]
+        self.assertTrue(
+            np.allclose(spec.fem.storey_inertias, expected_inertias, rtol=0.2)
+        )
+        self.assertTrue(np.allclose(spec.fem.storey_radii, expected_radii, rtol=0.2))
+
+
+class LoeraPreDesignTest(TestCase):
+    """
+    it should set inertias and radii to realistic values
+    using the given masses
+    """
+
+    file = None
+    path = None
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.path = DESIGN_FIXTURES_PATH
+        cls.file = cls.path / "loera-design-spec.yml"
+
+    def test_produces_correct_stiffnesses(self):
+        """it should load a spec and produce a realistic design"""
+        spec = ReinforcedConcreteFrame.from_file(self.file)
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_col_radii = [0.15, 0.15, 0.10, 0.10]
+        expected_beam_radii = [0.075, 0.05]
+        self.assertTrue(
+            np.allclose(spec.fem.column_radii, expected_col_radii, rtol=0.30)
+        )
+        self.assertTrue(
+            np.allclose(spec.fem.beam_radii, expected_beam_radii, rtol=0.30)
+        )
+
+
+class CodeMassesPreDesignTest(TestCase):
+
+    file = None
+    path = None
+    maxDiff = None
+
+    def test_produces_correct_masses(self):
+        design = ReinforcedConcreteFrame(
+            name="code-masses-test",
+            bays=[5.0, 3.0, 5.0],
+            storeys=[3.0, 3.0, 4.0, 5.0],
+            design_criteria=[CodeMassesPre.__name__],
+        )
+        expected_masses = [
+            (5 + 3 + 5) ** 2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81 / 2
+        ]
+        design.force_design()
+        self.assertTrue(np.allclose(design.masses, expected_masses, rtol=1e-3))
+        self.assertTrue(np.allclose(design.masses, design.fem.masses, rtol=1e-3))
+        self.assertIsNotNone(design.fem.periods)
+        self.assertIsNotNone(design.fem.frequencies)
+        self.assertIsNotNone(design.fem.values)
+        self.assertIsNotNone(design.fem.vectors)
+
+
+# st.register_profile(
+#     "design_tests_profile",
+#     max_examples=1,
+#     deadline=None,
+#     suppress_health_check=(HealthCheck.too_slow, HealthCheck.data_too_large),
+# )
+
+
+class SpecificationConstructors(TestCase):
+    """
+    it should create a RC elastic frame design
+    that is somewhat realistic in stiffnesses for analysis purposes.
+
+    """
+
+    file = None
+    path = None
+    maxDiff = None
+
+    # @settings(max_examples=10, deadline=None)
+    # @given(
+    #     name=st.text(min_size=3, max_size=64),
+    #     storeys=st.lists(
+    #         st.integers(min_value=1, max_value=8), min_size=1, max_size=25
+    #     ),
+    #     bays=st.lists(st.integers(min_value=1, max_value=12), min_size=1, max_size=10),
+    # )
+    # def test_design_from_instance_hyp(self, name, storeys, bays):
+    #     """
+    #     it should be able to write fems to .yml and be able to read it again (persist and recover data)
+    #     """
+    #     spec = ReinforcedConcreteFrame(
+    #         name=name,
+    #         bays=bays,
+    #         storeys=storeys,
+    #     )
+    #     spec.force_design(HYP_DESIGN_FIXTURES_PATH)
+    #     self.assertEqual(len(spec.fems), len(DesignCriterionFactory.default_criteria()))
+    #     self.assertTrue(all([isinstance(f, FiniteElementModel) for f in spec.fems]))
+    #     spec.to_file(HYP_DESIGN_FIXTURES_PATH)
+    #     spec = ReinforcedConcreteFrame.from_file(
+    #         HYP_DESIGN_FIXTURES_PATH / f"{name}.yml"
+    #     )
+    # self.assertTrue(len(spec.fem.contents) > 0)
+    # self.assertTrue(len(spec.fem.nonstructural_elements) > 0)
+    # self.assertTrue(len(spec.fem.elements) > 0)
+
+    def test_write_to_file(self):
+        """it should write all writable fields + FEM"""
+        spec = ReinforcedConcreteFrame(
+            name="spec-test",
+            bays=[5.0],
+            storeys=[3.0, 3.0],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        spec.to_file(DESIGN_FIXTURES_PATH)
+        spec.fem.to_file(DESIGN_FIXTURES_PATH / "fem-from-spec.yml")
+        spec.to_file(DESIGN_MODELS_PATH)
+
+        new = ReinforcedConcreteFrame.from_file(
+            DESIGN_FIXTURES_PATH / f"{spec.name}.yml"
+        )
+        self.assertEqual(len(new.fems), len(DesignCriterionFactory.default_criteria()))
+        self.assertTrue(all([isinstance(f, FiniteElementModel) for f in new.fems]))
+
+
+class ForcePreDesignTest(TestCase):
+    """
+    it should create an elastic frame PREdesign
+    that is somewhat realistic in stiffnesses for analysis purposes.
+    """
+
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.path = DESIGN_FIXTURES_PATH / "force-based"
+        cls.file = cls.path / "force-pre-design-spec.yml"
+
+    def test_produces_realistic_periods_and_stiffnesses(self):
+        """it should load a spec and produce a realistic design"""
+        spec = ReinforcedConcreteFrame.from_file(self.file)
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_periods = [0.40, 0.20, 0.10, 0.05]
+        self.assertTrue(np.allclose(spec.fem.periods, expected_periods, rtol=0.30))
+        expected_masses = [65.0]
+        self.assertTrue(np.allclose(spec.masses, expected_masses, rtol=0.40))
+        self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
+
+
+class Chopra1326RSADesign(TestCase):
+    """
+    pp. 573 and 576 Chopra.
+    """
+
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.path = DESIGN_FIXTURES_PATH / "chopra1326RSA"
+        cls.file = cls.path / "chopra-rsa-spec.yml"
+
+    def test_computes_modal_forces_using_spectra(self):
+        """it should load a spec and produce a realistic design"""
+        spec = ReinforcedConcreteFrame.from_file(self.file)
+        spec.fems = spec.design(DESIGN_FIXTURES_PATH)
+        expected_forces = np.array(
+            [
+                [4.9, 9.4, 13.14, 15.82, 17.21],
+                [16.934, 22.18, 12.11, -6.31, -20.38],
+                [16.925, 4.82, -15.554, -9.25, 12.92],
+                [8.33, -6.92, -2.58, 9.064, -4.951],
+                [2.19, -3.684, 4.01, -3.061, 1.141],
+            ]
+        ).T
+        self.assertTrue(
+            np.allclose(spec.fem.extras["forces"], expected_forces, rtol=0.10)
+        )
+
+    def test_computes_design_forces_SRSS(self):
+        first_storey_force = 25.87
+        spec = ReinforcedConcreteFrame.from_file(self.file)
+        spec.fems = spec.design(DESIGN_FIXTURES_PATH)
+        last_storey_force = 30.07
+        self.assertTrue(
+            np.allclose(
+                spec.fem.extras["design_forces"][0], first_storey_force, rtol=1e-2
+            )
+        )
+        self.assertTrue(
+            np.allclose(
+                spec.fem.extras["design_forces"][-1], last_storey_force, rtol=1e-2
+            )
+        )
+
+
+class CDMXDesignTest(TestCase):
+    """
+    it should create a RC elastic frame design
+    and that is realistic in strengths for nonlinear analysis
+    """
+
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.path = DESIGN_FIXTURES_PATH / "cdmx-design"
+        cls.raw_file = cls.path / "kaushik-raw-input.yml"
+        cls.designed_file = cls.path / "kaushik-designed.yml"
+
+    def test_design(self):
+        """contain My and Vy needed for nonlin implementation."""
+        spec = ReinforcedConcreteFrame.from_file(self.raw_file)
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        spec.to_file(self.path)
+        Vd = spec.fem.extras["design_shears"]
+        self.assertTrue(np.allclose(sum(Vd), 400, atol=30.0))
+
+    # def test_correct_nonlin_behavior(self):
+    #     target_drift = 0.10
+    #     spec = ReinforcedConcreteFrame.from_file(self.designed_file)
+    #     view = spec.fem.pushover(self.path, drift=target_drift)
+    #     roof_disp = view.peak_roof_disp()
+    #     expected_roof_disp = spec.fem.height*target_drift
+    #     self.assertAlmostEqual(roof_disp, expected_roof_disp, 3)
+    #     Vb = view.peak_base_shear()
+    #     self.assertAlmostEqual(sum(Vb), 685.7, delta=30.0)
+    #     expected_V = 400 * np.array([2, 2, 2, 2]) / 4.4
+    #     self.assertTrue(
+    #         np.allclose(Vb, expected_V, rtol=1e-2),
+    #     )
+
+    # def test_resisting_moments_srss(self) -> None:
+    #     # do kaushik!
+    #     cdmx = ReinforcedConcreteFrame.from_file(self.file)
+    #     self.assertTrue(
+    #         # np.allclose(design.fem.extras["forces"], expected_forces, rtol=0.15)
+    #         False
+    #     )
+
+    # def test_design(self) -> None:
+    #     """it should compute Vy, uy, ductility."""
+    #     # Vy approxeq total_mass * Sa(T1, xi)
+    #     # this would imply Vy/weight = Cs (seismic coeeff)
+    #     # seismic_coeff realistic?
+    #     # is yield drift realistic? 1%
+
+    #     # check column moments to make sure they are My.
+    #     # check column My/EI and compare against known empirical results
+    #     self.assertTrue(False)
+
+    # def test_timehistory(self) -> None:
+    #     """it should produce realistic results"""
+    #     self.assertTrue(False)

@@ -2,7 +2,7 @@ from __future__ import annotations
 from app.fem import Node, ElasticBeamColumn, FiniteElementModel
 from app.hazard import Hazard, Record
 from abc import ABC, abstractmethod
-from pandas import DataFrame
+from pandas import DataFrame, set_option, read_csv
 from typing import Union, Optional
 from app.utils import (
     EDP,
@@ -20,36 +20,37 @@ from dataclasses import dataclass, field
 from plotly.graph_objects import Figure
 import numpy as np
 from numpy import flip, cumsum
-import pandas as pd
 from pathlib import Path
 import os
 import subprocess
 from shortuuid import uuid
 from app.codes import BuildingCode
 from app.utils import ROOT_DIR
+from subprocess import Popen, PIPE
+from iteration_utilities import grouper
 
 MODELS_DIR = ROOT_DIR / "models"
-STRANA_DIR = MODELS_DIR / "strana_models"
+STRANA_DIR = MODELS_DIR / "strana"
 
-pd.set_option("plotting.backend", "plotly")
+set_option("plotting.backend", "plotly")
 
 
 @dataclass
 class StructuralResultView(YamlMixin):
     abs_folder: str
-    values: Optional[list] = None
-    vectors: Optional[list] = None
-    periods: Optional[list] = None
-    omegas: Optional[list] = None
-    frequencies: Optional[list] = None
-    peak_drifts: Optional[list] = None
-    peak_floor_accels: Optional[list] = None
-    record: Optional[Record] = None
-    scale: Optional[float] = None
+    values: list | None = None
+    vectors: list | None = None
+    periods: list | None = None
+    omegas: list | None = None
+    frequencies: list | None = None
+    peak_drifts: list | None = None
+    peak_floor_accels: list | None = None
+    record: Record | None = None
+    scale: float | None = None
 
     _DEFAULT_NAME = "results.yml"
     _K_STATIC_NAME = "K-static.csv"
-    _cache_modal_results: Optional[dict] = None
+    _cache_modal_results: dict | None = None
     _init: bool = False
 
     def __post_init__(self) -> None:
@@ -71,11 +72,13 @@ class StructuralResultView(YamlMixin):
         return super().to_file(filepath)
 
     @classmethod
-    def from_file(cls, path: Path):
-        filepath = path / cls._DEFAULT_NAME
+    def from_file(cls, path: Path | str):
+        if isinstance(path, str):
+            filepath = Path(path)
+        filepath = filepath / cls._DEFAULT_NAME
         return super().from_file(filepath)
 
-    def view_result_by_edp_and_node(self, edp: EDP, node: int) -> pd.DataFrame:
+    def view_result_by_edp_and_node(self, edp: EDP, node: int) -> DataFrame:
         fns = {
             EDP.rotations_env.value: self.view_rotations_envelope,
             # EDP.disp_env.value: self.view_displacements_envelope
@@ -83,12 +86,12 @@ class StructuralResultView(YamlMixin):
         result = fns[edp](node=node)
         return result
 
-    def _read_eigen_values(self) -> pd.DataFrame:
-        values = pd.read_csv(self._path / "eigen_values.csv", sep="\s+", header=None)
+    def _read_eigen_values(self) -> DataFrame:
+        values = read_csv(self._path / "eigen_values.csv", sep="\s+", header=None)
         return values
 
-    def _read_eigen_vectors(self) -> pd.DataFrame:
-        vectors = pd.read_csv(self._path / "eigen_vectors.csv", sep="\s+", header=None)
+    def _read_eigen_vectors(self) -> DataFrame:
+        vectors = read_csv(self._path / "eigen_vectors.csv", sep="\s+", header=None)
         return vectors
 
     def view_modal_results(self) -> dict[str, list]:
@@ -126,16 +129,16 @@ class StructuralResultView(YamlMixin):
         self.frequencies = results["frequencies"]
         return results
 
-    def _read_envelope(self, filename: Union[Path, str], **kwargs) -> pd.DataFrame:
+    def _read_envelope(self, filename: Union[Path, str], **kwargs) -> DataFrame:
         """return absmax() response"""
         path = self._path / filename
-        return pd.read_csv(path, header=None, sep="\s+", **kwargs)
+        return read_csv(path, header=None, sep="\s+", **kwargs)
         #  skiprows=[0, 1])
 
-    def _read_timehistory(self, filename: Union[Path, str], names=None) -> pd.DataFrame:
+    def _read_timehistory(self, filename: Union[Path, str], names=None) -> DataFrame:
         """return absmax() response"""
         path = self._path / filename
-        return pd.read_csv(path, header=None, sep="\s+", index_col=0, names=names)
+        return read_csv(path, header=None, sep="\s+", index_col=0, names=names)
 
     def reactions_env(self) -> dict[str, DataFrame]:
         results = {}
@@ -380,21 +383,16 @@ class StructuralResultView(YamlMixin):
         fig.update_layout(xaxis_title="t (s)", yaxis_title="PFA/PGA")
         return fig
 
-    # @property
-    # def timehistory_figures(self) -> list[dcc.Graph]:
-    #     """
-    #     TODO; this is interesting.. a better approach is to
-    #     define DRIFTS.csv NODE-ACCEL.csv as EDPs.
-    #     filenames <-> EDP and we could just
-    #     use a mapper
-    #     """
-    #     figs = []
-    #     figs.append(self.drifts_plot())
-    #     # figs.append(self.moments_plot())
-    #     figs.append(self.floor_accels_plot())
-    #     figs.append(self.floor_accels_plot_in_g())
-    #     figs.append(self.normalized_floor_accels_plot())
-    #     return [dcc.Graph(figure=f) for f in figs]
+    @property
+    def timehistory_figures(self) -> list:
+        figs = []
+        pl = self.drifts_plot()
+        figs.append(pl)
+        # figs.append(self.moments_plot())
+        figs.append(self.floor_accels_plot())
+        figs.append(self.floor_accels_plot_in_g())
+        figs.append(self.normalized_floor_accels_plot())
+        return figs
 
     def view_peak_drifts(self) -> DataFrame:
         abs_drifts = self.view_drifts().abs()
@@ -471,9 +469,9 @@ class Recorder:
         return str(self.fem) + self.recorders
 
     """
-    improvements:
+    TODO@improvements:
     it might be better to register a recorder for every string appended
-    so when I load strana again.. i have access to what it supposedly saved to db
+    so when I load strana again... I have access to what it supposedly saved to db
     and don't have to write paths manually
     """
 
@@ -612,7 +610,7 @@ class StaticRecorder(GravityRecorderMixin):
 class PushoverRecorder(GravityRecorderMixin):
     drift: float = 0.05
     steps: int = 2000
-    tol: str = 1.0e-5
+    tol: float = 1.0e-5
 
     def __str__(self) -> str:
         s = str(self.fem)
@@ -710,7 +708,7 @@ class KRecorder(Recorder):
         return s
 
     def view_stiffness_matrix(self):
-        K = pd.read_csv(self.path / self.view._K_STATIC_NAME, sep="\s+", header=None)
+        K = read_csv(self.path / self.view._K_STATIC_NAME, sep="\s+", header=None)
         return K
 
     @property
@@ -767,10 +765,10 @@ class EigenRecorder(Recorder):
 
 @dataclass
 class TimehistoryRecorder(GravityRecorderMixin):
-    record: Record = None
-    a0: float = None
-    a1: float = None
-    scale: float = None
+    record: Record | None = None
+    a0: float | None = None
+    a1: float | None = None
+    scale: float | None = None
     gravity_loads: bool = True
     EXTRA_FREE_VIBRATION_SECONDS: float = 10.0
 
@@ -854,6 +852,14 @@ class StructuralAnalysis:
 
         self.K_recorder = KRecorder(self.K_path, fem=self.fem)
         self.modal_recorder = EigenRecorder(self.modal_path, fem=self.fem)
+
+    def async_run(self, recorder: Recorder) -> tuple[str, StructuralResultView]:
+        """expects to be called by a parallel process and then the view used later"""
+        results_path = recorder.path / "model.tcl"
+        with open(results_path, "w") as f:
+            f.write(recorder.tcl_string)
+        os.chmod(results_path, 0o777)
+        return str(results_path.resolve()), recorder.view
 
     def run(self, recorder: Recorder) -> StructuralResultView:
         results_path = recorder.path / "model.tcl"
@@ -954,6 +960,30 @@ class StructuralAnalysis:
         view = self.run(recorder=recorder)
         return view
 
+    def async_timehistory(
+        self,
+        record: Record,
+        scale=None,
+        a0: float = None,
+        a1: float = None,
+        gravity_loads=True,
+    ) -> tuple[str, StructuralResultView]:
+        if a0 is None or a1 is None:
+            self.fem.get_and_set_eigen_results(self.modal_path)
+            a0, a1 = self.fem.a0, self.fem.a1
+        if not scale:
+            scale = record.scale
+        recorder = TimehistoryRecorder(
+            path=self.timehistory_path,
+            fem=self.fem,
+            record=record,
+            a0=a0,
+            a1=a1,
+            scale=scale,
+            gravity_loads=gravity_loads,
+        )
+        return self.async_run(recorder=recorder)
+
 
 class HazardNotFoundException(FileNotFoundError):
     pass
@@ -971,25 +1001,23 @@ class IDA(NamedYamlMixin):
     start: float = 0.1
     stop: float = 1.0
     step: float = 0.1
-    results: dict = None
+    results: dict | None = None
     standard: bool = False
-
-    _hazard: Hazard = None
+    _hazard: Hazard | None = None
     _design = None
-    _intensities: np.ndarray = None
-
+    _intensities: np.ndarray | None = None
     _COLLAPSE_DRIFT: float = 0.2
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
 
         try:
-            if self.hazard_abspath and not self._hazard:
+            if self.hazard_abspath is not None and not self._hazard:
                 self._hazard: Hazard = Hazard.from_file(self.hazard_abspath)
         except FileNotFoundError:
             raise HazardNotFoundException
         try:
-            if self.design_abspath and not self._design:
+            if self.design_abspath is not None and not self._design:
                 self._design = ReinforcedConcreteFrame.from_file(self.design_abspath)
         except FileNotFoundError:
             raise SpecNotFoundException
@@ -1003,6 +1031,105 @@ class IDA(NamedYamlMixin):
                 linspace + self.step / 2,
                 linspace - self.step / 2,
             )
+
+    def generate_input_strings(
+        self,
+        *,
+        run_id: str,
+        results_dir: Path = None,
+        fem_ix: int = -1,
+        period_ix: int = -1,
+    ) -> list[str]:
+        """
+        does the standard record, intensity run for the default fem design
+        """
+        fem = self._design.fems[fem_ix]
+        modal_view = fem.get_and_set_eigen_results(results_dir)
+        period = modal_view.periods[period_ix]
+        inputs = []
+        for rix, record in enumerate(self._hazard.records, start=1):
+            for iix, (intensity, sup, inf) in enumerate(
+                zip(*self._intensities), start=1
+            ):
+                intensity_str_precision = f"{intensity:.6f}"
+                outdir = results_dir / run_id / record.name / intensity_str_precision
+                results_to_meters = 1.0 / 100
+                scale_factor = results_to_meters * record.get_scale_factor(
+                    period=period, intensity=intensity
+                )
+                rate_inf, rate_sup = self._hazard._curve.interpolate_rate_for_values(
+                    [inf, sup]
+                )
+                freq = rate_inf - rate_sup
+                inputs.append(
+                    dict(
+                        freq=freq,
+                        inf=inf,
+                        sup=sup,
+                        period=period,
+                        outdir=outdir,
+                        results_to_meters=results_to_meters,
+                        scale_factor=scale_factor,
+                        record=record,
+                        intensity=intensity,
+                        intensity_str_precision=intensity_str_precision,
+                        fem=fem,
+                    )
+                )
+
+        return inputs
+
+    def run_parallel(
+        self,
+        *,
+        results_dir: Path = None,
+        run_id: str = None,
+        fem_ix: int = -1,
+        period_ix: int = 0,
+    ) -> IDAResultsDataFrame:
+        if not run_id:
+            run_id = str(uuid())
+
+        inputs = self.generate_input_strings(
+            run_id=run_id, results_dir=results_dir, fem_ix=fem_ix, period_ix=period_ix
+        )
+        dataframe_records = []
+        views = []
+
+        for group in grouper(inputs, 10):
+            cmds = []
+            for g in group:
+                record: Record = g["record"]
+                strana = StructuralAnalysis(g["outdir"], fem=g["fem"])
+                cmd, view = strana.async_timehistory(
+                    record=record, scale=g["scale_factor"]
+                )
+                views.append(view)
+                cmds.append(cmd)
+            procs = [Popen(cmd, shell=True) for cmd in cmds]
+            for proc in procs:
+                proc.wait()
+
+        for input, view in zip(inputs, views):
+            results = view.get_and_set_timehistory_summary()
+            collapse = self._design.fem.determine_collapse_from_results(results)
+            row = {
+                "record": view.record.name,
+                "intensity_str": input["intensity_str_precision"],
+                "intensity": input["intensity"],
+                "sup": input["sup"],
+                "inf": input["inf"],
+                "freq": input["freq"],
+                "collapse": collapse,
+                **results,
+            }
+            dataframe_records.append(row)
+            view.to_file()
+
+        results_df = DataFrame(dataframe_records)
+        results_df.to_csv(STRANA_DIR / f"{run_id}.csv")
+        self.results = results_df.to_dict(orient="records")
+        return results_df
 
     def run(
         self,
@@ -1063,7 +1190,7 @@ class IDA(NamedYamlMixin):
                 dataframe_records.append(row)
                 th_view.to_file()
 
-        results_df = pd.DataFrame.from_records(dataframe_records)
+        results_df = DataFrame.from_records(dataframe_records)
         results_df.to_csv(STRANA_DIR / f"{run_id}.csv")
         self.results = results_df.to_dict(orient="records")
         return results_df
@@ -1075,7 +1202,7 @@ class IDA(NamedYamlMixin):
         """
         import plotly.express as px
 
-        df = pd.DataFrame.from_records(self.results)
+        df = DataFrame.from_records(self.results)
         # df2 = df.pivot(
         #     index="intensity", columns="record", values=SummaryEDP.peak_drifts.value
         # )

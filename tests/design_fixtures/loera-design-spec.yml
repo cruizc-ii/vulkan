@@ -1,0 +1,7 @@
+name: euler-design-test
+storeys: [3.0, 3.0]
+masses: [12.0, 12.0]
+bays: [5.0]
+damping: 0.05
+design_criteria:
+  - LoeraPre

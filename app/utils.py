@@ -14,6 +14,7 @@ ROOT_DIR = Path(__file__).parent.parent
 MODELS_DIR = ROOT_DIR / "models"
 DESIGN_DIR = MODELS_DIR / "design"
 HAZARD_DIR = MODELS_DIR / "hazard"
+RESULTS_DIR = ROOT_DIR / "results"
 ASSETS_PATH = "https://vulkan1.s3.amazonaws.com/"
 GRAVITY = 9.81
 

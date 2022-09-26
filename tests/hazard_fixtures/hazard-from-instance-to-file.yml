@@ -1,0 +1,9 @@
+curve: pareto
+kind: acc
+name: hazard-from-instance-to-file
+records:
+- dt: 0.01
+  kind: acc
+  name: 98_SCT190985NS.csv
+  path: /Users/carlo/vulkan/records/98_SCT190985NS.csv
+  scale: 1.0
