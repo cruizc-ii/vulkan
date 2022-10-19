@@ -92,6 +92,9 @@ class CodeMassesPre(DesignCriterion):
         put_mass(fem.mass_nodes, masses.tolist())
         put_mass_spec(self.specification.nodes.values(), masses.tolist())
         self.specification.masses = masses.tolist()
+        self.specification.uniform_beam_loads_by_mass = [
+            GRAVITY * mass / self.specification.width for mass in masses.tolist()
+        ]
         fem.get_and_set_eigen_results(results_path=results_dir)
         return fem
 

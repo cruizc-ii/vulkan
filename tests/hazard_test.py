@@ -35,7 +35,7 @@ class TestHazardCurve(TestCase):
         index = abs(roe.Sa - a0).idxmin()
         empirical_v0 = roe.loc[index].v
         # non-deterministic test, delta is too strict.. what is the correct?
-        self.assertAlmostEquals(empirical_v0, v0, delta=2.0 / np.sqrt(n))
+        self.assertAlmostEquals(empirical_v0, v0, delta=2.0 * np.pi / np.sqrt(n))
 
 
 class TestHazard(TestCase):

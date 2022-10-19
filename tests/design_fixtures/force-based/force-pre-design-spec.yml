@@ -1,0 +1,6 @@
+name: force-based-design-test
+storeys: [3.0, 3.0, 3.0, 3.0]
+bays: [3.0, 3.0, 3.0]
+damping: 0.05
+design_criteria:
+  - ForceBasedPre
