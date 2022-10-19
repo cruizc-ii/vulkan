@@ -1,0 +1,41 @@
+
+occupancy: MedicalOccupancy
+damping: 0.05
+nodes:
+  - id: 0
+    x: 0.0
+    y: 0.0
+    fixed: yes
+  - id: 1
+    x: 3.0
+    y: 0.0
+    fixed: yes
+  - id: 2
+    x: 0.0
+    y: 2.5
+    mass: 30.58
+  - id: 3
+    x: 3.0
+    y: 2.5
+elements:
+  - id: 0
+    i: 0
+    j: 2
+    E: 30.0e+6
+    Ix: 0.0007469
+    type: 'column'
+    storey: 1
+  - id: 1
+    i: 1
+    j: 3
+    E: 30.0e+6
+    Ix: 0.0007469
+    type: 'column'
+    storey: 1
+  - id: 2
+    i: 2
+    j: 3
+    E: 30.0e+6
+    Ix: 0.0003733
+    type: 'beam'
+    storey: 1

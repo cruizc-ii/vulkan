@@ -1,0 +1,302 @@
+Ebeams: 30000000.0
+Ec: 24099792.53022731
+Ecols: 30000000.0
+Es: 210000000.0
+Ibeams: 0.0015
+Icols: 0.0015
+bays:
+- 6
+damping: 0.05
+design_criteria:
+- ForceBasedPre
+design_spectra: {}
+fc: 30000.0
+fems:
+- a0: 0.40660483375273204
+  a1: 0.004869216956499781
+  contents:
+  - category: contents
+    edp: pfa
+    floor: 1
+    icon: computer.png
+    name: ContentsGeneric
+    net_worth: 0.5
+    node: null
+    x: 0.0
+    y: null
+  - category: contents
+    edp: pfa
+    floor: 2
+    icon: computer.png
+    name: ContentsGeneric
+    net_worth: 0.5
+    node: null
+    x: 0.0
+    y: null
+  - category: contents
+    edp: pfa
+    floor: 2
+    icon: computer.png
+    name: ContentsGeneric
+    net_worth: 0.5
+    node: null
+    x: 0.0
+    y: null
+  damping: 0.05
+  elements:
+  - A: 1e6
+    E: 30000000.0
+    Ix: 0.0002864788975654115
+    bay: 0
+    category: structural
+    edp: peak_drifts
+    floor: 1
+    i: 0
+    icon: null
+    id: 0
+    j: 2
+    k: 1611.4437988054397
+    length: 4
+    name: ConcreteColumnAsset
+    net_worth: 10
+    node: null
+    radius: 0.13819765978853418
+    storey: 1
+    type: column
+    x: null
+    y: null
+  - A: 1e6
+    E: 30000000.0
+    Ix: 0.0002864788975654115
+    bay: 1
+    category: structural
+    edp: peak_drifts
+    floor: 1
+    i: 1
+    icon: null
+    id: 1
+    j: 3
+    k: 1611.4437988054397
+    length: 4
+    name: ConcreteColumnAsset
+    net_worth: 10
+    node: null
+    radius: 0.13819765978853418
+    storey: 1
+    type: column
+    x: null
+    y: null
+  - A: 1e6
+    E: 30000000.0
+    Ix: 0.004583662361046584
+    bay: 1
+    category: structural
+    edp: peak_drifts
+    floor: 2
+    i: 2
+    icon: null
+    id: 2
+    j: 3
+    k: 7639.437268410973
+    length: 6
+    name: ConcreteBeamAsset
+    net_worth: 10
+    node: null
+    radius: 0.06909882989426709
+    storey: 1
+    type: beam
+    x: null
+    y: null
+  - A: 1e6
+    E: 30000000.0
+    Ix: 7.16197243913529e-05
+    bay: 0
+    category: structural
+    edp: peak_drifts
+    floor: 2
+    i: 2
+    icon: null
+    id: 3
+    j: 4
+    k: 402.86094970136
+    length: 4
+    name: ConcreteColumnAsset
+    net_worth: 10
+    node: null
+    radius: 0.09772050238058398
+    storey: 2
+    type: column
+    x: null
+    y: null
+  - A: 1e6
+    E: 30000000.0
+    Ix: 7.16197243913529e-05
+    bay: 1
+    category: structural
+    edp: peak_drifts
+    floor: 2
+    i: 3
+    icon: null
+    id: 4
+    j: 5
+    k: 402.86094970136
+    length: 4
+    name: ConcreteColumnAsset
+    net_worth: 10
+    node: null
+    radius: 0.09772050238058398
+    storey: 2
+    type: column
+    x: null
+    y: null
+  - A: 1e6
+    E: 30000000.0
+    Ix: 0.0011459155902616464
+    bay: 1
+    category: structural
+    edp: peak_drifts
+    floor: 3
+    i: 4
+    icon: null
+    id: 5
+    j: 5
+    k: 1909.859317102744
+    length: 6
+    name: ConcreteBeamAsset
+    net_worth: 10
+    node: null
+    radius: 0.04886025119029199
+    storey: 2
+    type: beam
+    x: null
+    y: null
+  extras: {}
+  frequencies:
+  - 0.8888334073573656
+  - 2.3797607940048042
+  model: PlainFEM
+  nodes:
+  - bay: 0
+    column: 1
+    fixed: true
+    floor: 1
+    free_dofs: 0
+    id: 0
+    mass: null
+    storey: 0
+    x: 0.0
+    y: 0.0
+  - bay: 1
+    column: 2
+    fixed: true
+    floor: 1
+    free_dofs: 0
+    id: 1
+    mass: null
+    storey: 0
+    x: 6.0
+    y: 0.0
+  - bay: 0
+    column: 1
+    fixed: false
+    floor: 2
+    free_dofs: 3
+    id: 2
+    mass: 18.34862385321101
+    storey: 1
+    x: 0.0
+    y: 4.0
+  - bay: 1
+    column: 2
+    fixed: false
+    floor: 2
+    free_dofs: 3
+    id: 3
+    mass: null
+    storey: 1
+    x: 6.0
+    y: 4.0
+  - bay: 0
+    column: 1
+    fixed: false
+    floor: 3
+    free_dofs: 3
+    id: 4
+    mass: 18.34862385321101
+    storey: 2
+    x: 0.0
+    y: 8.0
+  - bay: 1
+    column: 2
+    fixed: false
+    floor: 3
+    free_dofs: 3
+    id: 5
+    mass: null
+    storey: 2
+    x: 6.0
+    y: 8.0
+  nonstructural_elements:
+  - category: nonstructural
+    edp: accel
+    floor: 1
+    icon: marble-tiles.jpg
+    name: NonStructuralGenericTest
+    net_worth: 3.3
+    node: null
+    x: 0.0
+    y: null
+  - category: nonstructural
+    edp: accel
+    floor: 1
+    icon: marble-tiles.jpg
+    name: NonStructuralGenericTest
+    net_worth: 3.3
+    node: null
+    x: 0.0
+    y: null
+  - category: nonstructural
+    edp: accel
+    floor: 2
+    icon: marble-tiles.jpg
+    name: NonStructuralGenericTest
+    net_worth: 3.3
+    node: null
+    x: 0.0
+    y: null
+  - category: nonstructural
+    edp: accel
+    floor: 2
+    icon: marble-tiles.jpg
+    name: NonStructuralGenericTest
+    net_worth: 3.3
+    node: null
+    x: 0.0
+    y: null
+  occupancy: MedicalOccupancy.yml
+  omegas:
+  - 5.584705005638167
+  - 14.95247805549301
+  periods:
+  - 1.125070223196436
+  - 0.42021030118625496
+  values:
+  - 31.18893
+  - 223.5766
+  vectors:
+  - - 0.0541108712680432
+    - -0.2270947238722443
+  - - 0.2270947238722472
+    - 0.0541108712680386
+fy: 420000.0
+masses:
+- 18.34862385321101
+- 18.34862385321101
+name: need-economic-kind-history
+occupancy: MedicalOccupancy.yml
+storeys:
+- 4
+- 4
+uniform_beam_loads_by_mass:
+- 30.0
+- 30.0

@@ -1,0 +1,155 @@
+damping: 0.05
+occupancy: SimpleOccupancyTest
+contents:
+  - category: nonstructural
+    edp: pfv
+    icon: marble-tiles.jpg
+    name: NonStructuralGeneric
+    net_worth: 3.3
+    node: null
+    floor: 1
+    x: null
+nonstructural_elements:
+  - category: nonstructural
+    edp: pfv
+    icon: marble-tiles.jpg
+    name: NonStructuralGeneric
+    net_worth: 3.3
+    node: null
+    floor: 1
+    x: null
+elements:
+- E: 30000000.0
+  Ix: 0.00031084949822635804
+  bay: 0
+  net_worth: 10
+  i: 0
+  id: 0
+  j: 2
+  length: 3.0
+  radius: 0.14104739588693907
+  storey: 1
+  type: column
+- E: 30000000.0
+  Ix: 0.00031084949822635804
+  bay: 1
+  net_worth: 10
+  i: 1
+  id: 1
+  j: 3
+  length: 3.0
+  radius: 0.14104739588693907
+  storey: 1
+  type: column
+- E: 30000000.0
+  Ix: 0.002398530078907084
+  bay: 1
+  net_worth: 10
+  i: 2
+  id: 2
+  j: 3
+  length: 5.0
+  radius: 0.08462843753216344
+  storey: 1
+  type: beam
+- E: 30000000.0
+  Ix: 7.771237455658954e-05
+  bay: 0
+  net_worth: 10
+  i: 2
+  id: 3
+  j: 4
+  length: 3.0
+  radius: 0.09973557010035818
+  storey: 2
+  type: column
+- E: 30000000.0
+  Ix: 7.771237455658954e-05
+  bay: 1
+  net_worth: 10
+  i: 3
+  id: 4
+  j: 5
+  length: 3.0
+  radius: 0.09973557010035818
+  storey: 2
+  type: column
+- E: 30000000.0
+  Ix: 0.0005996325197267712
+  bay: 1
+  net_worth: 10
+  i: 4
+  id: 5
+  j: 5
+  length: 5.0
+  radius: 0.0598413420602149
+  storey: 2
+  type: beam
+extras: {}
+frequencies:
+- 1.8922679421192607
+- 5.200822166098648
+model: PlainFEM
+nodes:
+- column: null
+  fixed: true
+  floor: null
+  free_dofs: 0
+  id: 0
+  mass: null
+  x: 0.0
+  y: 0.0
+- column: null
+  fixed: true
+  floor: null
+  free_dofs: 0
+  id: 1
+  mass: null
+  x: 5.0
+  y: 0.0
+- column: null
+  fixed: false
+  floor: null
+  free_dofs: 3
+  id: 2
+  mass: 9.5565749235474
+  x: 0.0
+  y: 3.0
+- column: null
+  fixed: false
+  floor: null
+  free_dofs: 3
+  id: 3
+  mass: null
+  x: 5.0
+  y: 3.0
+- column: null
+  fixed: false
+  floor: null
+  free_dofs: 3
+  id: 4
+  mass: 9.5565749235474
+  x: 0.0
+  y: 6.0
+- column: null
+  fixed: false
+  floor: null
+  free_dofs: 3
+  id: 5
+  mass: null
+  x: 5.0
+  y: 6.0
+omegas:
+- 11.889470131170691
+- 32.67772941928494
+periods:
+- 0.528466385621923
+- 0.19227729156333398
+values:
+- 141.3595
+- 1067.834
+vectors:
+- - 0.0756395912507676
+  - -0.3145133578011358
+- - 0.3145133578012037
+  - 0.0756395912506649

@@ -1,0 +1,8 @@
+design_abspath: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/ida-design-test.yml
+hazard_abspath: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/ida-hazard-test.yml
+name: ida-to-yaml
+results: null
+standard: false
+start: 0.1
+step: 0.1
+stop: 0.8

@@ -74,8 +74,8 @@ class StructuralResultView(YamlMixin):
     @classmethod
     def from_file(cls, path: Path | str):
         if isinstance(path, str):
-            filepath = Path(path)
-        filepath = filepath / cls._DEFAULT_NAME
+            path = Path(path)
+        filepath = path / cls._DEFAULT_NAME
         return super().from_file(filepath)
 
     def view_result_by_edp_and_node(self, edp: EDP, node: int) -> DataFrame:
@@ -1165,7 +1165,7 @@ class IDA(NamedYamlMixin):
                 scale_factor = results_to_meters * record.get_scale_factor(
                     period=period, intensity=intensity
                 )
-                rate_inf, rate_sup = self._hazard.curve.interpolate_rate_for_values(
+                rate_inf, rate_sup = self._hazard._curve.interpolate_rate_for_values(
                     [inf, sup]
                 )
                 freq = rate_inf - rate_sup
