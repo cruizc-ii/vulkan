@@ -256,6 +256,10 @@ class LossModel(YamlMixin, Loss):
         )
 
 
+class IDANotFoundException(FileNotFoundError):
+    pass
+
+
 @dataclass
 class LossAggregator(NamedYamlMixin, Loss):
     ida_model_path: str = None
@@ -264,14 +268,18 @@ class LossAggregator(NamedYamlMixin, Loss):
 
     def __post_init__(self):
         super().__post_init__()
-        self._ida = IDA.from_file(self.ida_model_path)
-        self.net_worth = self._ida._design.fem.total_net_worth
-        self._hazard = self._ida._hazard
-        self._assets = self._ida._design.fem.assets
-        self._ida_results_df = pd.DataFrame.from_dict(self._ida.results)
-        self._csv_name = "total"
-        self._scatter_csv_name = "1scatter"
-        self._loss_linspace = np.linspace(0, self.net_worth, self._RATE_NUM_BINS)
+        try:
+            self._ida = IDA.from_file(self.ida_model_path)
+            self.net_worth = self._ida._design.fem.total_net_worth
+            self._hazard = self._ida._hazard
+            self._assets = self._ida._design.fem.assets
+            self._ida_results_df = pd.DataFrame.from_dict(self._ida.results)
+            self._csv_name = "total"
+            self._scatter_csv_name = "1scatter"
+            self._loss_linspace = np.linspace(0, self.net_worth, self._RATE_NUM_BINS)
+        except FileNotFoundError:
+            raise IDANotFoundException
+
         if self.scatter_src:
             self._scatter_df = pd.read_csv(self.scatter_src, index_col=0)
 

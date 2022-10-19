@@ -1,4 +1,5 @@
 import streamlit as st
+from app.assets import LOSS_MODELS_DIR
 from app.criteria import DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
 from app.hazard import RECORDS_DIR, Hazard, HazardCurveFactory, Record
@@ -9,12 +10,14 @@ from app.strana import (
     SpecNotFoundException,
     StructuralResultView,
 )
+from app.loss import LossAggregator, IDANotFoundException
 from app.utils import DESIGN_DIR, MODELS_DIR, HAZARD_DIR, RESULTS_DIR, find_files
 from app.occupancy import BuildingOccupancy
 import pandas as pd
 import numpy as np
 import time
 from st_cytoscape import cytoscape
+import random
 
 
 st.set_page_config(
@@ -42,6 +45,8 @@ if "module" not in st.session_state:
     st.session_state.module = DEFAULT_MODULE
     st.session_state.design_abspath = ""
     st.session_state.hazard_abspath = ""
+    st.session_state.ida_abspath = ""
+    st.session_state.loss_abspath = ""
 
 if "first_render" not in st.session_state:
     st.session_state.first_render = True
@@ -209,8 +214,6 @@ with st.sidebar:
         sample = left.button("sample 5", help="grab 5 at random")
         if sample:
             with st.spinner("sampling..."):
-                import random
-
                 time.sleep(1)
                 untouched = [r for r in record_files if r not in hazard.record_names]
                 samples = random.sample(untouched, 5)
@@ -284,6 +287,7 @@ with st.sidebar:
 
         if file:
             ida = IDA.from_file(STRANA_DIR / file)
+            st.session_state.ida_abspath = STRANA_DIR / file
 
         if not (design_missing or hazard_missing):
             start = st.number_input(
@@ -343,6 +347,64 @@ with st.sidebar:
                     if view_result:
                         selected_ix = ix
 
+    if st.session_state.module == 4:
+        losses = find_files(LOSS_MODELS_DIR)
+        ida_missing = False
+        file = st.selectbox("select a loss file", options=losses)
+        name = st.text_input(
+            "give it a name",
+            value=file.split(".")[0] if file else "default loss",
+            help="to save just run",
+        )
+        try:
+            loss = LossAggregator(
+                name="default loss", ida_model_path=st.session_state.ida_abspath
+            )
+            loss.name = name
+        except IDANotFoundException:
+            loss = LossAggregator
+            ida_missing = True
+
+        if file:
+            loss = LossAggregator.from_file(LOSS_MODELS_DIR / file)
+            st.session_state.loss_abspath = LOSS_MODELS_DIR / file
+
+        left, right = st.columns(2)
+        sample = left.button("run", help="perform loss computation")
+        if sample:
+            with st.spinner("running..."):
+                loss = LossAggregator(
+                    **{
+                        **loss.to_dict,
+                        # "start": start,
+                        # "stop": stop,
+                        # "step": step,
+                        # "name": name,
+                        # "standard": standard,
+                    },
+                )
+                loss.run()
+                loss.to_file(LOSS_MODELS_DIR)
+
+            st.success("success")
+        rm = right.button("🗑️", help="delete")
+        if rm:
+            with st.spinner("removing..."):
+                time.sleep(2)
+            st.success("deleted")
+        design = loss._ida._design
+        st.text(f"{design.name}")
+        st.text(f"St {design.num_storeys} bays {design.num_bays}")
+        st.text(f"{design.design_criteria}")
+        st.text(f"{design.occupancy.split('.')[0]}")
+        st.metric("$ Net worth", 3414)
+        fig = design.fem.assets_pie_fig
+        fig.update_layout(height=300, width=300)
+        st.plotly_chart(fig)
+        st.header("Filter")
+        # WIP
+        st.header("View")
+        # WIP
 
 if st.session_state.module == 1:
     if design:
@@ -421,3 +483,9 @@ if st.session_state.module == 3:
             figures = view.timehistory_figures
             for fig in figures:
                 st.plotly_chart(fig)
+
+if st.session_state.module == 4:
+    if ida_missing:
+        st.warning("Please select a design")
+    if loss:
+        "Success, loss loaded"

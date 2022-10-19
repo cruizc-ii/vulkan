@@ -55,3 +55,8 @@ records:
   name: elCentro.csv
   path: /Users/carlo/vulkan/records/elCentro.csv
   scale: -1
+- dt: 0.01
+  kind: acc
+  name: 100_SCT190917.csv
+  path: /Users/carlo/vulkan/records/100_SCT190917.csv
+  scale: 1.0
