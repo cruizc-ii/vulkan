@@ -1,0 +1,33 @@
+Ebeams: 30000000.0
+Ec: 24099792.53022731
+Ecols: 30000000.0
+Es: 210000000.0
+Ibeams: 0.0015
+Icols: 0.0015
+bays:
+- 3
+- 3
+- 3
+damping: 0.05
+design_criteria:
+- CDMX2017Q1
+design_spectra: {}
+fc: 30000.0
+fy: 420000.0
+masses:
+- 20.0
+- 20.0
+- 20.0
+- 20.0
+name: kaushik-designed
+occupancy: MidRisePrivateOffice.yml
+storeys:
+- 4.4
+- 3.2
+- 3.2
+- 3.2
+uniform_beam_loads_by_mass:
+- 45.0
+- 45.0
+- 45.0
+- 45.0

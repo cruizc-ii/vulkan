@@ -46,11 +46,11 @@ repos:
           ]
         stages: [push]
 
-  # - repo: local
-  #   hooks:
-  #     - id: unittest
-  #       name: run unit tests
-  #       entry: python3 -m pytest
-  #       language: system
-  #       pass_filenames: false
-  #       stages: [commit]
+  - repo: local
+    hooks:
+      - id: unittest
+        name: run unit tests
+        entry: python3 -m pytest
+        language: system
+        pass_filenames: false
+        stages: [commit]

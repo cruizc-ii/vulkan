@@ -1,0 +1,99 @@
+name: chopra-rsa
+storeys: [12.0, 12.0, 12.0, 12.0, 12.0]
+masses: [3.1084, 3.1084, 3.1084, 3.1084, 3.1084]
+bays: [1.0]
+damping: 0.05
+design_criteria:
+  - ShearRSA
+design_spectra:
+  ShearRSA:
+    path: /Users/carlo/vulture/records/Sa_spectra/elCentro.csv
+    scale: 32.2
+fems:
+  - damping: 0.05
+    model: ShearModel
+    elements:
+    - E: 1.0
+      Ix: 54501.12
+      bay: 0
+      i: 0
+      id: 0
+      j: 2
+      storey: 1
+      type: column
+    - E: 1.0
+      Ix: 54501.12
+      bay: 0
+      i: 2
+      id: 3
+      j: 4
+      storey: 2
+      type: column
+    - E: 1.0
+      Ix: 54501.12
+      bay: 0
+      i: 4
+      id: 6
+      j: 6
+      storey: 3
+      type: column
+    - E: 1.0
+      Ix: 54501.12
+      bay: 0
+      i: 6
+      id: 9
+      j: 8
+      storey: 4
+      type: column
+    - E: 1.0
+      Ix: 54501.12
+      bay: 0
+      i: 8
+      id: 12
+      j: 10
+      storey: 5
+      type: column
+    nodes:
+    - column: null
+      fixed: true
+      floor: null
+      id: 0
+      mass: null
+      x: 0.0
+      y: 0.0
+    - column: null
+      fixed: false
+      floor: null
+      id: 2
+      mass: 3.108486167
+      x: 0.0
+      y: 12.0
+    - column: null
+      fixed: false
+      floor: null
+      id: 4
+      mass: 3.108486167
+      x: 0.0
+      y: 24.0
+    - column: null
+      fixed: false
+      floor: null
+      id: 6
+      mass: 3.108486167
+      x: 0.0
+      y: 36.0
+    - column: null
+      fixed: false
+      floor: null
+      id: 8
+      mass: 3.108486167
+      x: 0.0
+      y: 48.0
+    - column: null
+      fixed: false
+      floor: null
+      id: 10
+      mass: 3.108486167
+      x: 0.0
+      y: 60.0
+
