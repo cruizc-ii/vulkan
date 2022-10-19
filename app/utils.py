@@ -9,6 +9,7 @@ import io
 
 from dataclasses import asdict
 import pandas as pd
+import numpy as np
 
 ROOT_DIR = Path(__file__).parent.parent
 MODELS_DIR = ROOT_DIR / "models"
@@ -225,3 +226,17 @@ def UploadComponent(id, msg: str = "Upload design criterion."):
     #     style={"max-width": "500px"},
     # )
     pass
+
+
+def eigenvectors_similar(a: np.ndarray, b: np.ndarray, rtol=1e-3) -> bool:
+    """a-b are similar in an eigenvector sense
+    if their columns are similar when multiplied by -1 or +1"""
+    a = np.array(a)
+    b = np.array(b)
+    for ix, (cola, colb) in enumerate(zip(a.T, b.T)):
+        eq = np.allclose(cola, colb, rtol=rtol)
+        opp = np.allclose(-cola, colb, rtol=rtol)
+        if not (eq or opp):
+            print(f"col {ix} is not similar!")
+            return False
+    return True
