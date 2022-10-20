@@ -53,7 +53,7 @@ class Loss:
         df.to_csv(src)
         return src
 
-    def stats(self) -> tuple[float]:
+    def stats(self) -> tuple[float, float, float, float, float, float]:
         return (
             self.average_annual_loss,
             self.expected_loss,
@@ -306,6 +306,7 @@ class LossAggregator(NamedYamlMixin, Loss):
             self._loss_df, LOSS_CSV_RESULTS_DIR, name=self._csv_name
         )
         self._compute_rate_losses()
+        print(self._loss_df)
         return self._loss_df
 
     def _get_and_set_scatter_df(self) -> pd.DataFrame:
