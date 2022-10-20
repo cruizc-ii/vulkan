@@ -17,6 +17,7 @@ import pandas as pd
 import numpy as np
 import time
 from st_cytoscape import cytoscape
+import plotly.express as px
 import random
 
 
@@ -552,14 +553,67 @@ if st.session_state.module == 4:
     three.metric("E[L]", f"{expected_loss:.4f}")
     four.metric("E[L] %", f"{expected_loss_pct:.3f}")
     st.header("Building" if view_all or selected_ix is None else asset.name)
-    if asset:
+    agg_key_1 = None
+    if selected_ix is None:
+        agg_key_1 = st.selectbox(
+            "Deaggregate",
+            options=["", "name", "category", "floor", "collapse"],
+            format_func=lambda x: "Select an option" if x == "" else x,
+            help="display results broken down by",
+        )
+    if not agg_key_1:
         fig = asset.rate_fig(normalization=normalization)
         st.plotly_chart(fig)
         fig = asset.expected_loss_and_variance_fig(normalization=normalization)
         st.plotly_chart(fig)
+        if selected_ix is None:
+            fig = asset.scatter_fig(
+                category_filter=selected_categories,
+                name_filter=selected_names,
+                floor_filter=selected_floors,
+            )
+            st.plotly_chart(fig)
+    elif agg_key_1 and selected_ix is None:
+        df = loss.loss_models_df
+        df = loss.filter_src_df(
+            df,
+            category_filter=selected_categories,
+            name_filter=selected_names,
+            storey_filter=selected_floors,
+        )
+        fig = loss.multiple_rates_of_exceedance_fig(df, key=agg_key_1)
+        st.plotly_chart(fig)
+
+        df = loss.aggregate_src_df(df, key=agg_key_1)
+        df = df * 1.0 / normalization
+        fig = loss.aggregated_expected_loss_and_variance_fig(df)
+        st.plotly_chart(fig)
+
         fig = asset.scatter_fig(
             category_filter=selected_categories,
             name_filter=selected_names,
             floor_filter=selected_floors,
         )
         st.plotly_chart(fig)
+        agg_key_2 = st.selectbox(
+            "2nd deaggregator",
+            options=[
+                k
+                for k in ["", "name", "category", "floor", "collapse"]
+                if k != agg_key_1
+            ],
+            format_func=lambda x: "Select an option" if x == "" else x,
+            help="display heatmap broken down by agg1 x agg2",
+        )
+        if agg_key_2:
+            df2 = pd.DataFrame.copy(loss.loss_models_df, deep=True)
+            df2 = pd.pivot_table(
+                df2,
+                values="expected_loss",
+                index=agg_key_2,
+                columns=agg_key_1,
+                aggfunc=sum,
+            )
+            df2 = df2 * 1.0 / normalization
+            fig = px.imshow(df2)
+            st.plotly_chart(fig)
