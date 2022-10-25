@@ -245,7 +245,7 @@ class Hazard(NamedYamlMixin):
         return True
 
     def intensities_for_idas(self):
-        return self.curve.intensities_for_idas()
+        return self._curve.intensities_for_idas()
 
     @property
     def record_names(self) -> list[str]:

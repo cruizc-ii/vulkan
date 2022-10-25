@@ -1,4 +1,5 @@
 import streamlit as st
+from app.assets import LOSS_MODELS_DIR
 from app.criteria import DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
 from app.hazard import RECORDS_DIR, Hazard, HazardCurveFactory, Record
@@ -9,12 +10,15 @@ from app.strana import (
     SpecNotFoundException,
     StructuralResultView,
 )
+from app.loss import LossAggregator, IDANotFoundException, LossModel
 from app.utils import DESIGN_DIR, MODELS_DIR, HAZARD_DIR, RESULTS_DIR, find_files
 from app.occupancy import BuildingOccupancy
 import pandas as pd
 import numpy as np
 import time
 from st_cytoscape import cytoscape
+import plotly.express as px
+import random
 
 
 st.set_page_config(
@@ -42,6 +46,8 @@ if "module" not in st.session_state:
     st.session_state.module = DEFAULT_MODULE
     st.session_state.design_abspath = ""
     st.session_state.hazard_abspath = ""
+    st.session_state.ida_abspath = ""
+    st.session_state.loss_abspath = ""
 
 if "first_render" not in st.session_state:
     st.session_state.first_render = True
@@ -209,8 +215,6 @@ with st.sidebar:
         sample = left.button("sample 5", help="grab 5 at random")
         if sample:
             with st.spinner("sampling..."):
-                import random
-
                 time.sleep(1)
                 untouched = [r for r in record_files if r not in hazard.record_names]
                 samples = random.sample(untouched, 5)
@@ -284,8 +288,9 @@ with st.sidebar:
 
         if file:
             ida = IDA.from_file(STRANA_DIR / file)
+            st.session_state.ida_abspath = STRANA_DIR / file
 
-        if not (design_missing or hazard_missing):
+        if file or not (design_missing or hazard_missing):
             start = st.number_input(
                 r"start Sa (g)",
                 value=ida.start,
@@ -343,6 +348,90 @@ with st.sidebar:
                     if view_result:
                         selected_ix = ix
 
+    if st.session_state.module == 4:
+        losses = find_files(LOSS_MODELS_DIR)
+        ida_missing = False
+        file = st.selectbox("select a loss file", options=losses)
+        name = st.text_input(
+            "give it a name",
+            value=file.split(".")[0] if file else "default loss",
+            help="to save just run",
+        )
+        try:
+            loss = LossAggregator(
+                name=name, ida_model_path=(st.session_state.ida_abspath)
+            )
+            loss.name = name
+        except IDANotFoundException:
+            loss = LossAggregator(name=name)
+            ida_missing = True
+
+        if file:
+            loss = LossAggregator.from_file(LOSS_MODELS_DIR / file)
+            st.session_state.loss_abspath = LOSS_MODELS_DIR / file
+
+        if loss:
+            left, right = st.columns(2)
+            sample = left.button("run", help="perform loss computation")
+            if sample:
+                with st.spinner("running..."):
+                    loss = LossAggregator(
+                        **{
+                            **loss.to_dict,
+                            "name": name,
+                            "ida_model_path": str(st.session_state.ida_abspath),
+                        },
+                    )
+                    loss.run()
+                    loss.to_file(LOSS_MODELS_DIR)
+                st.success("success")
+
+            rm = right.button("🗑️", help="delete")
+            if rm:
+                with st.spinner("removing..."):
+                    time.sleep(1)
+                    loss.delete(LOSS_MODELS_DIR)
+                    loss = None
+                st.success("delete successful")
+            design = loss._ida._design
+            st.header("Design")
+            st.text(f"{design.name}")
+            st.text(f"St {design.num_storeys} bays {design.num_bays}")
+            st.text(f"{design.design_criteria}")
+            st.text(f"{design.occupancy.split('.')[0]}")
+            st.metric("$ Net worth", 3414)
+
+            assets = loss.to_dict["loss_models"]
+            filtered_assets = assets
+            fig = design.fem.assets_pie_fig
+
+            fig.update_layout(height=300, width=300)
+            st.plotly_chart(fig)
+            st.header("Filter")
+            all_categories = sorted(list(set([lm["category"] for lm in assets])))
+            selected_categories = st.multiselect(
+                "Category", options=all_categories, default=all_categories
+            )
+            all_floors = sorted(list(set([lm["floor"] for lm in assets])))
+            selected_floors = st.multiselect(
+                "Floor", options=all_floors, default=all_floors
+            )
+
+            all_names = sorted(list(set([lm["name"] for lm in assets])))
+            selected_names = st.multiselect(
+                "Name", options=all_names, default=all_names
+            )
+
+            st.header("View")
+            selected_ix = None
+            view_all = st.button("view all", help="view stats for building")
+            for ix, a in enumerate(filtered_assets):
+                with st.container():
+                    c1, c2 = st.columns([5, 1])
+                    c1.write(f'{a["name"]}-{a["category"]}-{a["floor"]}')
+                    view_asset = c2.button("view", key=f"asset{ix}")
+                    if view_asset:
+                        selected_ix = ix
 
 if st.session_state.module == 1:
     if design:
@@ -414,10 +503,117 @@ if st.session_state.module == 3:
     if hazard_missing:
         st.warning("Please select a hazard")
     if ida:
-        st.plotly_chart(ida.view_ida_curves())
+        fig = ida.view_ida_curves()
+        # todo@carlo width 85% parent container
+        fig.update_layout(width=1000)
+        st.plotly_chart(fig)
         if selected_ix is not None:
             filepath = ida.results[selected_ix]["path"]
             view = StructuralResultView.from_file(filepath)
             figures = view.timehistory_figures
             for fig in figures:
                 st.plotly_chart(fig)
+
+if st.session_state.module == 4:
+    if ida_missing:
+        st.warning("Please select a design")
+    normalization = 1.0
+    left, right = st.columns(2)
+    normalize = left.checkbox("Normalize")
+    # WIP normalization
+    asset = loss
+    if view_all or selected_ix is None:
+        "success"
+    elif view_asset or selected_ix is not None:
+        model_dict = asset.loss_models[selected_ix]
+        asset = LossModel(**model_dict, _ida_results_df=asset._ida_results_df)
+
+    if normalize:
+        st.write("Great!")
+        normalization = asset.net_worth
+
+    normalize_wrt_building = right.checkbox("Normalize to building cost")
+
+    if normalize_wrt_building:
+        st.write("Great!")
+        normalization = loss.net_worth
+
+    (
+        average_annual_loss,
+        expected_loss,
+        std_loss,
+        # sum_losses,
+        expected_loss_pct,
+        average_annual_loss_pct,
+        net_worth,
+    ) = asset.stats()
+    one, two, three, four = st.columns(4)
+    one.metric("AAL", f"{average_annual_loss:.4f}")
+    two.metric("AAL %", f"{average_annual_loss_pct:.3f}")
+    three.metric("E[L]", f"{expected_loss:.4f}")
+    four.metric("E[L] %", f"{expected_loss_pct:.3f}")
+    st.header("Building" if view_all or selected_ix is None else asset.name)
+    agg_key_1 = None
+    if selected_ix is None:
+        agg_key_1 = st.selectbox(
+            "Deaggregate",
+            options=["", "name", "category", "floor", "collapse"],
+            format_func=lambda x: "Select an option" if x == "" else x,
+            help="display results broken down by",
+        )
+    if not agg_key_1:
+        fig = asset.rate_fig(normalization=normalization)
+        st.plotly_chart(fig)
+        fig = asset.expected_loss_and_variance_fig(normalization=normalization)
+        st.plotly_chart(fig)
+        if selected_ix is None:
+            fig = asset.scatter_fig(
+                category_filter=selected_categories,
+                name_filter=selected_names,
+                floor_filter=selected_floors,
+            )
+            st.plotly_chart(fig)
+    elif agg_key_1 and selected_ix is None:
+        df = loss.loss_models_df
+        df = loss.filter_src_df(
+            df,
+            category_filter=selected_categories,
+            name_filter=selected_names,
+            storey_filter=selected_floors,
+        )
+        fig = loss.multiple_rates_of_exceedance_fig(df, key=agg_key_1)
+        st.plotly_chart(fig)
+
+        df = loss.aggregate_src_df(df, key=agg_key_1)
+        df = df * 1.0 / normalization
+        fig = loss.aggregated_expected_loss_and_variance_fig(df)
+        st.plotly_chart(fig)
+
+        fig = asset.scatter_fig(
+            category_filter=selected_categories,
+            name_filter=selected_names,
+            floor_filter=selected_floors,
+        )
+        st.plotly_chart(fig)
+        agg_key_2 = st.selectbox(
+            "2nd deaggregator",
+            options=[
+                k
+                for k in ["", "name", "category", "floor", "collapse"]
+                if k != agg_key_1
+            ],
+            format_func=lambda x: "Select an option" if x == "" else x,
+            help="display heatmap broken down by agg1 x agg2",
+        )
+        if agg_key_2:
+            df2 = pd.DataFrame.copy(loss.loss_models_df, deep=True)
+            df2 = pd.pivot_table(
+                df2,
+                values="expected_loss",
+                index=agg_key_2,
+                columns=agg_key_1,
+                aggfunc=sum,
+            )
+            df2 = df2 * 1.0 / normalization
+            fig = px.imshow(df2)
+            st.plotly_chart(fig)

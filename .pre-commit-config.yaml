@@ -8,8 +8,6 @@ repos:
       - id: check-ast
       - id: check-added-large-files
       - id: debug-statements
-      - id: debug-statements
-      - id: debug-statements
       - id: pretty-format-json
         args: [--autofix]
       - id: requirements-txt-fixer
