@@ -272,23 +272,23 @@ with st.sidebar:
             value=file.split(".")[0] if file else "default ida",
             help="to save just run",
         )
-        try:
-            ida = IDA(
-                name="default ida",
-                design_abspath=str(st.session_state.design_abspath),
-                hazard_abspath=str(st.session_state.hazard_abspath),
-            )
-            ida.name = name
-        except HazardNotFoundException:
-            ida = IDA(name="default_ida", design_abspath=None, hazard_abspath=None)
-            hazard_missing = True
-        except SpecNotFoundException:
-            ida = IDA(name="default_ida", design_abspath=None, hazard_abspath=None)
-            design_missing = True
-
         if file:
             ida = IDA.from_file(STRANA_DIR / file)
             st.session_state.ida_abspath = STRANA_DIR / file
+        else:
+            try:
+                ida = IDA(
+                    name="default ida",
+                    design_abspath=str(st.session_state.design_abspath),
+                    hazard_abspath=str(st.session_state.hazard_abspath),
+                )
+                ida.name = name
+            except HazardNotFoundException:
+                ida = IDA(name="default_ida", design_abspath=None, hazard_abspath=None)
+                hazard_missing = True
+            except SpecNotFoundException:
+                ida = IDA(name="default_ida", design_abspath=None, hazard_abspath=None)
+                design_missing = True
 
         if file or not (design_missing or hazard_missing):
             start = st.number_input(
