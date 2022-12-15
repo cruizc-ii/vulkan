@@ -42,16 +42,6 @@ records:
   scale: 1.0
 - dt: 0.01
   kind: acc
-  name: 20_ROMBS101294NS.csv
-  path: /Users/carlo/vulkan/records/20_ROMBS101294NS.csv
-  scale: 1.0
-- dt: 0.01
-  kind: acc
-  name: 21_XP101294EW.csv
-  path: /Users/carlo/vulkan/records/21_XP101294EW.csv
-  scale: 1.0
-- dt: 0.01
-  kind: acc
   name: 100_SCT190917.csv
   path: /Users/carlo/vulkan/records/100_SCT190917.csv
   scale: 1.0

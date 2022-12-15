@@ -175,12 +175,16 @@ class YamlMixin:
 
 
 class NamedYamlMixin(YamlMixin):
+    @property
+    def name_yml(self) -> str:
+        return f"{self.name}.yml"
+
     def to_file(self, folder: Path) -> None:
-        filepath = folder / f"{self.name}.yml"
+        filepath = folder / self.name_yml
         return super().to_file(filepath)
 
     def delete(self, folder: Path) -> None:
-        filepath = folder / f"{self.name}.yml"
+        filepath = folder / self.name_yml
         # folder = DESIGN_DIR / name
         try:
             Path.unlink(filepath)

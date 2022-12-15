@@ -1,168 +1,168 @@
-average_annual_loss: 0.35086433861113686
-average_annual_loss_pct: 0.020894103699426896
-expected_loss: 0.18323322405007805
-expected_loss_pct: 0.010911607602064612
+average_annual_loss: 0.38110477278152155
+average_annual_loss_pct: 0.022694932960026067
+expected_loss: 0.1990258015221787
+expected_loss_pct: 0.011852061546998046
 ida_model_path: /Users/carlo/vulkan/tests/loss_fixtures/ida-loss-tests.yml
 loss_models:
-- average_annual_loss: 6.8730936958768e-11
-  average_annual_loss_pct: 1.9091882287865418e-10
+- average_annual_loss: 6.827743065658035e-11
+  average_annual_loss_pct: 1.896590860961677e-10
   category: structural
-  expected_loss: 3.5893619798435634e-11
-  expected_loss_pct: 9.970426628815338e-11
+  expected_loss: 3.565678346959753e-11
+  expected_loss_pct: 9.904638913533938e-11
   floor: 1
   name: FragileConcreteColumnAsset
   net_worth: 0.3600008418365988
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/FragileConcreteColumnAsset-1-AqUTc2htfoMvnGiuibDVH2.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/FragileConcreteColumnAsset-1-RXrTfcUQnjMS5NzBwtspv5.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/FragileConcreteColumnAsset-1-oQYdzJU8NF8fc2wEkbDEgs.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/FragileConcreteColumnAsset-1-Auohx4yU96v9qZJvSsPaCx.csv
   std_loss: null
-- average_annual_loss: 6.893853738556203e-11
-  average_annual_loss_pct: 1.9149548938236267e-10
+- average_annual_loss: 6.954948563156801e-11
+  average_annual_loss_pct: 1.93192563874992e-10
   category: structural
-  expected_loss: 3.6002035762469534e-11
-  expected_loss_pct: 1.0000542103957229e-10
+  expected_loss: 3.63210935991438e-11
+  expected_loss_pct: 1.0089169073562784e-10
   floor: 1
   name: FragileConcreteColumnAsset
   net_worth: 0.3600008418365988
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/FragileConcreteColumnAsset-1-QJexWdxpG8zNjoJ2NFo6Y4.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/FragileConcreteColumnAsset-1-kaJzsq7JHwcLARHWkUR4vM.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/FragileConcreteColumnAsset-1-FMYJUC7a8eMjSiPqBJguWw.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/FragileConcreteColumnAsset-1-F2oWGefrQTNkCRmJ84xnnV.csv
   std_loss: null
-- average_annual_loss: 1.3034574234133213e-10
-  average_annual_loss_pct: 1.9310435190666569e-10
+- average_annual_loss: 1.3027704484762985e-10
+  average_annual_loss_pct: 1.9300257807991305e-10
   category: structural
-  expected_loss: 6.807095501624444e-11
-  expected_loss_pct: 1.0084562346238992e-10
+  expected_loss: 6.803507886164562e-11
+  expected_loss_pct: 1.0079247372801221e-10
   floor: 2
   name: ConcreteBeamAsset
   net_worth: 0.6750015784436227
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteBeamAsset-2-98TUbxTMt5VwZhzur5CRoa.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteBeamAsset-2-JWKRPxnLtBzgM7UT95B95V.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteBeamAsset-2-dVaUWp4gbvs43TCudkE3xD.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteBeamAsset-2-4pbNjQfMtsmmLVNK9YAMuX.csv
   std_loss: null
-- average_annual_loss: 0.006695721223165715
-  average_annual_loss_pct: 0.037198364253852735
+- average_annual_loss: 0.07410794835954694
+  average_annual_loss_pct: 0.4117098614629567
   category: structural
-  expected_loss: 0.003496732075758022
-  expected_loss_pct: 0.01942624388275824
+  expected_loss: 0.03870167700544265
+  expected_loss_pct: 0.21500881391276858
   floor: 2
   name: FragileConcreteColumnAsset
   net_worth: 0.1800004209182994
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/FragileConcreteColumnAsset-2-7wPdv5aT4VbksjpvH8q4cu.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/FragileConcreteColumnAsset-2-3w43esBGJNkAsjyd2C8DRD.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/FragileConcreteColumnAsset-2-LcCAWTRf6YT2ADi526A89w.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/FragileConcreteColumnAsset-2-dXcLZDLK7MoURpwYBYC9t2.csv
   std_loss: null
-- average_annual_loss: 0.0075343153463191285
-  average_annual_loss_pct: 0.04185720959918692
+- average_annual_loss: 0.009770392350046531
+  average_annual_loss_pct: 0.05427983057040309
   category: structural
-  expected_loss: 0.003934674288589027
-  expected_loss_pct: 0.02185925048683603
+  expected_loss: 0.0051024293253051035
+  expected_loss_pct: 0.028346763297965014
   floor: 2
   name: FragileConcreteColumnAsset
   net_worth: 0.1800004209182994
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/FragileConcreteColumnAsset-2-QKUZsFFDWj2Em2kgQPp8c6.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/FragileConcreteColumnAsset-2-UdAzMJ2GaMaKx3xpRviGbe.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/FragileConcreteColumnAsset-2-n9NvDaCcugtiZRFSKu5edE.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/FragileConcreteColumnAsset-2-nvceP8ebrsz6s5g34Tbgsh.csv
   std_loss: null
-- average_annual_loss: 0.001410051367509396
-  average_annual_loss_pct: 0.00417792020801079
+- average_annual_loss: 6.483680075186842e-11
+  average_annual_loss_pct: 1.9210859003134523e-10
   category: structural
-  expected_loss: 0.0007363765128359705
-  expected_loss_pct: 0.0021818512322115224
+  expected_loss: 3.3859970169337354e-11
+  expected_loss_pct: 1.0032560293387639e-10
   floor: 3
   name: ConcreteBeamAsset
   net_worth: 0.33750078922181137
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteBeamAsset-3-Md9RqqaVfYYYRs4SGcUsK5.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteBeamAsset-3-kTdfEWF7eUeZQ57Vqu3ffL.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteBeamAsset-3-bHAZ3CYgBG7w2JGVf5e2Y8.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteBeamAsset-3-D59AArnsNkud8CvKERS2tJ.csv
   std_loss: null
-- average_annual_loss: 0.1065698489298439
-  average_annual_loss_pct: 0.032293893615104215
+- average_annual_loss: 0.04097005058521735
+  average_annual_loss_pct: 0.012415166844005258
   category: nonstructural
-  expected_loss: 0.05565437936280836
-  expected_loss_pct: 0.01686496344327526
+  expected_loss: 0.02139594604552917
+  expected_loss_pct: 0.006483620013796719
   floor: 1
   name: NonStructuralGenericTest
   net_worth: 3.3
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-1-99oWXP8g486WGEGswHdksX.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-1-G7LVwWy2ZK5eJbP2nVfqCt.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-1-7bgwrkxcxWNXLcVux2o5YH.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-1-784hFYn65vSxtHXdRxFRrS.csv
   std_loss: null
-- average_annual_loss: 0.03927150516880344
-  average_annual_loss_pct: 0.01190045611175862
+- average_annual_loss: 0.06711099857997437
+  average_annual_loss_pct: 0.02033666623635587
   category: nonstructural
-  expected_loss: 0.020508908183325857
-  expected_loss_pct: 0.006214820661613897
+  expected_loss: 0.03504763318981142
+  expected_loss_pct: 0.010620494906003461
   floor: 1
   name: NonStructuralGenericTest
   net_worth: 3.3
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-1-dTE5ZfbaHp5at97rysAgFR.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-1-BXx7KVNLV6PJupa4ujRqbn.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-1-ZH43wah5hWWRHGvLfHWLv7.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-1-QAd4NxHEGjurLV9yoFoPZD.csv
   std_loss: null
-- average_annual_loss: 0.12466074270231044
-  average_annual_loss_pct: 0.03777598263706377
+- average_annual_loss: 0.13533285679284446
+  average_annual_loss_pct: 0.04100995660389226
   category: nonstructural
-  expected_loss: 0.06510205593489331
-  expected_loss_pct: 0.019727895737846456
+  expected_loss: 0.07067539484981246
+  expected_loss_pct: 0.02141678631812499
   floor: 2
   name: NonStructuralGenericTest
   net_worth: 3.3
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-2-AtjYzcbRV5bH3xFCcjJi5C.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-2-iNAPZbu3AXwZesE9UrrVFR.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-2-jMQ4tVgvwQjkbdJwBYadPM.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-2-QJfkJc95MLUm5XjdgP6tiF.csv
   std_loss: null
-- average_annual_loss: 0.05417796643828677
-  average_annual_loss_pct: 0.016417565587359628
+- average_annual_loss: 0.04269145891786335
+  average_annual_loss_pct: 0.012936805732685864
   category: nonstructural
-  expected_loss: 0.028293566403072196
-  expected_loss_pct: 0.00857380800093097
+  expected_loss: 0.022294923695825444
+  expected_loss_pct: 0.006756037483583468
   floor: 2
   name: NonStructuralGenericTest
   net_worth: 3.3
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-2-8ifCEmQVLLwk2xcxa6g8H7.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-2-dueAk9dbWrW95ewCzTiaYV.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-2-2kuYBJJEkrWb87EuVevwuG.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-2-D4BGTh6KmGgZpgnJStT43q.csv
   std_loss: null
-- average_annual_loss: 0.005452796972062906
-  average_annual_loss_pct: 0.010905593944125812
+- average_annual_loss: 0.002328304341656945
+  average_annual_loss_pct: 0.00465660868331389
   category: contents
-  expected_loss: 0.002847634995441728
-  expected_loss_pct: 0.005695269990883456
+  expected_loss: 0.0012159192717628184
+  expected_loss_pct: 0.002431838543525637
   floor: 1
   name: ContentsGeneric
   net_worth: 0.5
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ContentsGeneric-1-W6NawpR99hEHRGrA9AaRDK.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/ContentsGeneric-1-ANrVYp8oNWvjBdQpkbAPWT.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ContentsGeneric-1-i5Dn5swJjudiS8HRcTNExd.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/ContentsGeneric-1-ndqXtTxGhebKGyviMKytbN.csv
   std_loss: null
-- average_annual_loss: 0.0026317979192292144
-  average_annual_loss_pct: 0.005263595838458429
+- average_annual_loss: 0.004004078028721351
+  average_annual_loss_pct: 0.008008156057442702
   category: contents
-  expected_loss: 0.0013744138822928788
-  expected_loss_pct: 0.0027488277645857577
+  expected_loss: 0.002091064966747254
+  expected_loss_pct: 0.004182129933494508
   floor: 2
   name: ContentsGeneric
   net_worth: 0.5
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ContentsGeneric-2-L3hE4p3yCsVAFmvd9NDDYP.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/ContentsGeneric-2-bu3v9GnvdbwaVxxT7Jtr7R.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ContentsGeneric-2-BTGwHbzD42B5eH6PmDLi7Q.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/ContentsGeneric-2-8oUWMnNCm83KqTZBK4XsqM.csv
   std_loss: null
-- average_annual_loss: 0.002459592275590732
-  average_annual_loss_pct: 0.004919184551181464
+- average_annual_loss: 0.004788684492709519
+  average_annual_loss_pct: 0.009577368985419037
   category: contents
-  expected_loss: 0.0012844822710940873
-  expected_loss_pct: 0.0025689645421881745
+  expected_loss: 0.0025008129980694663
+  expected_loss_pct: 0.005001625996138933
   floor: 2
   name: ContentsGeneric
   net_worth: 0.5
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ContentsGeneric-2-eoxqh5CGjqBjvo3ztVkWKb.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/ContentsGeneric-2-hatLxXSvCzuiTZdQN4qSnL.csv
   scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ContentsGeneric-2-A4WJmkhVwLpezEeyHwsEmR.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/ContentsGeneric-2-ZRC86EssShbaaRTMMKbmTH.csv
   std_loss: null
 name: loss-view-test
 net_worth: 16.79250489317523
-rate_src: /Users/carlo/vulkan/models/rate_csvs/total-eB4jDfXm9oaFfgSFkwqoUz.csv
-scatter_src: /Users/carlo/vulkan/models/loss_csvs/1scatter-oCgEe9ynY5HacWf7kQPokN.csv
-src: /Users/carlo/vulkan/models/loss_csvs/total-i4BVMpttcxLNsS64qsCiqV.csv
+rate_src: /Users/carlo/vulkan/models/rate_csvs/total-LwJ4ZsovRoT3FzajWFnsKf.csv
+scatter_src: /Users/carlo/vulkan/models/loss_csvs/1scatter-S87xsT7YDgjN2ch4ZoXexM.csv
+src: /Users/carlo/vulkan/models/loss_csvs/total-EfXPBFfJWfLDxH2gTWtDEX.csv
 std_loss: null

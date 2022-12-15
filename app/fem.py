@@ -229,9 +229,6 @@ class ElasticBeamColumn(FE, RiskAsset):
 
 @dataclass
 class BilinBeamColumn(ElasticBeamColumn):
-    def __post_init__(self):
-        super().__post_init__()
-
     @property
     def EI(self) -> float:
         return self.E * self.Ix
@@ -246,9 +243,6 @@ class BilinBeamColumn(ElasticBeamColumn):
         s += f"section Aggregator %(agg{self.id})d %(elastic{self.id})d P %(plastic{self.id})d Mz\n"
         s += f"element forceBeamColumn {self.id} {self.i} {self.j} {self.integration_points} %(agg{self.id})d {self.transf}\n"
         return s
-
-    def get_and_set_net_worth(self) -> float:
-        return super().get_and_set_net_worth()
 
 
 @dataclass

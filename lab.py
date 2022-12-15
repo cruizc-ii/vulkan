@@ -19,6 +19,7 @@ import time
 from st_cytoscape import cytoscape
 import plotly.express as px
 import random
+from streamlit import session_state as state
 
 
 st.set_page_config(
@@ -30,7 +31,7 @@ st.set_page_config(
 
 
 padding_top = 2
-DEFAULT_MODULE = 3
+DEFAULT_MODULE = 1
 
 st.markdown(
     f"""
@@ -42,19 +43,19 @@ st.markdown(
     unsafe_allow_html=True,
 )  # remove unnecessary padding at top
 
-if "module" not in st.session_state:
-    st.session_state.module = DEFAULT_MODULE
-    st.session_state.design_abspath = ""
-    st.session_state.hazard_abspath = ""
-    st.session_state.ida_abspath = ""
-    st.session_state.loss_abspath = ""
+if "module" not in state:
+    state.module = DEFAULT_MODULE
+    state.design_abspath = ""
+    state.hazard_abspath = ""
+    state.ida_abspath = ""
+    state.loss_abspath = ""
 
-if "first_render" not in st.session_state:
-    st.session_state.first_render = True
+if "first_render" not in state:
+    state.first_render = True
 
 
 def switch_module(delta: int):
-    st.session_state.module = st.session_state.module + delta
+    state.module = state.module + delta
 
 
 title = (
@@ -65,33 +66,36 @@ title = (
 )
 
 left, right = st.columns(2)
-if st.session_state.module != 1:
+if state.module != 1:
     prev = left.button("back", on_click=switch_module, args=[-1])
-if st.session_state.module != 4:
+if state.module != 4:
     next = right.button("next", on_click=switch_module, args=[1])
 
 with st.sidebar:
-    st.header(title[st.session_state.module - 1])
-    if st.session_state.module == 1:
+    st.header(title[state.module - 1])
+    if state.module == 1:
+        state.design_abspath
+        state.hazard_abspath
         buildings = find_files(DESIGN_DIR)
-        design = ReinforcedConcreteFrame(
-            name="default",
-            storeys=[3.5, 3.0],
-            bays=[5.0],
-        )
         file = st.selectbox("select a building", options=buildings)
-        if file:
-            st.session_state.design_abspath = DESIGN_DIR / file
-            design = ReinforcedConcreteFrame.from_file(DESIGN_DIR / file)
+
         name = st.text_input(
             "give it a name",
             value=file.split(".")[0] if file else "",
         )
+
+        if file:
+            state.design_abspath = DESIGN_DIR / file
+            design = ReinforcedConcreteFrame.from_file(state.design_abspath)
+        else:
+            design = ReinforcedConcreteFrame(name=name)
+
         num_frames = st.number_input(
             "num frames",
             min_value=1,
             step=1,
-            max_value=100,
+            max_value=50,
+            value=design.num_frames,
             format="%d",
             help="number of identical perpendicular frames",
         )
@@ -140,14 +144,14 @@ with st.sidebar:
                 design.occupancy or BuildingOccupancy.DEFAULT
             ),
         )
-
         design_criteria = st.selectbox(
             "design criteria",
             DesignCriterionFactory.options(),
             index=DesignCriterionFactory.options().index(
                 design.design_criteria[0] or DesignCriterionFactory.DEFAULT
             )
-            # this [0] is bad design. the idea was to have multiple criteria, this is too complex in the ui. rather we must have the criteria combined in code.
+            # this [0] is bad design. the idea was to have multiple criteria, this is too complex in the ui.
+            # FEMs and Criteria should be singletons instead of lists
         )
 
         left, right = st.columns(2)
@@ -157,7 +161,8 @@ with st.sidebar:
                 time.sleep(2)
                 design.delete(DESIGN_DIR)
                 design = None
-                st.success("design successful")
+                state.design_abspath = None
+                st.success("delete successful")
 
         run_design = right.button("design", help="run a design")
         params_missing = not name or len(storeys) == 0 or len(bays) == 0
@@ -177,19 +182,22 @@ with st.sidebar:
                 )
                 design.force_design(DESIGN_DIR, pushover=True)
                 design.to_file(DESIGN_DIR)
+                state.design_abspath = DESIGN_DIR / design.name_yml
             st.success("design successful")
 
-        if design:
+        if design and design.fems:
             elements, stylesheet = design.fem.cytoscape()
 
-    if st.session_state.module == 2:
+    if state.module == 2:
+        state.design_abspath
+        state.hazard_abspath
         hazards = find_files(HAZARD_DIR)
         hazard = Hazard(
             name="sample_hazard",
         )
         file = st.selectbox("select a hazard", options=hazards)
         if file:
-            st.session_state.hazard_abspath = HAZARD_DIR / file
+            state.hazard_abspath = HAZARD_DIR / file
             hazard = Hazard.from_file(HAZARD_DIR / file)
         name = st.text_input(
             "give it a name",
@@ -206,7 +214,7 @@ with st.sidebar:
         st.subheader(f"Records ({len(hazard.records)})")
         record_files = find_files(RECORDS_DIR, only_yml=False, only_csv=True)
         record_name = st.selectbox("add a record", options=record_files)
-        if record_name and not st.session_state.first_render:
+        if record_name and not state.first_render:
             record_path = str((RECORDS_DIR / record_name).resolve())
             record = Record(record_path)
             hazard.add_record(record)
@@ -259,9 +267,12 @@ with st.sidebar:
                     hazard.to_file(HAZARD_DIR)
                     st.success("record removed")
 
-            st.session_state.first_render = False
+            state.first_render = False
 
-    if st.session_state.module == 3:
+    if state.module == 3:
+        state.design_abspath
+        state.hazard_abspath
+
         stranas = find_files(STRANA_DIR)
         design_missing = False
         hazard_missing = False
@@ -272,25 +283,33 @@ with st.sidebar:
             value=file.split(".")[0] if file else "default ida",
             help="to save just run",
         )
-        if file:
-            ida = IDA.from_file(STRANA_DIR / file)
-            st.session_state.ida_abspath = STRANA_DIR / file
-        else:
-            try:
+        try:
+            if file:
+                ida = IDA.from_file(STRANA_DIR / file)
+                state.ida_abspath = STRANA_DIR / file
+                ida.design_abspath = str(state.design_abspath) or ida.design_abspath
+                ida.hazard_abspath = str(state.hazard_abspath) or ida.hazard_abspath
+            else:
                 ida = IDA(
                     name="default ida",
-                    design_abspath=str(st.session_state.design_abspath),
-                    hazard_abspath=str(st.session_state.hazard_abspath),
+                    design_abspath=str(state.design_abspath),
+                    hazard_abspath=str(state.hazard_abspath),
                 )
                 ida.name = name
-            except HazardNotFoundException:
-                ida = IDA(name="default_ida", design_abspath=None, hazard_abspath=None)
-                hazard_missing = True
-            except SpecNotFoundException:
-                ida = IDA(name="default_ida", design_abspath=None, hazard_abspath=None)
-                design_missing = True
+        except HazardNotFoundException:
+            ida = IDA(
+                name="default_ida",
+            )
+            hazard_missing = True
+        except SpecNotFoundException:
+            ida = IDA(
+                name="default_ida",
+            )
+            design_missing = True
 
         if file or not (design_missing or hazard_missing):
+            "design:", state.design_abspath.name
+            "hazard:", state.hazard_abspath.name
             start = st.number_input(
                 r"start Sa (g)",
                 value=ida.start,
@@ -322,6 +341,15 @@ with st.sidebar:
             standard = st.button(
                 "run standard", help="means that Sa are chosen for you"
             )
+            delete = st.button("🗑️", help="delete this analysis")
+            if delete:
+                with st.spinner("deleting analysis"):
+                    time.sleep(2)
+                    ida.delete(STRANA_DIR)
+                    ida = None
+                    state.ida_abspath = None
+                    st.success("delete successful")
+
             if run or standard:
                 with st.spinner("running..."):
                     time.sleep(1)
@@ -340,15 +368,16 @@ with st.sidebar:
 
                 st.success("analysis successful")
 
-            for ix, r in enumerate(ida.results):
-                with st.container():
-                    c1, c2 = st.columns([5, 1])
-                    c1.write(f'{r["record"]} - {r["intensity"]:.4f}g')
-                    view_result = c2.button("view", key=f"record{ix}")
-                    if view_result:
-                        selected_ix = ix
+            if ida.results:
+                for ix, r in enumerate(ida.results):
+                    with st.container():
+                        c1, c2 = st.columns([5, 1])
+                        c1.write(f'{r["record"]} - {r["intensity"]:.4f}g')
+                        view_result = c2.button("view", key=f"record{ix}")
+                        if view_result:
+                            selected_ix = ix
 
-    if st.session_state.module == 4:
+    if state.module == 4:
         losses = find_files(LOSS_MODELS_DIR)
         ida_missing = False
         file = st.selectbox("select a loss file", options=losses)
@@ -357,18 +386,17 @@ with st.sidebar:
             value=file.split(".")[0] if file else "default loss",
             help="to save just run",
         )
-        try:
-            loss = LossAggregator(
-                name=name, ida_model_path=(st.session_state.ida_abspath)
-            )
-            loss.name = name
-        except IDANotFoundException:
-            loss = LossAggregator(name=name)
-            ida_missing = True
-
         if file:
             loss = LossAggregator.from_file(LOSS_MODELS_DIR / file)
-            st.session_state.loss_abspath = LOSS_MODELS_DIR / file
+            state.loss_abspath = LOSS_MODELS_DIR / file
+            loss.ida_model_path = state.ida_abspath
+        else:
+            try:
+                loss = LossAggregator(name=name, ida_model_path=(state.ida_abspath))
+                loss.name = name
+            except IDANotFoundException:
+                loss = LossAggregator(name=name)
+                ida_missing = True
 
         if loss:
             left, right = st.columns(2)
@@ -379,7 +407,7 @@ with st.sidebar:
                         **{
                             **loss.to_dict,
                             "name": name,
-                            "ida_model_path": str(st.session_state.ida_abspath),
+                            "ida_model_path": str(state.ida_abspath),
                         },
                     )
                     loss.run()
@@ -388,7 +416,7 @@ with st.sidebar:
 
             rm = right.button("🗑️", help="delete")
             if rm:
-                with st.spinner("removing..."):
+                with st.spinner("deleting..."):
                     time.sleep(1)
                     loss.delete(LOSS_MODELS_DIR)
                     loss = None
@@ -401,7 +429,7 @@ with st.sidebar:
             st.text(f"{design.occupancy.split('.')[0]}")
             st.metric("$ Net worth", 3414)
 
-            assets = loss.to_dict["loss_models"]
+            assets = loss.to_dict["loss_models"] or []
             filtered_assets = assets
             fig = design.fem.assets_pie_fig
 
@@ -433,8 +461,8 @@ with st.sidebar:
                     if view_asset:
                         selected_ix = ix
 
-if st.session_state.module == 1:
-    if design:
+if state.module == 1:
+    if design and design.fems:
         selected = cytoscape(
             elements=elements,
             stylesheet=stylesheet,
@@ -480,7 +508,7 @@ if st.session_state.module == 1:
             st.table(df)
 
 
-if st.session_state.module == 2:
+if state.module == 2:
     left, right = st.columns(2)
     logx = left.checkbox("log x", value=True)
     logy = right.checkbox("log y", value=True)
@@ -497,12 +525,13 @@ if st.session_state.module == 2:
             st.plotly_chart(record.spectra)
 
 
-if st.session_state.module == 3:
+if state.module == 3:
     if design_missing:
         st.warning("Please select a design")
     if hazard_missing:
         st.warning("Please select a hazard")
-    if ida:
+    if ida and ida.results:
+        ida.design_abspath
         fig = ida.view_ida_curves()
         # todo@carlo width 85% parent container
         fig.update_layout(width=1000)
@@ -513,8 +542,10 @@ if st.session_state.module == 3:
             figures = view.timehistory_figures
             for fig in figures:
                 st.plotly_chart(fig)
+    else:
+        st.header("run analysis to see results")
 
-if st.session_state.module == 4:
+if state.module == 4:
     if ida_missing:
         st.warning("Please select a design")
     normalization = 1.0
@@ -523,21 +554,18 @@ if st.session_state.module == 4:
     # WIP normalization
     asset = loss
     if view_all or selected_ix is None:
-        "success"
+        st.header("please run loss")
     elif view_asset or selected_ix is not None:
         model_dict = asset.loss_models[selected_ix]
         asset = LossModel(**model_dict, _ida_results_df=asset._ida_results_df)
 
     if normalize:
-        st.write("Great!")
         normalization = asset.net_worth
 
     normalize_wrt_building = right.checkbox("Normalize to building cost")
 
     if normalize_wrt_building:
-        st.write("Great!")
         normalization = loss.net_worth
-
     (
         average_annual_loss,
         expected_loss,
@@ -547,73 +575,74 @@ if st.session_state.module == 4:
         average_annual_loss_pct,
         net_worth,
     ) = asset.stats()
-    one, two, three, four = st.columns(4)
-    one.metric("AAL", f"{average_annual_loss:.4f}")
-    two.metric("AAL %", f"{average_annual_loss_pct:.3f}")
-    three.metric("E[L]", f"{expected_loss:.4f}")
-    four.metric("E[L] %", f"{expected_loss_pct:.3f}")
-    st.header("Building" if view_all or selected_ix is None else asset.name)
-    agg_key_1 = None
-    if selected_ix is None:
-        agg_key_1 = st.selectbox(
-            "Deaggregate",
-            options=["", "name", "category", "floor", "collapse"],
-            format_func=lambda x: "Select an option" if x == "" else x,
-            help="display results broken down by",
-        )
-    if not agg_key_1:
-        fig = asset.rate_fig(normalization=normalization)
-        st.plotly_chart(fig)
-        fig = asset.expected_loss_and_variance_fig(normalization=normalization)
-        st.plotly_chart(fig)
+    if average_annual_loss:
+        one, two, three, four = st.columns(4)
+        one.metric("AAL", f"{average_annual_loss or 0:.4f}")
+        two.metric("AAL %", f"{average_annual_loss_pct or 0:.3f}")
+        three.metric("E[L]", f"{expected_loss or 0:.4f}")
+        four.metric("E[L] %", f"{expected_loss_pct or 0:.3f}")
+        st.header("Building" if view_all or selected_ix is None else asset.name)
+        agg_key_1 = None
         if selected_ix is None:
+            agg_key_1 = st.selectbox(
+                "Deaggregate",
+                options=["", "name", "category", "floor", "collapse"],
+                format_func=lambda x: "Select an option" if x == "" else x,
+                help="display results broken down by",
+            )
+        if not agg_key_1:
+            fig = asset.rate_fig(normalization=normalization)
+            st.plotly_chart(fig)
+            fig = asset.expected_loss_and_variance_fig(normalization=normalization)
+            st.plotly_chart(fig)
+            if selected_ix is None:
+                fig = asset.scatter_fig(
+                    category_filter=selected_categories,
+                    name_filter=selected_names,
+                    floor_filter=selected_floors,
+                )
+                st.plotly_chart(fig)
+        elif agg_key_1 and selected_ix is None:
+            df = loss.loss_models_df
+            df = loss.filter_src_df(
+                df,
+                category_filter=selected_categories,
+                name_filter=selected_names,
+                storey_filter=selected_floors,
+            )
+            fig = loss.multiple_rates_of_exceedance_fig(df, key=agg_key_1)
+            st.plotly_chart(fig)
+
+            df = loss.aggregate_src_df(df, key=agg_key_1)
+            df = df * 1.0 / normalization
+            fig = loss.aggregated_expected_loss_and_variance_fig(df)
+            st.plotly_chart(fig)
+
             fig = asset.scatter_fig(
                 category_filter=selected_categories,
                 name_filter=selected_names,
                 floor_filter=selected_floors,
             )
             st.plotly_chart(fig)
-    elif agg_key_1 and selected_ix is None:
-        df = loss.loss_models_df
-        df = loss.filter_src_df(
-            df,
-            category_filter=selected_categories,
-            name_filter=selected_names,
-            storey_filter=selected_floors,
-        )
-        fig = loss.multiple_rates_of_exceedance_fig(df, key=agg_key_1)
-        st.plotly_chart(fig)
-
-        df = loss.aggregate_src_df(df, key=agg_key_1)
-        df = df * 1.0 / normalization
-        fig = loss.aggregated_expected_loss_and_variance_fig(df)
-        st.plotly_chart(fig)
-
-        fig = asset.scatter_fig(
-            category_filter=selected_categories,
-            name_filter=selected_names,
-            floor_filter=selected_floors,
-        )
-        st.plotly_chart(fig)
-        agg_key_2 = st.selectbox(
-            "2nd deaggregator",
-            options=[
-                k
-                for k in ["", "name", "category", "floor", "collapse"]
-                if k != agg_key_1
-            ],
-            format_func=lambda x: "Select an option" if x == "" else x,
-            help="display heatmap broken down by agg1 x agg2",
-        )
-        if agg_key_2:
-            df2 = pd.DataFrame.copy(loss.loss_models_df, deep=True)
-            df2 = pd.pivot_table(
-                df2,
-                values="expected_loss",
-                index=agg_key_2,
-                columns=agg_key_1,
-                aggfunc=sum,
+            agg_key_2 = st.selectbox(
+                "2nd deaggregator",
+                options=[
+                    k
+                    for k in ["", "name", "category", "floor", "collapse"]
+                    if k != agg_key_1
+                ],
+                format_func=lambda x: "Select an option" if x == "" else x,
+                help="display heatmap broken down by agg1 x agg2",
             )
-            df2 = df2 * 1.0 / normalization
-            fig = px.imshow(df2)
-            st.plotly_chart(fig)
+            if agg_key_2:
+                df2 = pd.DataFrame.copy(loss.loss_models_df, deep=True)
+                df2 = pd.pivot_table(
+                    df2,
+                    values="expected_loss",
+                    index=agg_key_2,
+                    columns=agg_key_1,
+                    aggfunc=sum,
+                )
+                df2 = df2 * 1.0 / normalization
+                fig = px.imshow(df2)
+                st.plotly_chart(fig)
