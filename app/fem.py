@@ -20,6 +20,7 @@ from typing import Optional
 class ElementTypes(Enum):
     BEAM = "beam"
     COLUMN = "column"
+    SPRING = "spring"
 
 
 class FEMValidationException(Exception):
@@ -50,11 +51,13 @@ class Node(FE):
     y: float = None
     mass: float = None
     fixed: bool = False
-    column: int = None
+    column: int = None  # 1 for first column
     bay: int = None  # 0 for first column
-    floor: int = None
-    storey: int = None
+    floor: int = None  # 1 for y=0
+    storey: int = None  # 0 for y=0
     free_dofs: int = 3
+    zerolen: int = None  # wrt which id it is fixed to
+    orientation: str = None
 
     def __post_init__(self):
         if self.mass is not None and self.mass <= 0:
@@ -69,6 +72,11 @@ class Node(FE):
         s += "\n"
         if self.fixed:
             s += f"fix {self.id} 1 1 1\n"
+
+        if self.zerolen is not None:
+            s += f"equalDOF {self.zerolen} {self.id} 1 2\n"
+            s += "\n"
+
         return s
 
 
@@ -246,12 +254,21 @@ class BilinBeamColumn(ElasticBeamColumn):
 
 
 @dataclass
+class IMKSpring(BilinBeamColumn):
+    pass
+
+
+@dataclass
 class FiniteElementModel(ABC, YamlMixin):
     nodes: list[Node]
     elements: list[ElasticBeamColumn]
     damping: float
     model: str = "ABC"
     num_frames: int = 1
+    num_storeys: Optional[float] = None
+    num_floors: Optional[float] = None
+    num_bays: Optional[float] = None
+    num_cols: Optional[float] = None
     occupancy: Optional[str] = None
     periods: list = field(default_factory=list)
     frequencies: list = field(default_factory=list)
@@ -311,6 +328,10 @@ class FiniteElementModel(ABC, YamlMixin):
             damping=spec.damping,
             occupancy=spec.occupancy,
             num_frames=spec.num_frames,
+            num_cols=spec.num_cols,
+            num_bays=spec.num_bays,
+            num_floors=spec.num_floors,
+            num_storeys=spec.num_storeys,
         )
         return fem
 
@@ -476,7 +497,6 @@ class FiniteElementModel(ABC, YamlMixin):
                 break
         return collapse
 
-    @abstractmethod
     def validate(self, *args, **kwargs):
         # TODO:
         # no dangling nodes, at least one element has that ID in i or j,
@@ -918,7 +938,7 @@ class FiniteElementModel(ABC, YamlMixin):
 
 @dataclass
 class PlainFEM(FiniteElementModel):
-    """a direct implementation of the interface"""
+    """the simplest implementation of the interface"""
 
     def build_and_place_slabs(self) -> list[Asset]:
         from app.assets import RiskModelFactory
@@ -1062,9 +1082,6 @@ class RigidBeamFEM(FiniteElementModel):
 
 @dataclass
 class BilinFrame(FiniteElementModel):
-    def validate(self, *args, **kwargs):
-        return super().validate(*args, **kwargs)
-
     def __post_init__(self):
         from app.occupancy import BuildingOccupancy
 
@@ -1142,12 +1159,51 @@ class BilinFrame(FiniteElementModel):
 
 
 @dataclass
-class IMKFrame(FiniteElementModel):
-    def validate(self, *args, **kwargs):
-        return super().validate(*args, **kwargs)
-
+class IMKFrame(BilinFrame):
     def __post_init__(self):
-        return super().__post_init__()
+        super().__post_init__()
+        nodes = []
+        next_id = self.nodes[-1].id + 1
+        # create nodes in counterclockwise manner
+        nodes_by_id = {}
+        for node in self.nodes:
+            if node.fixed:
+                orientations = ["col_down"]
+            elif node.storey == self.num_storeys:
+                if node.column == 1:
+                    orientations = ["col_down", "beam_left"]
+                elif node.column == self.num_cols:
+                    orientations = ["col_down", "beam_right"]
+                else:
+                    orientations = ["col_down", "beam_left", "beam_right"]
+            elif node.column == 1:
+                orientations = ["col_down", "beam_left", "col_up"]
+            elif node.column == self.num_cols:
+                orientations = ["col_down", "col_up", "beam_right"]
+            else:
+                orientations = ["col_down", "beam_right", "col_up", "beam_left"]
+            nodes_by_id[node.id] = {}
+            for o in orientations:
+                n = Node(
+                    id=next_id,
+                    x=node.x,
+                    y=node.y,
+                    column=node.column,
+                    bay=node.bay,
+                    free_dofs=1,
+                    zerolen=node.id,
+                    orientation=o,
+                )
+                nodes_by_id[node.id][o] = next_id
+                next_id += 1
+                nodes.append(n)
+
+        self.nodes += nodes
+        # source columns, beams for storey 1
+
+    @property
+    def elements_str(self) -> str:
+        pass
 
 
 class FEMFactory:

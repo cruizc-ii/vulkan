@@ -1,6 +1,6 @@
 from app.strana import Recorder, StructuralResultView
 from pathlib import Path
-from app.fem import BilinFrame, ShearModel, PlainFEM
+from app.fem import BilinFrame, ShearModel, PlainFEM, IMKFrame
 from unittest.case import TestCase
 from app.criteria import CodeMassesPre, DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
@@ -216,3 +216,24 @@ class ElastoplasticFrameTest(TestCase):
         self.assertIsNotNone(fig)
         fig = frame.pushover_figs(self.path, drift=0.10)
         self.assertIsNotNone(fig)
+
+
+class IMKFrameTest(TestCase):
+    maxDiff = None
+    path = None
+    file = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.path = FEM_FIXTURES_PATH / "imk-frame"
+        cls.file = cls.path / "3storey-imk.yml"
+        with open(cls.path / "expected-nodes-imk.tcl", "r") as file:
+            cls.expected_nodes_str = file.read()
+
+    def test_node_strings(self) -> None:
+        frame = IMKFrame.from_file(self.file)
+        print(frame.num_storeys)
+        print(frame.num_cols)
+        with open(self.path / "nodes-output.tcl", "w") as f:
+            f.write(frame.nodes_str)
+        self.assertEqual(frame.nodes_str, self.expected_nodes_str)
