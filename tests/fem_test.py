@@ -232,10 +232,8 @@ class IMKFrameTest(TestCase):
 
     def test_node_strings(self) -> None:
         frame = IMKFrame.from_file(self.file)
-        print(frame.num_storeys)
-        print(frame.num_cols)
-        # e = frame.elements[0]
-        # imk = IMKSpring.from_bilin(**e.to_dict)
         with open(self.path / "nodes-output.tcl", "w") as f:
             f.write(frame.nodes_str)
+        with open(self.path / "elements-output.tcl", "w") as f:
+            f.write(frame.elements_str)
         self.assertEqual(frame.nodes_str, self.expected_nodes_str)

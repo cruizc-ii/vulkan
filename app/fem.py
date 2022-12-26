@@ -104,15 +104,24 @@ class DiaphragmNode(Node):
 
 @dataclass
 class BeamColumn(FE):
+    type: str = ElementTypes.BEAM.value
     name: str = None
     i: int = None
     j: int = None
     E: float = 1.0
     Ix: float = 1.0
+    A: str = "1e6"
     radius: float = None
     storey: int = None
     floor: int = None
     bay: str = None  # 0 for first column
+    transf: int | None = 1
+
+    def __post_init__(self):
+        self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
+
+    def __str__(self) -> str:
+        return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A} {self.E} {self.Ix} {self.transf}\n"
 
 
 @dataclass
@@ -126,8 +135,6 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
     I can transition from elastic -> plastic
     """
 
-    type: str = ElementTypes.BEAM.value
-    A: str = "1e6"
     k: float = None
     length: float = 1.0
     My: float = None
@@ -139,11 +146,7 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
     _SLAB_PCT: float = 5.0
     Q: float = 1.0
 
-    def __str__(self) -> str:
-        return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A} {self.E} {self.Ix} {self.transf}\n"
-
     def __post_init__(self):
-        self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
         if self.E <= 0 or self.Ix <= 0:
             raise FEMValidationException(
                 "Properties must be positive! " + f"{str(self)}"
@@ -261,15 +264,35 @@ class BilinBeamColumn(ElasticBeamColumn):
 @dataclass
 class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     ASPECT_RATIO_B_TO_H: float = 0.5  # b = kappa * h, h = (12 Ix / kappa )**(1/4)
+    left: bool = False
+    right: bool = False
+    up: bool = False
+    down: bool = False
+    Ks: float | None = None
+    Ke: float | None = None
+    Kb: float | None = None
+    Ic: float | None = None
+    secColTag: int | None = None
+    secBeamTag: int | None = None
+    imkMatTag: int | None = None
 
     @classmethod
     def from_bilin(cls, **data):
-        # needs Ix, My, radius,
-        # as an asset needs to save net_worth,
         Ix = data["Ix"]
         h = (12 * Ix / cls.ASPECT_RATIO_B_TO_H) ** 0.25
         b = h * cls.ASPECT_RATIO_B_TO_H
         return cls(**{"h": h, "b": b, "EFFECTIVE_INERTIA_COEFF": 1, **data})
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.Ks = self.My / self.theta_y
+        self.Ke = 6 * self.E * self.Ix / self.length
+        self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
+        self.Ic = self.Kb * self.length / 6 / self.E
+        self.secColTag = self.id + 100000
+        self.secBeamTag = self.id + 200000
+        self.imkMatTag = self.id + 300000
+        return super().__post_init__()
 
     def get_and_set_net_worth(self) -> str:
         self.net_worth = self.cost
@@ -302,7 +325,27 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         return losses
 
     def __str__(self) -> str:
-        pass
+        s = f"""
+        set Ec  {self.Ec}
+        set Ic  {self.Ic}
+        set theta_y {self.theta_y}
+        set theta_p {self.theta_cap_cyclic}
+        set theta_pc {self.theta_pc_cyclic}
+        set My {self.My}
+        set lambda {self.gammaJiangCheng}
+        set alpha {self.alpha_postyield}
+        set Icrit {self.Icrit}
+        set stable {self.stable}
+        source imk_sections.tcl
+        set secTagCol {self.secColTag}
+        set secTagBeam {self.secBeamTag}
+        set imkMat {self.imkMatTag}
+        uniaxialMaterial ModIMKPeakOriented $imkMat $Ks $as_Plus $as_Neg $My_Plus $My_Neg $Lamda_S $Lamda_C $Lamda_A $Lamda_K $c_S $c_C $c_A $c_K $theta_p_Plus $theta_p_Neg $theta_pc_Plus $theta_pc_Neg $Res_Pos $Res_Neg $theta_u_Plus $theta_u_Neg $D_Plus $D_Neg
+        section Aggregator $secTagCol $elasticMatTag P $imkMat Mz
+        section Aggregator $secTagBeam $elasticMatTag P $elasticMatTag Mz
+        element zeroLengthSection  {self.id}  {self.i} {self.j} $secTagCol
+        """
+        return s
 
 
 @dataclass
@@ -1207,6 +1250,10 @@ class BilinFrame(FiniteElementModel):
 
 @dataclass
 class IMKFrame(BilinFrame):
+    @property
+    def elements_str(self) -> str:
+        return "".join([str(e) for e in self.elements])
+
     def __post_init__(self):
         super().__post_init__()
         nodes = []
@@ -1218,17 +1265,17 @@ class IMKFrame(BilinFrame):
                 orientations = ["col_down"]
             elif node.storey == self.num_storeys:
                 if node.column == 1:
-                    orientations = ["col_down", "beam_left"]
+                    orientations = ["col_up", "beam_left"]
                 elif node.column == self.num_cols:
-                    orientations = ["col_down", "beam_right"]
+                    orientations = ["col_up", "beam_right"]
                 else:
-                    orientations = ["col_down", "beam_left", "beam_right"]
+                    orientations = ["col_up", "beam_left", "beam_right"]
             elif node.column == 1:
-                orientations = ["col_down", "beam_left", "col_up"]
+                orientations = ["col_up", "beam_left", "col_down"]
             elif node.column == self.num_cols:
-                orientations = ["col_down", "col_up", "beam_right"]
+                orientations = ["col_up", "col_down", "beam_right"]
             else:
-                orientations = ["col_down", "beam_right", "col_up", "beam_left"]
+                orientations = ["col_up", "beam_left", "col_down", "beam_right"]
             nodes_by_id[node.id] = {}
             for o in orientations:
                 n = Node(
@@ -1238,6 +1285,8 @@ class IMKFrame(BilinFrame):
                     column=node.column,
                     bay=node.bay,
                     free_dofs=1,
+                    storey=node.storey,
+                    floor=node.floor,
                     zerolen=node.id,
                     orientation=o,
                 )
@@ -1246,11 +1295,64 @@ class IMKFrame(BilinFrame):
                 nodes.append(n)
 
         self.nodes += nodes
-        # source columns, beams for storey 1
+        elements = []
+        elem_id = 1
+        for elem in self.elements:
+            i, j, bay, st, fl = elem.i, elem.j, elem.bay, elem.storey, elem.floor
+            if elem.type == ElementTypes.BEAM.value:
+                imk_i, imk_j = (
+                    nodes_by_id[i].pop("beam_left"),
+                    nodes_by_id[j].pop("beam_right"),
+                )
+            else:
+                imk_i, imk_j = (
+                    nodes_by_id[i].pop("col_down"),
+                    nodes_by_id[j].pop("col_up"),
+                )
+            imk1 = IMKSpring(
+                id=elem_id,
+                i=i,
+                j=imk_i,
+                length=elem.length,
+                My=elem.My,
+                Ix=elem.Ix,
+                E=elem.E,
+                storey=st,
+                bay=bay,
+                floor=fl,
+            )
+            elem_id += 1
+            elements.append(imk1)
+            Ic = imk1.Ic
+            bc = BeamColumn(
+                id=elem_id,
+                i=imk_i,
+                j=imk_j,
+                Ix=Ic,
+                storey=st,
+                bay=bay,
+                floor=fl,
+                type=elem.type,
+            )
+            elem_id += 1
+            elements.append(bc)
+            imk2 = IMKSpring(
+                id=elem_id,
+                i=imk_j,
+                j=j,
+                length=elem.length,
+                My=elem.My,
+                Ix=elem.Ix,
+                E=elem.E,
+                storey=st,
+                bay=bay,
+                floor=fl,
+            )
+            elements.append(imk2)
+            elem_id += 1
 
-    @property
-    def elements_str(self) -> str:
-        pass
+        self.elements = elements
+        return
 
 
 class FEMFactory:
