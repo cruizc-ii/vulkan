@@ -3887,9 +3887,11 @@ fems:
     free_dofs: 0
     id: 0
     mass: null
+    orientation: null
     storey: 0
     x: 0.0
     y: 0.0
+    zerolen: null
   - bay: 1
     column: 2
     fixed: true
@@ -3897,9 +3899,11 @@ fems:
     free_dofs: 0
     id: 1
     mass: null
+    orientation: null
     storey: 0
     x: 3.0
     y: 0.0
+    zerolen: null
   - bay: 2
     column: 3
     fixed: true
@@ -3907,9 +3911,11 @@ fems:
     free_dofs: 0
     id: 2
     mass: null
+    orientation: null
     storey: 0
     x: 6.0
     y: 0.0
+    zerolen: null
   - bay: 3
     column: 4
     fixed: true
@@ -3917,9 +3923,11 @@ fems:
     free_dofs: 0
     id: 3
     mass: null
+    orientation: null
     storey: 0
     x: 9.0
     y: 0.0
+    zerolen: null
   - bay: 0
     column: 1
     fixed: false
@@ -3927,9 +3935,11 @@ fems:
     free_dofs: 3
     id: 4
     mass: 41.28440366972477
+    orientation: null
     storey: 1
     x: 0.0
     y: 4.4
+    zerolen: null
   - bay: 1
     column: 2
     fixed: false
@@ -3937,9 +3947,11 @@ fems:
     free_dofs: 3
     id: 5
     mass: null
+    orientation: null
     storey: 1
     x: 3.0
     y: 4.4
+    zerolen: null
   - bay: 2
     column: 3
     fixed: false
@@ -3947,9 +3959,11 @@ fems:
     free_dofs: 3
     id: 6
     mass: null
+    orientation: null
     storey: 1
     x: 6.0
     y: 4.4
+    zerolen: null
   - bay: 3
     column: 4
     fixed: false
@@ -3957,9 +3971,11 @@ fems:
     free_dofs: 3
     id: 7
     mass: null
+    orientation: null
     storey: 1
     x: 9.0
     y: 4.4
+    zerolen: null
   - bay: 0
     column: 1
     fixed: false
@@ -3967,9 +3983,11 @@ fems:
     free_dofs: 3
     id: 8
     mass: 41.28440366972477
+    orientation: null
     storey: 2
     x: 0.0
     y: 7.6000000000000005
+    zerolen: null
   - bay: 1
     column: 2
     fixed: false
@@ -3977,9 +3995,11 @@ fems:
     free_dofs: 3
     id: 9
     mass: null
+    orientation: null
     storey: 2
     x: 3.0
     y: 7.6000000000000005
+    zerolen: null
   - bay: 2
     column: 3
     fixed: false
@@ -3987,9 +4007,11 @@ fems:
     free_dofs: 3
     id: 10
     mass: null
+    orientation: null
     storey: 2
     x: 6.0
     y: 7.6000000000000005
+    zerolen: null
   - bay: 3
     column: 4
     fixed: false
@@ -3997,9 +4019,11 @@ fems:
     free_dofs: 3
     id: 11
     mass: null
+    orientation: null
     storey: 2
     x: 9.0
     y: 7.6000000000000005
+    zerolen: null
   - bay: 0
     column: 1
     fixed: false
@@ -4007,9 +4031,11 @@ fems:
     free_dofs: 3
     id: 12
     mass: 41.28440366972477
+    orientation: null
     storey: 3
     x: 0.0
     y: 10.8
+    zerolen: null
   - bay: 1
     column: 2
     fixed: false
@@ -4017,9 +4043,11 @@ fems:
     free_dofs: 3
     id: 13
     mass: null
+    orientation: null
     storey: 3
     x: 3.0
     y: 10.8
+    zerolen: null
   - bay: 2
     column: 3
     fixed: false
@@ -4027,9 +4055,11 @@ fems:
     free_dofs: 3
     id: 14
     mass: null
+    orientation: null
     storey: 3
     x: 6.0
     y: 10.8
+    zerolen: null
   - bay: 3
     column: 4
     fixed: false
@@ -4037,9 +4067,11 @@ fems:
     free_dofs: 3
     id: 15
     mass: null
+    orientation: null
     storey: 3
     x: 9.0
     y: 10.8
+    zerolen: null
   - bay: 0
     column: 1
     fixed: false
@@ -4047,9 +4079,11 @@ fems:
     free_dofs: 3
     id: 16
     mass: 41.28440366972477
+    orientation: null
     storey: 4
     x: 0.0
     y: 14.0
+    zerolen: null
   - bay: 1
     column: 2
     fixed: false
@@ -4057,9 +4091,11 @@ fems:
     free_dofs: 3
     id: 17
     mass: null
+    orientation: null
     storey: 4
     x: 3.0
     y: 14.0
+    zerolen: null
   - bay: 2
     column: 3
     fixed: false
@@ -4067,9 +4103,11 @@ fems:
     free_dofs: 3
     id: 18
     mass: null
+    orientation: null
     storey: 4
     x: 6.0
     y: 14.0
+    zerolen: null
   - bay: 3
     column: 4
     fixed: false
@@ -4077,9 +4115,11 @@ fems:
     free_dofs: 3
     id: 19
     mass: null
+    orientation: null
     storey: 4
     x: 9.0
     y: 14.0
+    zerolen: null
   nonstructural_elements:
   - category: nonstructural
     edp: pfa
@@ -5027,7 +5067,11 @@ fems:
     rugged: true
     x: 8.5
     y: null
+  num_bays: 3
+  num_cols: 4
+  num_floors: 5
   num_frames: 1
+  num_storeys: 4
   occupancy: MidRisePrivateOffice.yml
   omegas:
   - 14.050911002493754

@@ -15,12 +15,12 @@ from enum import Enum
 import pandas as pd
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line, Pie
 from typing import Optional
+from app.concrete import RectangularConcreteColumn
 
 
 class ElementTypes(Enum):
     BEAM = "beam"
     COLUMN = "column"
-    SPRING = "spring"
 
 
 class FEMValidationException(Exception):
@@ -37,7 +37,7 @@ class FEMValidationException(Exception):
 
 
 @dataclass
-class FE(YamlMixin):
+class FE(ABC):
     id: Optional[str] = None  # opensees tag
 
     @staticmethod
@@ -46,7 +46,7 @@ class FE(YamlMixin):
 
 
 @dataclass
-class Node(FE):
+class Node(FE, YamlMixin):
     x: float = None
     y: float = None
     mass: float = None
@@ -103,7 +103,20 @@ class DiaphragmNode(Node):
 
 
 @dataclass
-class ElasticBeamColumn(FE, RiskAsset):
+class BeamColumn(FE):
+    name: str = None
+    i: int = None
+    j: int = None
+    E: float = 1.0
+    Ix: float = 1.0
+    radius: float = None
+    storey: int = None
+    floor: int = None
+    bay: str = None  # 0 for first column
+
+
+@dataclass
+class ElasticBeamColumn(RiskAsset, BeamColumn):
     """
     circular & axially rigid.
     natural coordinates bay:ix storey:iy
@@ -113,15 +126,6 @@ class ElasticBeamColumn(FE, RiskAsset):
     I can transition from elastic -> plastic
     """
 
-    i: int = None
-    j: int = None
-    E: float = 1.0
-    Ix: float = 1.0
-    radius: float = None
-    storey: int = None
-    floor: int = None
-    bay: str = None  # 0 for first column
-    name: str = None
     type: str = ElementTypes.BEAM.value
     A: str = "1e6"
     k: float = None
@@ -135,19 +139,23 @@ class ElasticBeamColumn(FE, RiskAsset):
     _SLAB_PCT: float = 5.0
     Q: float = 1.0
 
+    def __str__(self) -> str:
+        return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A} {self.E} {self.Ix} {self.transf}\n"
+
     def __post_init__(self):
         self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
         if self.E <= 0 or self.Ix <= 0:
             raise FEMValidationException(
                 "Properties must be positive! " + f"{str(self)}"
             )
-        if self.type == ElementTypes.COLUMN.value:
-            if self.Q == 1:
-                self.name = "FragileConcreteColumnAsset"
+        if self.name is None:
+            if self.type == ElementTypes.COLUMN.value:
+                if self.Q == 1:
+                    self.name = "FragileConcreteColumnAsset"
+                else:
+                    self.name = "ConcreteColumnAsset"
             else:
-                self.name = "ConcreteColumnAsset"
-        else:
-            self.name = "ConcreteBeamAsset"
+                self.name = "ConcreteBeamAsset"
 
         self._risk = RiskModelFactory(self.name)
         self.k = self.get_k()
@@ -210,9 +218,6 @@ class ElasticBeamColumn(FE, RiskAsset):
     def get_k(self) -> float:
         return 12 * self.E * self.Ix / self.length**3
 
-    def __str__(self) -> str:
-        return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A} {self.E} {self.Ix} {self.transf}\n"
-
     @staticmethod
     def from_adjacency(
         adjacency: list[tuple[int, int, dict]]
@@ -254,8 +259,50 @@ class BilinBeamColumn(ElasticBeamColumn):
 
 
 @dataclass
-class IMKSpring(BilinBeamColumn):
-    pass
+class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
+    ASPECT_RATIO_B_TO_H: float = 0.5  # b = kappa * h, h = (12 Ix / kappa )**(1/4)
+
+    @classmethod
+    def from_bilin(cls, **data):
+        # needs Ix, My, radius,
+        # as an asset needs to save net_worth,
+        Ix = data["Ix"]
+        h = (12 * Ix / cls.ASPECT_RATIO_B_TO_H) ** 0.25
+        b = h * cls.ASPECT_RATIO_B_TO_H
+        return cls(**{"h": h, "b": b, "EFFECTIVE_INERTIA_COEFF": 1, **data})
+
+    def get_and_set_net_worth(self) -> str:
+        self.net_worth = self.cost
+        return self.cost
+
+    def dollars(self, *, strana_results_df):
+        print(f"Structural element {self.name=} {self.node=} {self.rugged=}")
+        strana_results_df["collapse_losses"] = (
+            strana_results_df["collapse"]
+            .apply(lambda r: self.net_worth if r else 0)
+            .values
+        )
+        if self.type == ElementTypes.COLUMN.value:
+            strana_results_df = self.dollars_for_storey(
+                strana_results_df=strana_results_df
+            )
+        elif self.type == ElementTypes.BEAM.value:
+            self.node = self.j
+            dollars_for_j = self.dollars_for_node(strana_results_df=strana_results_df)[
+                "losses"
+            ].values
+            self.node = self.i
+            dollars_for_i = self.dollars_for_node(strana_results_df=strana_results_df)[
+                "losses"
+            ].values
+            df = pd.DataFrame(dict(i=dollars_for_i, j=dollars_for_j))
+            df["peak"] = df.apply(max, axis=1)
+            strana_results_df["losses"] = df.peak.values
+        losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
+        return losses
+
+    def __str__(self) -> str:
+        pass
 
 
 @dataclass

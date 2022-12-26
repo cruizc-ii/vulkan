@@ -3,7 +3,7 @@ category: structural
 edp: peak_drifts
 damage_states:
   - name: ds0
-    description: 'no damage'
+    description: "no damage"
     median: 1e-10
     std: 0.01
     vulnerability:
@@ -11,7 +11,7 @@ damage_states:
       median: 1e-10
       std: 0.01
   - name: ds1
-    description: 'micro crack'
+    description: "micro crack"
     median: 0.008
     std: 0.36
     vulnerability:
@@ -19,7 +19,7 @@ damage_states:
       median: 0.0837
       std: 0.49
   - name: ds2
-    description: 'small crack'
+    description: "small crack"
     median: 0.01
     std: 0.36
     vulnerability:
@@ -27,7 +27,7 @@ damage_states:
       median: 0.2101
       std: 0.59
   - name: ds3
-    description: 'severe cracking'
+    description: "severe cracking"
     median: 0.015
     std: 0.46
     vulnerability:
@@ -35,7 +35,7 @@ damage_states:
       median: 0.35
       std: 0.63
   - name: ds4
-    description: 'shear_failure'
+    description: "shear_failure"
     median: 0.03
     std: 0.20
     vulnerability:

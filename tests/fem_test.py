@@ -4,7 +4,7 @@ from app.fem import BilinFrame, ShearModel, PlainFEM, IMKFrame
 from unittest.case import TestCase
 from app.criteria import CodeMassesPre, DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
-from app.fem import FiniteElementModel
+from app.fem import FiniteElementModel, IMKSpring
 from .test import DESIGN_FIXTURES_PATH, DESIGN_MODELS_PATH, FEM_FIXTURES_PATH
 import numpy as np
 
@@ -234,6 +234,8 @@ class IMKFrameTest(TestCase):
         frame = IMKFrame.from_file(self.file)
         print(frame.num_storeys)
         print(frame.num_cols)
+        # e = frame.elements[0]
+        # imk = IMKSpring.from_bilin(**e.to_dict)
         with open(self.path / "nodes-output.tcl", "w") as f:
             f.write(frame.nodes_str)
         self.assertEqual(frame.nodes_str, self.expected_nodes_str)
