@@ -12,6 +12,7 @@ from app.fem import (
     FiniteElementModel,
     ShearModel,
     PlainFEM,
+    IMKFrame,
 )
 from pathlib import Path
 
@@ -257,6 +258,14 @@ class CDMX2017Q4(CDMX2017Q1):
     Q: int = 4
 
 
+@dataclass
+class CDMX2017Q1IMK(CDMX2017Q1):
+    def run(self, results_dir, *args, **kwargs) -> FiniteElementModel:
+        fem = super().run(results_dir=results_dir, *args, **kwargs)
+        fem = IMKFrame(**fem.to_dict)
+        return fem
+
+
 class DesignCriterionFactory:
     seeds = {
         EulerShearPre.__name__: EulerShearPre,
@@ -267,11 +276,13 @@ class DesignCriterionFactory:
         ShearRSA.__name__: ShearRSA,
         CDMX2017Q1.__name__: CDMX2017Q1,
         CDMX2017Q4.__name__: CDMX2017Q4,
+        CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
     }
 
     default_seeds = {
         # ForceBasedPre.__name__: ForceBasedPre,
-        CDMX2017Q1.__name__: CDMX2017Q1,
+        # CDMX2017Q1.__name__: CDMX2017Q1,
+        CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
     }
 
     DEFAULT: str = CDMX2017Q1.__name__

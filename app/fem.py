@@ -47,16 +47,16 @@ class FE(ABC):
 
 @dataclass
 class Node(FE, YamlMixin):
-    x: float = None
-    y: float = None
-    mass: float = None
+    x: float | None = None
+    y: float | None = None
+    mass: float | None = None
     fixed: bool = False
     column: int = None  # 1 for first column
-    bay: int = None  # 0 for first column
-    floor: int = None  # 1 for y=0
-    storey: int = None  # 0 for y=0
-    free_dofs: int = 3
-    zerolen: int = None  # wrt which id it is fixed to
+    bay: int | None = None  # 0 for first column
+    floor: int | None = None  # 1 for y=0
+    storey: int | None = None  # 0 for y=0
+    free_dofs: int | None = 3
+    zerolen: int | None = None  # wrt which id it is fixed to
     orientation: str = None
 
     def __post_init__(self):
@@ -68,14 +68,13 @@ class Node(FE, YamlMixin):
     def __str__(self) -> str:
         s = f"node {self.id} {self.x} {self.y}"
         if self.mass:
-            s += f" -mass {self.mass} 1e-9 1e-9"
+            s += f" -mass {self.mass:.4f} 1e-9 1e-9"
         s += "\n"
         if self.fixed:
             s += f"fix {self.id} 1 1 1\n"
 
         if self.zerolen is not None:
             s += f"equalDOF {self.zerolen} {self.id} 1 2\n"
-            s += "\n"
 
         return s
 
@@ -105,15 +104,16 @@ class DiaphragmNode(Node):
 @dataclass
 class BeamColumn(FE):
     type: str = ElementTypes.BEAM.value
+    model: str = "BeamColumn"
     name: str = None
-    i: int = None
-    j: int = None
+    i: int | None = None
+    j: int | None = None
     E: float = 1.0
     Ix: float = 1.0
-    A: str = "1e6"
+    A: float = 100_000
     radius: float = None
-    storey: int = None
-    floor: int = None
+    storey: int | None = None
+    floor: int | None = None
     bay: str = None  # 0 for first column
     transf: int | None = 1
 
@@ -121,7 +121,7 @@ class BeamColumn(FE):
         self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
 
     def __str__(self) -> str:
-        return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A} {self.E} {self.Ix} {self.transf}\n"
+        return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A:.5g} {self.E:.6g} {self.Ix:.6g} {self.transf}\n"
 
 
 @dataclass
@@ -135,10 +135,10 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
     I can transition from elastic -> plastic
     """
 
+    model: str = "ElasticBeamColumn"
     k: float = None
     length: float = 1.0
     My: float = None
-    Vy: float = None
     alpha: float = "0.0055"
     EA: float = 1e9
     integration_points: int = 5
@@ -159,7 +159,6 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
                     self.name = "ConcreteColumnAsset"
             else:
                 self.name = "ConcreteBeamAsset"
-
         self._risk = RiskModelFactory(self.name)
         self.k = self.get_k()
         super().__post_init__()
@@ -245,6 +244,13 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
 
 @dataclass
 class BilinBeamColumn(ElasticBeamColumn):
+    model: str = "BilinBeamColumn"
+    Vy: float | None = None
+
+    def __post_init__(self):
+        self.model = self.__class__.__name__
+        return super().__post_init__()
+
     @property
     def EI(self) -> float:
         return self.E * self.Ix
@@ -263,6 +269,7 @@ class BilinBeamColumn(ElasticBeamColumn):
 
 @dataclass
 class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
+    model: str = "IMKSpring"
     ASPECT_RATIO_B_TO_H: float = 0.5  # b = kappa * h, h = (12 Ix / kappa )**(1/4)
     left: bool = False
     right: bool = False
@@ -273,8 +280,16 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     Kb: float | None = None
     Ic: float | None = None
     secColTag: int | None = None
-    secBeamTag: int | None = None
     imkMatTag: int | None = None
+    elasticMatTag: int | None = None
+    Vy: float | None = None
+
+    def __str__(self) -> str:
+        s = f"uniaxialMaterial Elastic {self.elasticMatTag} 1e9\n"
+        s += f"uniaxialMaterial ModIMKPeakOriented {self.imkMatTag} {self.Ks:.2f} {self.alpha_postyield} {self.alpha_postyield} {self.My:.2f} {-self.My:.2f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} 1. 1. 1. 1. {self.theta_cap_cyclic:.8f} {self.theta_cap_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.theta_pc_cyclic:.8f} 1e-6 1e-6 {self.theta_u_cyclic:.8f} {self.theta_u_cyclic:.8f} 1. 1.\n"
+        s += f"section Aggregator {self.secColTag} {self.elasticMatTag} P {self.imkMatTag} Mz\n"
+        s += f"element zeroLengthSection  {self.id}  {self.i} {self.j} {self.secColTag}\n"
+        return s
 
     @classmethod
     def from_bilin(cls, **data):
@@ -285,14 +300,15 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
 
     def __post_init__(self):
         super().__post_init__()
+        self.model = self.__class__.__name__
+        self.radius = self.h
         self.Ks = self.My / self.theta_y
         self.Ke = 6 * self.E * self.Ix / self.length
         self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
         self.Ic = self.Kb * self.length / 6 / self.E
         self.secColTag = self.id + 100000
-        self.secBeamTag = self.id + 200000
-        self.imkMatTag = self.id + 300000
-        return super().__post_init__()
+        self.imkMatTag = self.id + 200000
+        self.elasticMatTag = self.id + 300000
 
     def get_and_set_net_worth(self) -> str:
         self.net_worth = self.cost
@@ -323,29 +339,6 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
             strana_results_df["losses"] = df.peak.values
         losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
         return losses
-
-    def __str__(self) -> str:
-        s = f"""
-        set Ec  {self.Ec}
-        set Ic  {self.Ic}
-        set theta_y {self.theta_y}
-        set theta_p {self.theta_cap_cyclic}
-        set theta_pc {self.theta_pc_cyclic}
-        set My {self.My}
-        set lambda {self.gammaJiangCheng}
-        set alpha {self.alpha_postyield}
-        set Icrit {self.Icrit}
-        set stable {self.stable}
-        source imk_sections.tcl
-        set secTagCol {self.secColTag}
-        set secTagBeam {self.secBeamTag}
-        set imkMat {self.imkMatTag}
-        uniaxialMaterial ModIMKPeakOriented $imkMat $Ks $as_Plus $as_Neg $My_Plus $My_Neg $Lamda_S $Lamda_C $Lamda_A $Lamda_K $c_S $c_C $c_A $c_K $theta_p_Plus $theta_p_Neg $theta_pc_Plus $theta_pc_Neg $Res_Pos $Res_Neg $theta_u_Plus $theta_u_Neg $D_Plus $D_Neg
-        section Aggregator $secTagCol $elasticMatTag P $imkMat Mz
-        section Aggregator $secTagBeam $elasticMatTag P $elasticMatTag Mz
-        element zeroLengthSection  {self.id}  {self.i} {self.j} $secTagCol
-        """
-        return s
 
 
 @dataclass
@@ -383,7 +376,7 @@ class FiniteElementModel(ABC, YamlMixin):
         if isinstance(self.nodes[0], dict):
             self.nodes = [Node(**data) for data in self.nodes]
         if isinstance(self.elements[0], dict):
-            self.elements = [ElasticBeamColumn(**data) for data in self.elements]
+            self.elements = [ElementFactory(**data) for data in self.elements]
         if len(self.nonstructural_elements) > 0 and isinstance(
             self.nonstructural_elements[0], dict
         ):
@@ -1173,30 +1166,11 @@ class RigidBeamFEM(FiniteElementModel):
 @dataclass
 class BilinFrame(FiniteElementModel):
     def __post_init__(self):
-        from app.occupancy import BuildingOccupancy
-
-        if self.occupancy is None:
-            self.occupancy = BuildingOccupancy.DEFAULT
-        if isinstance(self.nodes[0], dict):
-            self.nodes = [Node(**data) for data in self.nodes]
+        super().__post_init__()
         if isinstance(self.elements[0], dict):
             self.elements = [BilinBeamColumn(**data) for data in self.elements]
-        if len(self.nonstructural_elements) > 0 and isinstance(
-            self.nonstructural_elements[0], dict
-        ):
-            self.nonstructural_elements = [
-                AssetFactory(**data) for data in self.nonstructural_elements
-            ]
         else:
-            self.build_and_place_assets()
-        if len(self.contents) > 0 and isinstance(self.contents[0], dict):
-            self.contents = [AssetFactory(**data) for data in self.contents]
-        else:
-            self.build_and_place_assets()
-
-        self.model = self.__class__.__name__
-        self.validate()
-        return super().__post_init__()
+            self.elements = [BilinBeamColumn(**elem.to_dict) for elem in self.elements]
 
     @classmethod
     def from_elastic(
@@ -1250,9 +1224,27 @@ class BilinFrame(FiniteElementModel):
 
 @dataclass
 class IMKFrame(BilinFrame):
+    def __str__(self) -> str:
+        s = super().__str__()
+        s += "\n"
+        s += "source modal.tcl\n"
+        return s
+
     @property
     def elements_str(self) -> str:
         return "".join([str(e) for e in self.elements])
+
+    @property
+    def nodes_str(self) -> str:
+        s = super().nodes_str
+        for mass_node in self.mass_nodes:
+            st = mass_node.storey
+            st_nodes = [
+                n for n in self.nodes if n.storey == st and not n.zerolen and not n.mass
+            ]
+            for st_node in st_nodes:
+                s += f"equalDOF {mass_node.id} {st_node.id} 1\n"
+        return s
 
     def __post_init__(self):
         super().__post_init__()
@@ -1309,26 +1301,29 @@ class IMKFrame(BilinFrame):
                     nodes_by_id[i].pop("col_down"),
                     nodes_by_id[j].pop("col_up"),
                 )
-            imk1 = IMKSpring(
-                id=elem_id,
-                i=i,
-                j=imk_i,
-                length=elem.length,
-                My=elem.My,
-                Ix=elem.Ix,
-                E=elem.E,
-                storey=st,
-                bay=bay,
-                floor=fl,
-            )
+            # imk1 = IMKSpring(
+            #     id=elem_id,
+            #     i=i,
+            #     j=imk_i,
+            #     length=elem.length,
+            #     My=elem.My,
+            #     Ix=elem.Ix,
+            #     E=elem.E,
+            #     storey=st,
+            #     bay=bay,
+            #     floor=fl,
+            # )
+            imk1 = IMKSpring.from_bilin(**elem.to_dict)
             elem_id += 1
             elements.append(imk1)
-            Ic = imk1.Ic
+            Ic = float(imk1.Ic)
             bc = BeamColumn(
                 id=elem_id,
+                radius=imk1.radius,
                 i=imk_i,
                 j=imk_j,
-                Ix=Ic,
+                Ix=Ic if elem.type == ElementTypes.COLUMN.value else 1000,
+                E=elem.E,
                 storey=st,
                 bay=bay,
                 floor=fl,
@@ -1363,6 +1358,27 @@ class FEMFactory:
         ShearModel.__name__: ShearModel,
         BilinFrame.__name__: BilinFrame,
         IMKFrame.__name__: IMKFrame,
+    }
+
+    def __new__(cls, **data) -> FiniteElementModel:
+        model = data.get("model", cls.DEFAULT)
+        return cls.options[model](**data)
+
+    @classmethod
+    def add(cls, name, seed):
+        cls.options[name] = seed
+
+    @classmethod
+    def models(cls) -> list[dict[str, str]]:
+        return [{"label": name, "value": name} for name, _ in cls.options.items()]
+
+
+class ElementFactory:
+    DEFAULT = BilinBeamColumn.__name__
+    options = {
+        ElasticBeamColumn.__name__: ElasticBeamColumn,
+        BilinBeamColumn.__name__: BilinBeamColumn,
+        IMKSpring.__name__: IMKSpring,
     }
 
     def __new__(cls, **data) -> FiniteElementModel:

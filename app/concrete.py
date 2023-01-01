@@ -40,16 +40,18 @@ class Rebar:
     num10: float = 819e-6
     num14: float = 1452e-6
     num18: float = 2581e-6
-    table: np.ndarray | None = None
+    _table: np.ndarray | None = None
     nums: list | None = None
-    allowed_num_bars: list | None = None
-    areas_by_num: dict[int, float] = None
-    diameters_by_num: dict[int, float] = None
+    _allowed_num_bars: list | None = None
+    _areas_by_num: dict[int, float] | None = None
+    _diameters_by_num: dict[int, float] | None = None
 
     def __post_init__(self):
         self.nums = [2, 3, 4, 5, 6, 8, 10, 14, 18]
-        self.diameters = INCHES_TO_METERS * np.array([2, 3, 4, 5, 6, 8, 10, 14, 18]) / 8
-        self.areas_by_num = {
+        self._diameters = (
+            INCHES_TO_METERS * np.array([2, 3, 4, 5, 6, 8, 10, 14, 18]) / 8
+        )
+        self._areas_by_num = {
             2: self.num2,
             3: self.num3,
             4: self.num4,
@@ -60,32 +62,32 @@ class Rebar:
             14: self.num14,
             18: self.num18,
         }
-        self.diameters_by_num = {n: d for d, n in zip(self.diameters, self.nums)}
-        self.allowed_num_bars = range(4, 12 + 1, 2)
-        self.table = np.array(
+        self._diameters_by_num = {n: d for d, n in zip(self._diameters, self.nums)}
+        self._allowed_num_bars = range(4, 12 + 1, 2)
+        self._table = np.array(
             [
-                [k * num for k in self.allowed_num_bars]
-                for num in self.areas_by_num.values()
+                [k * num for k in self._allowed_num_bars]
+                for num in self._areas_by_num.values()
             ]
         )
 
     @property
     def area(self) -> float:
-        return self.areas_by_num[self.num]
+        return self._areas_by_num[self.num]
 
     @property
     def diameter(self) -> float:
-        return self.diameters_by_num[self.num]
+        return self._diameters_by_num[self.num]
 
     @classmethod
     def area_to_bars(cls, area: float):
         b = cls()
         i, j = np.unravel_index(
-            np.argmin(abs(b.table - area), axis=None), b.table.shape
+            np.argmin(abs(b._table - area), axis=None), b._table.shape
         )
         caliber = b.nums[i]
-        num = b.allowed_num_bars[j]
-        real_area = num * b.areas_by_num[caliber]
+        num = b._allowed_num_bars[j]
+        real_area = num * b._areas_by_num[caliber]
         print(f"{num=} {caliber=} {real_area=}")
         return real_area, num, caliber
 
@@ -127,14 +129,14 @@ class RectangularConcreteColumn:
     Asc: float = 0.0  # area of steel in the compression zone
     Asw: float = 0.0  # area of steel in web
     As: float = 0.0  # As = Asc + Ast
-    rebar: Rebar | None = field(
+    _rebar: Rebar | None = field(
         default_factory=Rebar
     )  # rebar number to compute advanced parameters
     Asw: float = 0.0  # stirrup/web steel area
     Acc: float | None = None  # area of the confined core
     fy: float = 420e3  # longitudinal steel yield strength
     s: float = 0.2  # stirrup spacing
-    stirrup: Rebar | None = field(
+    _stirrup: Rebar | None = field(
         default_factory=Rebar
     )  # rebar number to compute advanced parameters
     fyw: float = 420e3  # stirrup yield strength
@@ -253,7 +255,7 @@ set stable {self.stable}
         self.fpc = self.beta * self.fc
         self.fpcMPa = self.fpc * 1e-3
         # this also depends highly on aggregate quality and can be considerably more complex, good enough for now.
-        self.Ec = 4400 * np.sqrt(self.fcMPa) * 1e3 if self.Ec is None else self.Ec
+        self.Ec = 4400 * self.fcMPa**0.5 * 1e3 if self.Ec is None else self.Ec
         self.eta = self.Es / self.Ec
         self.Ig = self.b * self.h**3 / 12
         xcr = self.h / 2
@@ -316,14 +318,14 @@ set stable {self.stable}
                 self.As = self.Ast + self.Asc
                 self.pc = self.Asc / self.Ac
                 self.p = self.pt + self.pc
-            self.My = self.analyze(Ast=self.Ast, Asc=self.Asc)
+            self.My = float(self.analyze(Ast=self.Ast, Asc=self.Asc))
         else:
             raise DesignException("Provide either My or (p, As, Ast or pt)")
 
         self.q = self.p * self.fy / self.fpc
         self.qc = self.pc * self.fy / self.fpc
         self.qt = self.pt * self.fy / self.fpc
-        self.Asw = 2 * self.stirrup.area if self.stirrup is not None else self.Asw
+        self.Asw = 2 * self._stirrup.area if self._stirrup is not None else self.Asw
         self.pw = self.Asw / self.s / self.b
         self.ex = self.My / self.P if self.P else None
         # each BC has different cracked and yielding inertias
@@ -345,13 +347,13 @@ set stable {self.stable}
                 self.FRV
                 * (0.2 + 20 * self.p)
                 * 0.3
-                * np.sqrt(self.fcMPa)
+                * self.fcMPa**0.5
                 * (self.Ac * 1e6)
                 * 1e-3
             )
         else:
             self.Vcr = (
-                self.FRV * 0.16 * np.sqrt(self.fcMPa) * (self.Ac * 1e6) * 1e-3
+                self.FRV * 0.16 * self.fcMPa**0.5 * (self.Ac * 1e6) * 1e-3
             )  # formula inputs are MPa, mm. output is in N.
 
         self.Vsr = 0.7 * (self.Asw * self.fyw) * self.d / self.s
@@ -380,7 +382,7 @@ set stable {self.stable}
             * (
                 0.25
                 * self.eps_y
-                * self.rebar.diameter
+                * self._rebar.diameter
                 * self.fyMPa
                 / ((self.d - self.dp) * np.sqrt(self.fpcMPa))
             )
@@ -457,7 +459,7 @@ set stable {self.stable}
         drift = (
             3.0 / 100
             + 4 * self.pw
-            - 1.0 / 40 * shear_stress_MPa / np.sqrt(self.fpcMPa)
+            - 1.0 / 40 * shear_stress_MPa / self.fpcMPa**0.5
             - 1.0 / 40 * self.P * 1e-3 / (self.Ac * self.fpcMPa)
         )
         drift = drift if drift >= 0.01 else 0.01
@@ -471,7 +473,7 @@ set stable {self.stable}
         # this unit cost is callibrated to give the % of unit costs in real structures
         WORK_UNIT_COST = 1
         num_stirrups = self.L / self.s + 1
-        stirrup_volume = num_stirrups * self.stirrup.area * self.perimeter
+        stirrup_volume = num_stirrups * self._stirrup.area * self.perimeter
         longitudinal_volume = self.L * self.As
         print(f"{stirrup_volume=} {longitudinal_volume=} {self.s=} {num_stirrups=}")
         steel = (
@@ -565,7 +567,7 @@ set stable {self.stable}
         pi = area / self.Ac
         # if self.pmin and pi < self.pmin:
         #     pi = self.pmin
-        self.p = pi
+        self.p = float(pi)
         self.pc = self.pt = self.p / 2
         self.As = self.p * self.Ag
         self.Ast = self.Asc = self.p / 2 * self.Ag

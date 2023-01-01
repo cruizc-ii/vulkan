@@ -241,9 +241,3 @@ class ReinforcedConcreteFrame(BuildingSpecification):
         # each BC defines its own Ec, but this property is independent of legal matters!
         self.Ec = 4.4e6 * (self.fc / 1e3) ** 0.5
         return super().__post_init__()
-
-
-@dataclass
-class IMKReinforcedConcreteFrame(BuildingSpecification):
-    def __post_init__(self):
-        return super().__post_init__()
