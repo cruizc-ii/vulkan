@@ -6,7 +6,7 @@ import json
 import os
 import base64
 import io
-
+from typing import Any
 from dataclasses import asdict
 import pandas as pd
 import numpy as np
@@ -140,8 +140,25 @@ class YamlMixin:
          !python/object/apply:numpy.core.multiarray.scalar
     """
 
-    def read_only_dict_factory(self, data):
-        return dict([x for x in data if not x[0].startswith("_")])
+    def read_only_dict_factory(self, data: list[tuple[str, Any]]):
+        result = {}
+        for k, v in data:
+            if k.startswith("_"):
+                continue
+            elif isinstance(v, (np.ndarray)):
+                v = v.tolist()
+                print(f"field {k} is numpy.ndarray {v} {type(v)}, should be list")
+            elif isinstance(v, (np.integer)):
+                v = int(v)
+                print(f"field {k} is {type(v)}, should be native int !")
+            elif isinstance(v, (np.floating,)):
+                v = v.item()
+                print(f"field {k} is {type(v)}, should be native float !")
+            elif isinstance(v, (np.generic)):
+                v = v.item()
+                print(f"field {k} is {type(v)}, generic should be python native !")
+            result[k] = v
+        return result
 
     @classmethod
     def from_file(cls, filepath):

@@ -102,7 +102,10 @@ class DiaphragmNode(Node):
 
 
 @dataclass
-class BeamColumn(FE):
+class BeamColumn(
+    FE,
+    RiskAsset,
+):
     type: str = ElementTypes.BEAM.value
     model: str = "BeamColumn"
     name: str = None
@@ -116,6 +119,7 @@ class BeamColumn(FE):
     floor: int | None = None
     bay: str = None  # 0 for first column
     transf: int | None = 1
+    length: float = 1.0
 
     def __post_init__(self):
         self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
@@ -125,7 +129,7 @@ class BeamColumn(FE):
 
 
 @dataclass
-class ElasticBeamColumn(RiskAsset, BeamColumn):
+class ElasticBeamColumn(BeamColumn):
     """
     circular & axially rigid.
     natural coordinates bay:ix storey:iy
@@ -136,10 +140,9 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
     """
 
     model: str = "ElasticBeamColumn"
-    k: float = None
-    length: float = 1.0
-    My: float = None
-    alpha: float = "0.0055"
+    k: float | None = None
+    My: float | None = None
+    alpha: str = "0.0055"
     EA: float = 1e9
     integration_points: int = 5
     _DOLLARS_PER_UNIT_VOLUME: float = 1.500
@@ -735,6 +738,7 @@ class FiniteElementModel(ABC, YamlMixin):
     def cytoscape(self) -> tuple[list[dict], list[dict]]:
         ASSET_Y_OFFSET = 25
         SCALE = 100
+        print(self.contents[0])
         fig = [
             {
                 "data": {
@@ -1023,6 +1027,8 @@ class FiniteElementModel(ABC, YamlMixin):
 class PlainFEM(FiniteElementModel):
     """the simplest implementation of the interface"""
 
+    model: str = "PlainFEM"
+
     def build_and_place_slabs(self) -> list[Asset]:
         from app.assets import RiskModelFactory
 
@@ -1055,6 +1061,7 @@ class ShearModel(FiniteElementModel):
 
     def __post_init__(self):
         super().__post_init__()
+        self.model = self.__class__.__name__
         self.nodes = [self.fixed_nodes[0]] + [
             DiaphragmNode(**n.to_dict) for n in self.mass_nodes
         ]
@@ -1159,6 +1166,7 @@ class RigidBeamFEM(FiniteElementModel):
 
     def __post_init__(self):
         super().__post_init__()
+        self.model = self.__class__.__name__
         for beam in self.beams:
             beam.Ix = "1e9"
 
@@ -1167,6 +1175,7 @@ class RigidBeamFEM(FiniteElementModel):
 class BilinFrame(FiniteElementModel):
     def __post_init__(self):
         super().__post_init__()
+        self.model = self.__class__.__name__
         if isinstance(self.elements[0], dict):
             self.elements = [BilinBeamColumn(**data) for data in self.elements]
         else:
@@ -1187,10 +1196,10 @@ class BilinFrame(FiniteElementModel):
             col_moments, fem.columns_by_storey, beam_moments, fem.beams_by_storey
         ):
             for c in cols:
-                c.My = float(cm)
+                c.My = cm
                 c.Q = Q
             for b in beams:
-                b.My = float(bm)
+                b.My = bm
                 b.Q = Q
 
         instance = cls(**fem.to_dict)
@@ -1224,6 +1233,8 @@ class BilinFrame(FiniteElementModel):
 
 @dataclass
 class IMKFrame(BilinFrame):
+    done: bool = False
+
     def __str__(self) -> str:
         s = super().__str__()
         s += "\n"
@@ -1247,107 +1258,109 @@ class IMKFrame(BilinFrame):
         return s
 
     def __post_init__(self):
-        super().__post_init__()
-        nodes = []
-        next_id = self.nodes[-1].id + 1
-        # create nodes in counterclockwise manner
-        nodes_by_id = {}
-        for node in self.nodes:
-            if node.fixed:
-                orientations = ["col_down"]
-            elif node.storey == self.num_storeys:
-                if node.column == 1:
-                    orientations = ["col_up", "beam_left"]
+        self.model = self.__class__.__name__
+        self.nodes = [Node(**n) for n in self.nodes]
+        self.elements = [ElementFactory(**e) for e in self.elements]
+        if not self.done:
+            nodes = []
+            next_id = self.nodes[-1].id + 1
+            # create nodes in counterclockwise manner
+            nodes_by_id = {}
+            for node in self.nodes:
+                if node.fixed:
+                    orientations = ["col_down"]
+                elif node.storey == self.num_storeys:
+                    if node.column == 1:
+                        orientations = ["col_up", "beam_left"]
+                    elif node.column == self.num_cols:
+                        orientations = ["col_up", "beam_right"]
+                    else:
+                        orientations = ["col_up", "beam_left", "beam_right"]
+                elif node.column == 1:
+                    orientations = ["col_up", "beam_left", "col_down"]
                 elif node.column == self.num_cols:
-                    orientations = ["col_up", "beam_right"]
+                    orientations = ["col_up", "col_down", "beam_right"]
                 else:
-                    orientations = ["col_up", "beam_left", "beam_right"]
-            elif node.column == 1:
-                orientations = ["col_up", "beam_left", "col_down"]
-            elif node.column == self.num_cols:
-                orientations = ["col_up", "col_down", "beam_right"]
-            else:
-                orientations = ["col_up", "beam_left", "col_down", "beam_right"]
-            nodes_by_id[node.id] = {}
-            for o in orientations:
-                n = Node(
-                    id=next_id,
-                    x=node.x,
-                    y=node.y,
-                    column=node.column,
-                    bay=node.bay,
-                    free_dofs=1,
-                    storey=node.storey,
-                    floor=node.floor,
-                    zerolen=node.id,
-                    orientation=o,
-                )
-                nodes_by_id[node.id][o] = next_id
-                next_id += 1
-                nodes.append(n)
+                    orientations = ["col_up", "beam_left", "col_down", "beam_right"]
+                nodes_by_id[node.id] = {}
+                for o in orientations:
+                    n = Node(
+                        id=next_id,
+                        x=node.x,
+                        y=node.y,
+                        column=node.column,
+                        bay=node.bay,
+                        free_dofs=1,
+                        storey=node.storey,
+                        floor=node.floor,
+                        zerolen=node.id,
+                        orientation=o,
+                    )
+                    nodes_by_id[node.id][o] = next_id
+                    next_id += 1
+                    nodes.append(n)
 
-        self.nodes += nodes
-        elements = []
-        elem_id = 1
-        for elem in self.elements:
-            i, j, bay, st, fl = elem.i, elem.j, elem.bay, elem.storey, elem.floor
-            if elem.type == ElementTypes.BEAM.value:
-                imk_i, imk_j = (
-                    nodes_by_id[i].pop("beam_left"),
-                    nodes_by_id[j].pop("beam_right"),
+            self.nodes += nodes
+            elements = []
+            elem_id = 1
+            print(nodes_by_id)
+            for elem in self.elements:
+                i, j, bay, st, fl = elem.i, elem.j, elem.bay, elem.storey, elem.floor
+                if elem.type == ElementTypes.BEAM.value:
+                    imk_i, imk_j = (
+                        nodes_by_id[i].pop("beam_left"),
+                        nodes_by_id[j].pop("beam_right"),
+                    )
+                else:
+                    imk_i, imk_j = (
+                        nodes_by_id[i].pop("col_down"),
+                        nodes_by_id[j].pop("col_up"),
+                    )
+                imk1 = IMKSpring(
+                    id=elem_id,
+                    i=i,
+                    j=imk_i,
+                    length=elem.length,
+                    My=elem.My,
+                    Ix=elem.Ix,
+                    E=elem.E,
+                    storey=st,
+                    bay=bay,
+                    floor=fl,
                 )
-            else:
-                imk_i, imk_j = (
-                    nodes_by_id[i].pop("col_down"),
-                    nodes_by_id[j].pop("col_up"),
+                elem_id += 1
+                elements.append(imk1)
+                Ic = imk1.Ic
+                bc = BeamColumn(
+                    id=elem_id,
+                    radius=imk1.radius,
+                    i=imk_i,
+                    j=imk_j,
+                    Ix=Ic if elem.type == ElementTypes.COLUMN.value else 1000,
+                    E=elem.E,
+                    storey=st,
+                    bay=bay,
+                    floor=fl,
+                    type=elem.type,
                 )
-            # imk1 = IMKSpring(
-            #     id=elem_id,
-            #     i=i,
-            #     j=imk_i,
-            #     length=elem.length,
-            #     My=elem.My,
-            #     Ix=elem.Ix,
-            #     E=elem.E,
-            #     storey=st,
-            #     bay=bay,
-            #     floor=fl,
-            # )
-            imk1 = IMKSpring.from_bilin(**elem.to_dict)
-            elem_id += 1
-            elements.append(imk1)
-            Ic = float(imk1.Ic)
-            bc = BeamColumn(
-                id=elem_id,
-                radius=imk1.radius,
-                i=imk_i,
-                j=imk_j,
-                Ix=Ic if elem.type == ElementTypes.COLUMN.value else 1000,
-                E=elem.E,
-                storey=st,
-                bay=bay,
-                floor=fl,
-                type=elem.type,
-            )
-            elem_id += 1
-            elements.append(bc)
-            imk2 = IMKSpring(
-                id=elem_id,
-                i=imk_j,
-                j=j,
-                length=elem.length,
-                My=elem.My,
-                Ix=elem.Ix,
-                E=elem.E,
-                storey=st,
-                bay=bay,
-                floor=fl,
-            )
-            elements.append(imk2)
-            elem_id += 1
-
-        self.elements = elements
-        return
+                elem_id += 1
+                elements.append(bc)
+                imk2 = IMKSpring(
+                    id=elem_id,
+                    i=imk_j,
+                    j=j,
+                    length=elem.length,
+                    My=elem.My,
+                    Ix=elem.Ix,
+                    E=elem.E,
+                    storey=st,
+                    bay=bay,
+                    floor=fl,
+                )
+                elements.append(imk2)
+                elem_id += 1
+            self.elements = elements
+            self.done = True
 
 
 class FEMFactory:
@@ -1376,6 +1389,7 @@ class FEMFactory:
 class ElementFactory:
     DEFAULT = BilinBeamColumn.__name__
     options = {
+        BeamColumn.__name__: BeamColumn,
         ElasticBeamColumn.__name__: ElasticBeamColumn,
         BilinBeamColumn.__name__: BilinBeamColumn,
         IMKSpring.__name__: IMKSpring,

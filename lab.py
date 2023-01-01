@@ -120,7 +120,7 @@ with st.sidebar:
         )
         storeys_input = st.text_input(
             "storeys",
-            value=",".join([str(s) for s in design.storeys]) or "3",
+            value=",".join([str(s) for s in design.storeys]) or "3,",
             help="heights in meters separated by comma",
         )
         storeys = [float(s) for s in storeys_input.split(",")]

@@ -20,16 +20,12 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     """
 
     name: str
-    storeys: list[float] = field(default_factory=lambda: [1.0])
-    bays: list[float] = field(default_factory=lambda: [1.0])
+    storeys: list[float] = field(default_factory=lambda: [3.0])
+    bays: list[float] = field(default_factory=lambda: [6.0])
     masses: list[float] = field(default_factory=lambda: [1.0])
     damping: float = 0.05
     num_frames: int = 1
 
-    Ecols: Optional[list[float]] = None
-    Icols: Optional[list[float]] = None
-    Ebeams: Optional[list[float]] = None
-    Ibeams: Optional[list[float]] = None
     uniform_beam_loads_by_mass: Optional[list[float]] = None
     design_criteria: list[str] = field(
         default_factory=DesignCriterionFactory.default_criteria
@@ -88,6 +84,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     def __post_init__(self):
         self.__pre_init__()
         if all([isinstance(f, dict) for f in self.fems]):
+            print([f["model"] for f in self.fems])
             self.fems = [FEMFactory(**data) for data in self.fems]
 
     def __set_up__(self):
@@ -231,10 +228,10 @@ class ReinforcedConcreteFrame(BuildingSpecification):
     Ec: float = 30e6
     fy: float = 420e3
     Es: float = 200e6
-    Ecols: Optional[float] = 30e6
-    Ebeams: Optional[float] = 30e6
-    Icols: Optional[float] = 0.0015
-    Ibeams: Optional[float] = 0.0015
+    Ecols: float = 30e6
+    Ebeams: float = 30e6
+    Icols: float = 0.0015
+    Ibeams: float = 0.0015
 
     def __post_init__(self):
         # WARNING: this is an inconsistency with out design procedures

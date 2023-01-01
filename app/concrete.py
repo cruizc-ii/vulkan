@@ -318,7 +318,7 @@ set stable {self.stable}
                 self.As = self.Ast + self.Asc
                 self.pc = self.Asc / self.Ac
                 self.p = self.pt + self.pc
-            self.My = float(self.analyze(Ast=self.Ast, Asc=self.Asc))
+            self.My = self.analyze(Ast=self.Ast, Asc=self.Asc)
         else:
             raise DesignException("Provide either My or (p, As, Ast or pt)")
 
@@ -384,7 +384,7 @@ set stable {self.stable}
                 * self.eps_y
                 * self._rebar.diameter
                 * self.fyMPa
-                / ((self.d - self.dp) * np.sqrt(self.fpcMPa))
+                / ((self.d - self.dp) * self.fpcMPa**0.5)
             )
         )
         self.theta_pc = 0.76 * 0.031**self.nu * (0.02 + 40 * self.pw) ** 1.02
@@ -475,7 +475,7 @@ set stable {self.stable}
         num_stirrups = self.L / self.s + 1
         stirrup_volume = num_stirrups * self._stirrup.area * self.perimeter
         longitudinal_volume = self.L * self.As
-        print(f"{stirrup_volume=} {longitudinal_volume=} {self.s=} {num_stirrups=}")
+        # print(f"{stirrup_volume=} {longitudinal_volume=} {self.s=} {num_stirrups=}")
         steel = (
             (stirrup_volume + longitudinal_volume)
             * STEEL_DENSITY_TON
@@ -486,7 +486,7 @@ set stable {self.stable}
         # there is more work involved when stirrup spacing is smaller i.e. when concrete is more confined
         # when unions/overlapping with beams are stricter it is more work
         work = 0.722 * num_stirrups**2 * WORK_UNIT_COST
-        print(f"{steel=} {concrete=} {work=}")
+        # print(f"{steel=} {concrete=} {work=}")
         return steel + concrete + work
 
     def analyze(self, As: float | None = None, *, Ast=0, Asc=0, P=0, tol=5, iter=20):
