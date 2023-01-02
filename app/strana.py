@@ -3,7 +3,7 @@ from app.fem import Node, ElasticBeamColumn, FiniteElementModel
 from app.hazard import Hazard, Record
 from abc import ABC, abstractmethod
 from pandas import DataFrame, set_option, read_csv
-from typing import Union, Optional
+from typing import Union
 from app.utils import (
     EDP,
     GRAVITY,
@@ -19,14 +19,13 @@ from app.utils import (
 from dataclasses import dataclass, field
 from plotly.graph_objects import Figure
 import numpy as np
-from numpy import flip, cumsum
 from pathlib import Path
 import os
 import subprocess
 from shortuuid import uuid
 from app.codes import BuildingCode
 from app.utils import ROOT_DIR
-from subprocess import Popen, PIPE
+from subprocess import Popen
 from iteration_utilities import grouper
 
 MODELS_DIR = ROOT_DIR / "models"
@@ -450,8 +449,8 @@ class StructuralResultView(YamlMixin):
 class Recorder:
     path: Path
     fem: "FiniteElementModel"
-    model_str: Optional[str] = None
-    view: Optional[StructuralResultView] = None
+    model_str: str | None = None
+    view: StructuralResultView | None = None
 
     def __post_init__(self) -> None:
         os.makedirs(self.abspath, exist_ok=True)
@@ -542,18 +541,18 @@ class Recorder:
 
     @property
     def elastic_static_solvers(self) -> str:
-        string = "constraints Transformation \n"
-        string += "numberer RCM \n"
-        string += "system BandGeneral \n"
-        string += "test NormDispIncr 1.0e-05 25 5 \n"
-        string += "algorithm Newton \n"
-        string += "integrator LoadControl 0.1 1 \n"
-        string += "analysis Static \n"
-        string += "initialize \n"
-        string += "analyze 10 \n"
-        string += "remove recorders \n"
-        string += "loadConst -time 0.0 \n"
-        return string
+        s = "constraints Transformation \n"
+        s += "numberer RCM \n"
+        s += "system BandGeneral \n"
+        s += "test NormDispIncr 1.0e-05 25 5 \n"
+        s += "algorithm Newton \n"
+        s += "integrator LoadControl 0.1 1 \n"
+        s += "analysis Static \n"
+        s += "initialize \n"
+        s += "analyze 10 \n"
+        s += "remove recorders \n"
+        s += "loadConst -time 0.0 \n"
+        return s
 
 
 @dataclass
@@ -580,7 +579,7 @@ class GravityRecorderMixin(Recorder):
 
 @dataclass
 class StaticRecorder(GravityRecorderMixin):
-    forces_per_storey: list[float] = None
+    forces_per_storey: list[float] | None = None
 
     # deformation.. is this curvature?
     # recorder Element -file ${gravity_results}/col_moments_th.out -time -ele 11 plasticDeformation

@@ -77,7 +77,7 @@ class Rebar:
 
     @property
     def diameter(self) -> float:
-        return self._diameters_by_num[self.num]
+        return float(self._diameters_by_num[self.num])
 
     @classmethod
     def area_to_bars(cls, area: float):
@@ -322,6 +322,7 @@ set stable {self.stable}
         else:
             raise DesignException("Provide either My or (p, As, Ast or pt)")
 
+        self.My = float(self.My)
         self.q = self.p * self.fy / self.fpc
         self.qc = self.pc * self.fy / self.fpc
         self.qt = self.pt * self.fy / self.fpc

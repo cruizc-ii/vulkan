@@ -14,7 +14,6 @@ from app.utils import GRAVITY, SummaryEDP, YamlMixin, ASSETS_PATH
 from enum import Enum
 import pandas as pd
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line, Pie
-from typing import Optional
 from app.concrete import RectangularConcreteColumn
 
 
@@ -38,7 +37,7 @@ class FEMValidationException(Exception):
 
 @dataclass
 class FE(ABC):
-    id: Optional[str] = None  # opensees tag
+    id: str | None = None  # opensees tag
 
     @staticmethod
     def string_ids_for_list(fems: list["FE"]) -> str:
@@ -108,21 +107,23 @@ class BeamColumn(
 ):
     type: str = ElementTypes.BEAM.value
     model: str = "BeamColumn"
-    name: str = None
+    name: str | None = None
     i: int | None = None
     j: int | None = None
     E: float = 1.0
     Ix: float = 1.0
     A: float = 100_000
-    radius: float = None
+    radius: float | None = None
     storey: int | None = None
     floor: int | None = None
-    bay: str = None  # 0 for first column
+    bay: str | None = None  # 0 for first column
     transf: int | None = 1
     length: float = 1.0
+    net_worth: float = 0.0
 
     def __post_init__(self):
         self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
+        super().__post_init__
 
     def __str__(self) -> str:
         return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A:.5g} {self.E:.6g} {self.Ix:.6g} {self.transf}\n"
@@ -312,10 +313,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self.secColTag = self.id + 100000
         self.imkMatTag = self.id + 200000
         self.elasticMatTag = self.id + 300000
-
-    def get_and_set_net_worth(self) -> str:
         self.net_worth = self.cost
-        return self.cost
 
     def dollars(self, *, strana_results_df):
         print(f"Structural element {self.name=} {self.node=} {self.rugged=}")
@@ -347,28 +345,28 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
 @dataclass
 class FiniteElementModel(ABC, YamlMixin):
     nodes: list[Node]
-    elements: list[ElasticBeamColumn]
+    elements: list[BeamColumn]
     damping: float
     model: str = "ABC"
     num_frames: int = 1
-    num_storeys: Optional[float] = None
-    num_floors: Optional[float] = None
-    num_bays: Optional[float] = None
-    num_cols: Optional[float] = None
-    occupancy: Optional[str] = None
+    num_storeys: float | None = None
+    num_floors: float | None = None
+    num_bays: float | None = None
+    num_cols: float | None = None
+    occupancy: str | None = None
     periods: list = field(default_factory=list)
     frequencies: list = field(default_factory=list)
     omegas: list = field(default_factory=list)
     values: list = field(default_factory=list)
     vectors: list = field(default_factory=list)
-    a0: Optional[float] = None
-    a1: Optional[float] = None
+    a0: float | None = None
+    a1: float | None = None
     extras: dict = field(default_factory=dict)
     _transf_beam: int = 1
     _transf_col: int = 2
     nonstructural_elements: list[Asset] = field(default_factory=list)
     contents: list[Asset] = field(default_factory=list)
-    pushover_abs_path: Optional[str] = None
+    pushover_abs_path: str | None = None
     _pushover_view = None
 
     def __post_init__(self):
@@ -738,7 +736,6 @@ class FiniteElementModel(ABC, YamlMixin):
     def cytoscape(self) -> tuple[list[dict], list[dict]]:
         ASSET_Y_OFFSET = 25
         SCALE = 100
-        print(self.contents[0])
         fig = [
             {
                 "data": {
@@ -1232,14 +1229,26 @@ class BilinFrame(FiniteElementModel):
 
 
 @dataclass
-class IMKFrame(BilinFrame):
+class IMKFrame(FiniteElementModel):
     done: bool = False
 
     def __str__(self) -> str:
         s = super().__str__()
         s += "\n"
-        s += "source modal.tcl\n"
+        # s += "source modal.tcl\n"
         return s
+
+    # @property
+    # def columnIDs(self) -> list[int]:
+    #     return
+
+    # @property
+    # def beamIDs(self) -> list[int]:
+    #     return
+
+    # @property
+    # def fixedIDs(self) -> list[int]:
+    #     return
 
     @property
     def elements_str(self) -> str:
@@ -1259,8 +1268,7 @@ class IMKFrame(BilinFrame):
 
     def __post_init__(self):
         self.model = self.__class__.__name__
-        self.nodes = [Node(**n) for n in self.nodes]
-        self.elements = [ElementFactory(**e) for e in self.elements]
+        super().__post_init__()
         if not self.done:
             nodes = []
             next_id = self.nodes[-1].id + 1
@@ -1303,7 +1311,6 @@ class IMKFrame(BilinFrame):
             self.nodes += nodes
             elements = []
             elem_id = 1
-            print(nodes_by_id)
             for elem in self.elements:
                 i, j, bay, st, fl = elem.i, elem.j, elem.bay, elem.storey, elem.floor
                 if elem.type == ElementTypes.BEAM.value:
@@ -1328,9 +1335,14 @@ class IMKFrame(BilinFrame):
                     bay=bay,
                     floor=fl,
                 )
+                data_imk1 = dict(i=i, j=imk_i)
+                d = {**elem.to_dict, **data_imk1}
+                print(d)
+                # imk1 = IMKSpring.from_bilin(**d)
                 elem_id += 1
                 elements.append(imk1)
                 Ic = imk1.Ic
+                print(imk1.radius)
                 bc = BeamColumn(
                     id=elem_id,
                     radius=imk1.radius,
