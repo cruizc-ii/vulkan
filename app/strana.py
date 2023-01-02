@@ -482,45 +482,9 @@ class Recorder:
         return str(self)
 
     @property
-    def node_recorders(self) -> str:
-        """TODO; add -time to .envelope to see the pseudotime that the min/max happened in"""
-        # nodeIDs = ""  # per OpenSees docs, it defaults to all nodes in model.
-        s = f"set abspath {self.abspath}\n"
-        for edp in OPENSEES_EDPs:
-            s += f"recorder Node            -file $abspath/node-{edp}.csv -time -dof 1 2 3 {edp}\n"
-            s += f"recorder Node            -file $abspath/mass-{edp}.csv -time -node {self.fem.massIDs_str} -dof 1 {edp}\n"
-            s += f"recorder NodeEnvelope    -file $abspath/node-{edp}-envelope.csv -dof 1 2 3 {edp}\n"
-            s += f"recorder NodeEnvelope    -file $abspath/mass-{edp}-envelope.csv -node {self.fem.massIDs_str} -dof 1 {edp}\n"
-            # -time will prepend a column with the step that node_i achieved envelope at dof_j
-
-        fixed_nodes = self.fem.fixedIDs_str
-        for reaction, dof in OPENSEES_REACTION_EDPs:
-            s += f"recorder Node            -file $abspath/{reaction}.csv -time -node {fixed_nodes} -dof {dof} reaction\n"
-            s += f"recorder NodeEnvelope    -file $abspath/{reaction}-envelope.csv -node {fixed_nodes} -dof {dof} reaction\n"
-
-        s += f"recorder Node            -file $abspath/roof-displacements.csv -time -node {self.fem.roofID} -dof 1 disp\n"
-        s += f"recorder NodeEnvelope            -file $abspath/roof-displacements-env.csv -time -node {self.fem.roofID} -dof 1 disp\n"
-        s += f"recorder Node            -file $abspath/roof-accels.csv -time -node {self.fem.roofID} -dof 1 accel\n"
-        s += f"recorder NodeEnvelope            -file $abspath/roof-accels-env.csv -time -node {self.fem.roofID} -dof 1 accel\n"
-
-        storey_node_ids = self.fem.mass_nodes
-        iNodes = "0 " + Node.string_ids_for_list(
-            storey_node_ids[:-1]
-        )  # 1st and next to last storeys
-        jNodes = Node.string_ids_for_list(storey_node_ids)
-        s += f"recorder Drift           -file $abspath/drifts.csv -time -iNode {iNodes} -jNode {jNodes} -dof 1 -perpDirn 2\n"
-        roofID = self.fem.roofID
-        s += f"recorder Drift           -file $abspath/roof-drift.csv -time -iNode {fixed_nodes[0]} -jNode {roofID} -dof 1 -perpDirn 2\n"
-
-        return s
-
-    @property
-    def element_recorders(self) -> str:
-        return self.fem.element_recorders
-
-    @property
     def recorders(self) -> str:
-        return self.node_recorders + self.element_recorders
+        s = f"set abspath {self.abspath}\n"
+        return s + self.fem.node_recorders + self.fem.element_recorders
 
     @property
     def elastic_static_solvers(self) -> str:
@@ -596,8 +560,9 @@ class PushoverRecorder(GravityRecorderMixin):
     def __str__(self) -> str:
         s = str(self.fem)
         s += self.gravity_str
-        s += self.pushover_str + self.recorders
-        s += self.extra_recorders
+        s += self.pushover_str
+        s += self.recorders
+        s += self.base_shear_recorders
         s += self.pushover_solvers
         return s
 
@@ -610,7 +575,7 @@ class PushoverRecorder(GravityRecorderMixin):
         return analysis_str
 
     @property
-    def extra_recorders(self) -> str:
+    def base_shear_recorders(self) -> str:
         fixed_nodes = self.fem.fixedIDs_str
         s = ""
         s += f"recorder NodeEnvelope -file $abspath/base-shear-env.csv -node {fixed_nodes} -dof 1 reaction\n"

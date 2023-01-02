@@ -376,6 +376,15 @@ class FiniteElementModel(ABC, YamlMixin):
     pushover_abs_path: str | None = None
     _pushover_view = None
 
+    def __str__(self) -> str:
+        h = "#!/usr/local/bin/opensees\n"
+        h += f"# {self.model}, storeys {self.num_storeys}, bays {self.num_bays}\n"
+        h += "wipe\n"
+        h += "model BasicBuilder -ndm 2 -ndf 3\n"
+        t = f"geomTransf Linear {self._transf_beam}\n"
+        t += f"geomTransf PDelta {self._transf_col}\n"
+        return h + t + self.nodes_str + self.elements_str
+
     def __post_init__(self):
         from app.occupancy import BuildingOccupancy
 
@@ -560,14 +569,6 @@ class FiniteElementModel(ABC, YamlMixin):
         }
         summaries.append(elements_summary)
         return summaries
-
-    def __str__(self) -> str:
-        h = "#!/usr/local/bin/opensees\n"
-        h += "wipe\n"
-        h += "model BasicBuilder -ndm 2 -ndf 3\n"
-        t = f"geomTransf Linear {self._transf_beam}\n"
-        t += f"geomTransf PDelta {self._transf_col}\n"
-        return h + t + self.nodes_str + self.elements_str
 
     @property
     def elements_str(self) -> str:
@@ -1026,6 +1027,39 @@ class FiniteElementModel(ABC, YamlMixin):
         return [c.radius for c in self.beams]
 
     @property
+    def node_recorders(self) -> str:
+        """TODO; add -time to .envelope to see the pseudotime that the min/max happened in"""
+        s = ""
+        # nodeIDs = ""  # per OpenSees docs, it defaults to all nodes in model.
+        for edp in OPENSEES_EDPs:
+            s += f"recorder Node            -file $abspath/node-{edp}.csv -time -dof 1 2 3 {edp}\n"
+            s += f"recorder Node            -file $abspath/mass-{edp}.csv -time -node {self.massIDs_str} -dof 1 {edp}\n"
+            s += f"recorder NodeEnvelope    -file $abspath/node-{edp}-envelope.csv -dof 1 2 3 {edp}\n"
+            s += f"recorder NodeEnvelope    -file $abspath/mass-{edp}-envelope.csv -node {self.massIDs_str} -dof 1 {edp}\n"
+            # -time will prepend a column with the step that node_i achieved envelope at dof_j
+
+        fixed_nodes = self.fixedIDs_str
+        for reaction, dof in OPENSEES_REACTION_EDPs:
+            s += f"recorder Node            -file $abspath/{reaction}.csv -time -node {fixed_nodes} -dof {dof} reaction\n"
+            s += f"recorder NodeEnvelope    -file $abspath/{reaction}-envelope.csv -node {fixed_nodes} -dof {dof} reaction\n"
+
+        s += f"recorder Node            -file $abspath/roof-displacements.csv -time -node {self.roofID} -dof 1 disp\n"
+        s += f"recorder NodeEnvelope            -file $abspath/roof-displacements-env.csv -time -node {self.roofID} -dof 1 disp\n"
+        s += f"recorder Node            -file $abspath/roof-accels.csv -time -node {self.roofID} -dof 1 accel\n"
+        s += f"recorder NodeEnvelope            -file $abspath/roof-accels-env.csv -time -node {self.roofID} -dof 1 accel\n"
+
+        storey_node_ids = self.mass_nodes
+        iNodes = "0 " + Node.string_ids_for_list(
+            storey_node_ids[:-1]
+        )  # 1st and next to last storeys
+        jNodes = Node.string_ids_for_list(storey_node_ids)
+        s += f"recorder Drift           -file $abspath/drifts.csv -time -iNode {iNodes} -jNode {jNodes} -dof 1 -perpDirn 2\n"
+        roofID = self.roofID
+        s += f"recorder Drift           -file $abspath/roof-drift.csv -time -iNode {fixed_nodes[0]} -jNode {roofID} -dof 1 -perpDirn 2\n"
+
+        return s
+
+    @property
     def element_recorders(self) -> str:
         # elementIDs = ""  # per OpenSees docs, it defaults to all elements in model.
         # WARNING; when runnning without IDS
@@ -1288,15 +1322,9 @@ class BilinFrame(FiniteElementModel):
 class IMKFrame(FiniteElementModel):
     done: bool = False
 
-    def __str__(self) -> str:
-        s = super().__str__()
-        s += "\n"
-        # s += "source modal.tcl\n"
-        return s
-
     @property
     def fixedIDs(self):
-        return [n for n in self.nodes if n.base]
+        return [n.id for n in self.nodes if n.base]
 
     @property
     def nodes_str(self) -> str:
@@ -1308,6 +1336,25 @@ class IMKFrame(FiniteElementModel):
             ]
             for st_node in st_nodes:
                 s += f"equalDOF {mass_node.id} {st_node.id} 1\n"
+        return s
+
+    @property
+    def springs(self):
+        return [
+            e
+            for e in self.elements
+            if e.type == ElementTypes.SPRING_BEAM.value
+            or e.type == ElementTypes.SPRING_COLUMN.value
+        ]
+
+    @property
+    def springs_str(self) -> str:
+        return " ".join([str(c) for c in self.springs])
+
+    @property
+    def elements_str(self) -> str:
+        s = super().elements_str
+        s += self.springs_str
         return s
 
     def __post_init__(self):

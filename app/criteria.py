@@ -273,13 +273,14 @@ class DesignCriterionFactory:
         ForceBasedPre.__name__: ForceBasedPre,
         # CodeMassesPre.__name__: CodeMassesPre,
         CDMX2017Q1.__name__: CDMX2017Q1,
-        # CDMX2017Q4.__name__: CDMX2017Q4,
-        # CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
+        CDMX2017Q4.__name__: CDMX2017Q4,
+        CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
     }
 
     default_seeds = {
         CDMX2017Q1.__name__: CDMX2017Q1,
-        # CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
+        CDMX2017Q4.__name__: CDMX2017Q4,
+        CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
     }
 
     DEFAULT: str = CDMX2017Q1.__name__
