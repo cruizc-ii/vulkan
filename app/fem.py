@@ -7,6 +7,11 @@ from app.assets import (
     RiskModelFactory,
     Asset,
 )
+from app.utils import (
+    OPENSEES_ELEMENT_EDPs,
+    OPENSEES_EDPs,
+    OPENSEES_REACTION_EDPs,
+)
 from dataclasses import dataclass, field
 import numpy as np
 from pathlib import Path
@@ -20,6 +25,8 @@ from app.concrete import RectangularConcreteColumn
 class ElementTypes(Enum):
     BEAM = "beam"
     COLUMN = "column"
+    SPRING_BEAM = "spring_beam"
+    SPRING_COLUMN = "spring_column"
 
 
 class FEMValidationException(Exception):
@@ -207,7 +214,6 @@ class ElasticBeamColumn(BeamColumn):
     def get_and_set_net_worth(self) -> float:
         """
         this is where size, steel % matters
-
         regression: prices per m2 of slab as function of thickness
         price_m2 = 7623 * thickness
         """
@@ -1019,6 +1025,32 @@ class FiniteElementModel(ABC, YamlMixin):
     def beam_radii(self) -> list[float]:
         return [c.radius for c in self.beams]
 
+    @property
+    def element_recorders(self) -> str:
+        # elementIDs = ""  # per OpenSees docs, it defaults to all elements in model.
+        # WARNING; when runnning without IDS
+        # we get a segfault [1]    39319 segmentation fault  opensees model.tcl
+        # IDK why. so bad :(.. I really need to program my own in python numba.
+        s = ""
+        for edp in OPENSEES_ELEMENT_EDPs:
+            for ele_type, ids in [
+                ("columns", self.columnIDs_str),
+                ("beams", self.beamIDs_str),
+            ]:
+                s += f"recorder Element         -file $abspath/{ele_type}.csv -ele {ids} -time {edp} \n"
+                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope.csv -ele {ids} {edp} \n"
+        for edp in OPENSEES_ELEMENT_EDPs:
+            for ele_type, elems_by_st in [
+                ("columns", self.columnIDs_by_storey),
+                ("beams", self.beamIDs_by_storey),
+            ]:
+                for st, elems in enumerate(elems_by_st, 1):
+                    ids = " ".join([str(id) for id in elems])
+                    s += f"recorder Element         -file $abspath/{ele_type}-{st}.csv -ele {ids} -time {edp} \n"
+                    s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope.csv -ele {ids} {edp} \n"
+
+        return s
+
 
 @dataclass
 class PlainFEM(FiniteElementModel):
@@ -1227,6 +1259,30 @@ class BilinFrame(FiniteElementModel):
         formatted = string % matcher
         return formatted
 
+    @property
+    def element_recorders(self) -> str:
+        s = super().element_recorders
+        for ele_type, ids in [
+            ("columns", self.columnIDs_str),
+            ("beams", self.beamIDs_str),
+        ]:
+            s += f"recorder Element         -file $abspath/{ele_type}-a.csv -ele {ids} -time section 1 force \n"
+            s += f"recorder Element         -file $abspath/{ele_type}-b.csv -ele {ids} -time section 5 force \n"
+            s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope-a.csv -ele {ids} section 1 force \n"
+            s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope-b.csv -ele {ids} section 5 force \n"
+
+        for ele_type, elems_by_st in [
+            ("columns", self.columnIDs_by_storey),
+            ("beams", self.beamIDs_by_storey),
+        ]:
+            for st, elems in enumerate(elems_by_st, 1):
+                ids = " ".join([str(id) for id in elems])
+                s += f"recorder Element         -file $abspath/{ele_type}-{st}-a.csv -ele {ids} -time section 1 force \n"
+                s += f"recorder Element         -file $abspath/{ele_type}-{st}-b.csv -ele {ids} -time section 5 force \n"
+                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope-a.csv -ele {ids} section 1 force \n"
+                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope-b.csv -ele {ids} section 5 force \n"
+        return s
+
 
 @dataclass
 class IMKFrame(FiniteElementModel):
@@ -1249,6 +1305,10 @@ class IMKFrame(FiniteElementModel):
     # @property
     # def fixedIDs(self) -> list[int]:
     #     return
+
+    # @property
+    # def beams(self):
+    #     return [e for e in self.elements if e.type == ElementTypes.BEAM.value]
 
     @property
     def elements_str(self) -> str:
@@ -1318,11 +1378,13 @@ class IMKFrame(FiniteElementModel):
                         nodes_by_id[i].pop("beam_left"),
                         nodes_by_id[j].pop("beam_right"),
                     )
+                    type = ElementTypes.SPRING_BEAM.value
                 else:
                     imk_i, imk_j = (
                         nodes_by_id[i].pop("col_down"),
                         nodes_by_id[j].pop("col_up"),
                     )
+                    type = ElementTypes.SPRING_COLUMN.value
                 imk1 = IMKSpring(
                     id=elem_id,
                     i=i,
@@ -1334,6 +1396,7 @@ class IMKFrame(FiniteElementModel):
                     storey=st,
                     bay=bay,
                     floor=fl,
+                    type=type,
                 )
                 data_imk1 = dict(i=i, j=imk_i)
                 d = {**elem.to_dict, **data_imk1}
@@ -1341,14 +1404,14 @@ class IMKFrame(FiniteElementModel):
                 # imk1 = IMKSpring.from_bilin(**d)
                 elem_id += 1
                 elements.append(imk1)
-                Ic = imk1.Ic
+                Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1000
                 print(imk1.radius)
                 bc = BeamColumn(
                     id=elem_id,
                     radius=imk1.radius,
                     i=imk_i,
                     j=imk_j,
-                    Ix=Ic if elem.type == ElementTypes.COLUMN.value else 1000,
+                    Ix=Ic,
                     E=elem.E,
                     storey=st,
                     bay=bay,
@@ -1368,6 +1431,7 @@ class IMKFrame(FiniteElementModel):
                     storey=st,
                     bay=bay,
                     floor=fl,
+                    type=type,
                 )
                 elements.append(imk2)
                 elem_id += 1

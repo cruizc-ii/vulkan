@@ -10,7 +10,6 @@ from app.utils import (
     AnalysisTypes,
     NamedYamlMixin,
     OPENSEES_EDPs,
-    OPENSEES_ELEMENT_EDPs,
     OPENSEES_REACTION_EDPs,
     IDAResultsDataFrame,
     SummaryEDP,
@@ -32,6 +31,14 @@ MODELS_DIR = ROOT_DIR / "models"
 STRANA_DIR = MODELS_DIR / "strana"
 
 set_option("plotting.backend", "plotly")
+
+
+class HazardNotFoundException(FileNotFoundError):
+    pass
+
+
+class SpecNotFoundException(FileNotFoundError):
+    pass
 
 
 @dataclass
@@ -452,6 +459,16 @@ class Recorder:
     model_str: str | None = None
     view: StructuralResultView | None = None
 
+    """
+    TODO@improvements:
+    it might be better to register a recorder for every string appended
+    so when I load strana again... I have access to what it supposedly saved to db
+    and don't have to write paths manually
+    """
+
+    def __str__(self) -> str:
+        return str(self.fem) + self.recorders
+
     def __post_init__(self) -> None:
         os.makedirs(self.abspath, exist_ok=True)
         self.view = StructuralResultView(self.abspath)
@@ -463,16 +480,6 @@ class Recorder:
     @property
     def tcl_string(self) -> str:
         return str(self)
-
-    def __str__(self) -> str:
-        return str(self.fem) + self.recorders
-
-    """
-    TODO@improvements:
-    it might be better to register a recorder for every string appended
-    so when I load strana again... I have access to what it supposedly saved to db
-    and don't have to write paths manually
-    """
 
     @property
     def node_recorders(self) -> str:
@@ -509,35 +516,11 @@ class Recorder:
 
     @property
     def element_recorders(self) -> str:
-        # elementIDs = ""  # per OpenSees docs, it defaults to all elements in model.
-        # WARNING; when runnning without IDS
-        # we get a segfault [1]    39319 segmentation fault  opensees model.tcl
-        # IDK why. so bad :(.. I really need to program my own in python numba.
-        s = ""
-        for edp in OPENSEES_ELEMENT_EDPs:
-            for ele_type, ids in [
-                ("columns", self.fem.columnIDs_str),
-                ("beams", self.fem.beamIDs_str),
-            ]:
-                s += f"recorder Element         -file $abspath/{ele_type}.csv -ele {ids} -time {edp} \n"
-                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope.csv -ele {ids} {edp} \n"
-        for edp in OPENSEES_ELEMENT_EDPs:
-            for ele_type, elems_by_st in [
-                ("columns", self.fem.columnIDs_by_storey),
-                ("beams", self.fem.beamIDs_by_storey),
-            ]:
-                for st, elems in enumerate(elems_by_st, 1):
-                    ids = " ".join([str(id) for id in elems])
-                    s += f"recorder Element         -file $abspath/{ele_type}-{st}.csv -ele {ids} -time {edp} \n"
-                    s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope.csv -ele {ids} {edp} \n"
-
-        return s
+        return self.fem.element_recorders
 
     @property
     def recorders(self) -> str:
-        s = self.node_recorders
-        s += self.element_recorders
-        return s
+        return self.node_recorders + self.element_recorders
 
     @property
     def elastic_static_solvers(self) -> str:
@@ -581,8 +564,7 @@ class GravityRecorderMixin(Recorder):
 class StaticRecorder(GravityRecorderMixin):
     forces_per_storey: list[float] | None = None
 
-    # deformation.. is this curvature?
-    # recorder Element -file ${gravity_results}/col_moments_th.out -time -ele 11 plasticDeformation
+    # recorder Element -file ${gravity_results}/col_moments_th.out -time -ele 11 plasticDeformation; is this curvature?
 
     def __str__(self) -> str:
         s = str(self.fem) + self.gravity_str
@@ -617,30 +599,6 @@ class PushoverRecorder(GravityRecorderMixin):
         s += self.pushover_str + self.recorders
         s += self.extra_recorders
         s += self.pushover_solvers
-        return s
-
-    @property
-    def element_recorders(self) -> str:
-        s = super().element_recorders
-        for ele_type, ids in [
-            ("columns", self.fem.columnIDs_str),
-            ("beams", self.fem.beamIDs_str),
-        ]:
-            s += f"recorder Element         -file $abspath/{ele_type}-a.csv -ele {ids} -time section 1 force \n"
-            s += f"recorder Element         -file $abspath/{ele_type}-b.csv -ele {ids} -time section 5 force \n"
-            s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope-a.csv -ele {ids} section 1 force \n"
-            s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope-b.csv -ele {ids} section 5 force \n"
-        for ele_type, elems_by_st in [
-            ("columns", self.fem.columnIDs_by_storey),
-            ("beams", self.fem.beamIDs_by_storey),
-        ]:
-            for st, elems in enumerate(elems_by_st, 1):
-                ids = " ".join([str(id) for id in elems])
-                s += f"recorder Element         -file $abspath/{ele_type}-{st}-a.csv -ele {ids} -time section 1 force \n"
-                s += f"recorder Element         -file $abspath/{ele_type}-{st}-b.csv -ele {ids} -time section 5 force \n"
-                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope-a.csv -ele {ids} section 1 force \n"
-                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope-b.csv -ele {ids} section 5 force \n"
-
         return s
 
     @property
@@ -712,26 +670,26 @@ class KRecorder(Recorder):
 
     @property
     def stiffness_matrix_solvers(self) -> str:
-        string = "constraints Transformation \n"
-        string += "numberer Plain \n"
-        string += "system FullGeneral \n"
-        string += "test NormDispIncr 1.0e-05 25 5 \n"
-        string += "algorithm Newton \n"
-        string += "integrator LoadControl 0.1 1 \n"
-        string += "analysis Static \n"
-        string += "initialize \n"
-        string += "analyze 1 \n"
-        string += f"printA -file {self.path / self.view._K_STATIC_NAME}\n"
-        string += "analyze 9 \n"
-        string += "remove recorders \n"
-        string += "loadConst -time 0.0 \n"
+        s = "constraints Transformation \n"
+        s += "numberer Plain \n"
+        s += "system FullGeneral \n"
+        s += "test NormDispIncr 1.0e-05 25 5 \n"
+        s += "algorithm Newton \n"
+        s += "integrator LoadControl 0.1 1 \n"
+        s += "analysis Static \n"
+        s += "initialize \n"
+        s += "analyze 1 \n"
+        s += f"printA -file {self.path / self.view._K_STATIC_NAME}\n"
+        s += "analyze 9 \n"
+        s += "remove recorders \n"
+        s += "loadConst -time 0.0 \n"
         # string += "wipeAnalysis \n"
-        return string
+        return s
 
 
 @dataclass
 class EigenRecorder(Recorder):
-    _cache: dict = None
+    _cache: dict | None = None
 
     def __str__(self) -> str:
         """add -time to envelope to get"""
@@ -982,14 +940,6 @@ class StructuralAnalysis:
             gravity_loads=gravity_loads,
         )
         return self.async_run(recorder=recorder)
-
-
-class HazardNotFoundException(FileNotFoundError):
-    pass
-
-
-class SpecNotFoundException(FileNotFoundError):
-    pass
 
 
 @dataclass
