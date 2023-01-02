@@ -985,7 +985,7 @@ class IDA(NamedYamlMixin):
         self,
         *,
         run_id: str,
-        results_dir: Path = None,
+        results_path: Path = None,
         fem_ix: int = -1,
         period_ix: int = -1,
     ) -> list[str]:
@@ -993,7 +993,7 @@ class IDA(NamedYamlMixin):
         does the standard record, intensity run for the default fem design
         """
         fem = self._design.fems[fem_ix]
-        modal_view = fem.get_and_set_eigen_results(results_dir)
+        modal_view = fem.get_and_set_eigen_results(results_path)
         period = modal_view.periods[period_ix]
         inputs = []
         for rix, record in enumerate(self._hazard.records, start=1):
@@ -1001,7 +1001,7 @@ class IDA(NamedYamlMixin):
                 zip(*self._intensities), start=1
             ):
                 intensity_str_precision = f"{intensity:.6f}"
-                outdir = results_dir / run_id / record.name / intensity_str_precision
+                outdir = results_path / run_id / record.name / intensity_str_precision
                 results_to_meters = 1.0 / 100
                 scale_factor = results_to_meters * record.get_scale_factor(
                     period=period, intensity=intensity
@@ -1040,7 +1040,7 @@ class IDA(NamedYamlMixin):
             run_id = str(uuid())
 
         inputs = self.generate_input_strings(
-            run_id=run_id, results_dir=results_dir, fem_ix=fem_ix, period_ix=period_ix
+            run_id=run_id, results_path=results_dir, fem_ix=fem_ix, period_ix=period_ix
         )
         dataframe_records = []
         views = []
@@ -1082,7 +1082,7 @@ class IDA(NamedYamlMixin):
 
     def run(
         self,
-        results_dir: Path = None,
+        results_path: Path = None,
         run_id: str = None,
         fem_ix: int = -1,
         period_ix: int = 0,
@@ -1091,7 +1091,7 @@ class IDA(NamedYamlMixin):
             run_id = str(uuid())
 
         fem = self._design.fems[fem_ix]
-        modal_view = fem.get_and_set_eigen_results(results_dir)
+        modal_view = fem.get_and_set_eigen_results(results_path)
         period = modal_view.periods[period_ix]
 
         dataframe_records = []
@@ -1109,7 +1109,7 @@ class IDA(NamedYamlMixin):
                     f"record {rix} of {num_records} at intensity {iix} of {num_intensities} ({intensity:.2f}g) -- {complete_pct:.0f} % done."
                 )
                 intensity_str_precision = f"{intensity:.8f}"
-                outdir = results_dir / run_id / record.name / intensity_str_precision
+                outdir = results_path / run_id / record.name / intensity_str_precision
                 results_to_meters = 1.0 / 100
                 scale_factor = results_to_meters * record.get_scale_factor(
                     period=period, intensity=intensity

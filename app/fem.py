@@ -654,16 +654,15 @@ class FiniteElementModel(ABC, YamlMixin):
         self._pushover_view = view
         return view
 
+    @property
     def pushover_figs(
         self,
-        results_path: Path,
-        drift: float = 0.05,
-        force=False,
+        # results_path: Path,
+        # drift: float = 0.05,
+        # force=False,
     ):
-        from app.strana import StructuralResultView
-
-        if force or not self._pushover_view:
-            self.pushover(results_path=results_path, drift=drift)
+        # if force or not self._pushover_view:
+        #     self.pushover(results_path=results_path, drift=drift)
 
         df, ndf = self.pushover_dfs
         cols = df[df.columns.difference(["u"])].columns
@@ -681,8 +680,8 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @property
     def pushover_dfs(self) -> pd.DataFrame:
-        if not self._pushover_view:
-            raise Exception("You must run a pushover first!")
+        # if not self._pushover_view:
+        #     raise Exception("You must run a pushover first!")
         view = self._pushover_view
         Vb = view.base_shear()
         Vb = -Vb
@@ -1129,8 +1128,8 @@ class ShearModel(FiniteElementModel):
     def storey_radii(self) -> list[float]:
         return self.column_radii
 
-    def get_and_set_eigen_results(self, path: Path):
-        view = super().get_and_set_eigen_results(path)
+    def get_and_set_eigen_results(self, results_path: Path):
+        view = super().get_and_set_eigen_results(results_path)
         Phi = np.array(view.vectors)
         values = view.values
         N = len(values)

@@ -349,7 +349,7 @@ class IDATest(TestCase):
             step=0.1,
         )
         results_df = ida.run(
-            results_dir=self.IDA_TESTS,
+            results_path=self.IDA_TESTS,
             run_id="__single_run",
         )
         self.assertEqual(

@@ -78,12 +78,10 @@ with st.sidebar:
         state.hazard_abspath
         buildings = find_files(DESIGN_DIR)
         file = st.selectbox("select a building", options=buildings)
-
         name = st.text_input(
             "give it a name",
             value=file.split(".")[0] if file else "",
         )
-
         if file:
             state.design_abspath = DESIGN_DIR / file
             design = ReinforcedConcreteFrame.from_file(state.design_abspath)
@@ -180,7 +178,8 @@ with st.sidebar:
                     occupancy=occupancy,
                     design_criteria=[design_criteria],
                 )
-                design.force_design(DESIGN_DIR, pushover=True)
+                design.force_design(DESIGN_DIR)
+                design.fem.pushover(DESIGN_DIR / design.name)
                 design.to_file(DESIGN_DIR)
                 state.design_abspath = DESIGN_DIR / design.name_yml
             st.success("design successful")
@@ -499,8 +498,9 @@ if state.module == 1:
             st.dataframe(design.fem.eigen_df)
 
         with st.expander("capacity"):
-            path = DESIGN_DIR / design.name
-            fig, nfig = design.fem.pushover_figs(path)
+            # path = DESIGN_DIR / design.name
+            # fig, nfig = design.fem.pushover_figs(path)
+            fig, nfig = design.fem.pushover_figs
             col1, col2 = st.columns(2)
             col1.plotly_chart(fig)
             col2.plotly_chart(nfig)

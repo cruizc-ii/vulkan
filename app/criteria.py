@@ -36,11 +36,11 @@ class DesignNotValidException(Exception):
 
 @dataclass
 class DesignCriterion(ABC):
-    specification: Optional["BuildingSpecification"] = None  # noqa: F821
-    fem: Optional[FiniteElementModel] = None
+    fem: FiniteElementModel
+    specification: "BuildingSpecification"  # noqa: F821
 
     @abstractmethod
-    def run(self, results_dir: Path, *args, **kwargs) -> FiniteElementModel:
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         """raise DesignNotValid error for flow control."""
         pass
 
@@ -48,7 +48,7 @@ class DesignCriterion(ABC):
 class EulerShearPre(DesignCriterion):
     EULER_LAMBDA = 25
 
-    def run(self, results_dir: Path, *args, **kwargs) -> ShearModel:
+    def run(self, results_path: Path, *args, **kwargs) -> ShearModel:
         """
         RC columns have a slenderness ratio LAMBDA of about 30-70.
         Mexican code recommends <35 to not be considered slender.
@@ -65,7 +65,7 @@ class EulerShearPre(DesignCriterion):
                 col.Ix = float(Ix)
                 col.radius = float(radius)
 
-        results = mdof.get_and_set_eigen_results(path=results_dir)
+        results = mdof.get_and_set_eigen_results(results_path=results_path)
         mdof.extras["moments"] = results.Mb.tolist()
         return mdof
 
@@ -79,7 +79,7 @@ class CodeMassesPre(DesignCriterion):
     CODE_UNIFORM_LOADS_kPA = 10.0  # 1 t/m2
     SLAB_AREA_PERCENTAGE = 0.5  # part of the slab mass goes to this frame's beams
 
-    def run(self, results_dir, *args, **kwargs) -> FiniteElementModel:
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = PlainFEM.from_spec(self.specification)
         masses = np.array(
             [
@@ -96,7 +96,7 @@ class CodeMassesPre(DesignCriterion):
         self.specification.uniform_beam_loads_by_mass = [
             GRAVITY * mass / self.specification.width for mass in masses.tolist()
         ]
-        fem.get_and_set_eigen_results(results_path=results_dir)
+        fem.get_and_set_eigen_results(results_path=results_path)
         return fem
 
 
@@ -111,7 +111,7 @@ class LoeraPre(DesignCriterion):
     _COLUMN_CRACKED_INERTIAS = 1.0
     _BEAM_CRACKED_INERTIAS = 1.0
 
-    def run(self, results_dir, *args, **kwargs) -> FiniteElementModel:
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = PlainFEM.from_spec(self.specification)
         weights = np.array(self.fem.cumulative_weights)
         cols_st = fem.columns_by_storey
@@ -135,7 +135,7 @@ class LoeraPre(DesignCriterion):
                 )
                 beam.radius = float(radius * self.BEAM_TO_COLUMN_RATIO)
 
-        fem.get_and_set_eigen_results(results_dir)
+        fem.get_and_set_eigen_results(results_path)
         return fem
 
 
@@ -144,7 +144,7 @@ class ChopraPeriodsPre(DesignCriterion):
     MAX_ITERATIONS = 10
     building_code: Optional[BuildingCode] = None
 
-    def run(self, results_dir) -> FiniteElementModel:
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         """
         Chopra & Goel (2000) Building period formulas for estimating seismic displacements
         concrete T = 0.028 H**0.8 where H is in feet (this is almost the same as num_storeys/10 surprisingly!)
@@ -172,7 +172,9 @@ class ChopraPeriodsPre(DesignCriterion):
 
         while abs(err) > self.period_tolerance_percentage:
             put_mass(fem.mass_nodes, masses.tolist())
-            model_period = fem.get_and_set_eigen_results(path=results_dir).periods[0]
+            model_period = fem.get_and_set_eigen_results(
+                results_path=results_path
+            ).periods[0]
             err = (fundamental_period - model_period) / fundamental_period
             iteration += 1
             if abs(err) <= self.period_tolerance_percentage:
@@ -193,55 +195,52 @@ class ForceBasedPre(DesignCriterion):
     in stiffnesses (element dimensions) and masses (weights)
     """
 
-    def run(self, results_dir: Path, *args, **kwargs) -> FiniteElementModel:
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = self.fem
-        for index, criterion in enumerate(
+        for index, _class in enumerate(
             [
                 CodeMassesPre,
                 LoeraPre,
             ]
         ):
-            criterion: DesignCriterion = criterion(
+            instance: DesignCriterion = _class(
                 specification=self.specification, fem=fem
             )
-            filepath = results_dir / str(index)
-            fem = criterion.run(results_dir=filepath, *args, **kwargs)
+            filepath = results_path / _class.__name__
+            fem = instance.run(results_path=filepath, *args, **kwargs)
         return fem
 
 
-class ShearRSA(DesignCriterion):
-    def run(self, results_dir, *args, **kwargs) -> FiniteElementModel:
-        if not self.fem:
-            raise Exception("must pass a fem instance")
-        data = self.fem.to_dict
-        fem = ShearModel(**data)
-        results = fem.get_and_set_eigen_results(results_dir)
-        S = results.S
-        spectra: Spectra = self.specification._design_spectra[self.__class__.__name__]
-        As = np.array(spectra.get_ordinates_for_periods(fem.periods))
-        forces = S.dot(np.eye(len(As)) * As)
-        peak_forces = np.sqrt(np.sum(forces**2, axis=1))
-        fem.extras["S"] = S
-        fem.extras["forces"] = forces.tolist()
-        fem.extras["design_forces"] = peak_forces.tolist()
-        return fem
+# class ShearRSA(DesignCriterion):
+#     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
+#         fem = ShearModel(**self.fem.to_dict)
+#         results = fem.get_and_set_eigen_results(results_path)
+#         S = results.S
+#         spectra: Spectra = self.specification._design_spectra[self.__class__.__name__]
+#         As = np.array(spectra.get_ordinates_for_periods(fem.periods))
+#         forces = S.dot(np.eye(len(As)) * As)
+#         peak_forces = np.sqrt(np.sum(forces**2, axis=1))
+#         fem.extras["S"] = S
+#         fem.extras["forces"] = forces.tolist()
+#         fem.extras["design_forces"] = peak_forces.tolist()
+#         return fem
 
 
 @dataclass
 class CDMX2017Q1(DesignCriterion):
     Q: int = 1
 
-    def run(self, results_dir, *args, **kwargs) -> FiniteElementModel:
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         from app.strana import RSA
 
         fem = PlainFEM.from_spec(self.specification)
         criterion = ForceBasedPre(specification=self.specification, fem=fem)
-        designed_fem = criterion.run(results_dir=results_dir, *args, **kwargs)
+        designed_fem = criterion.run(results_path=results_path, *args, **kwargs)
 
         data = designed_fem.to_dict
         fem = ShearModel(**data)
         code = CDMXBuildingCode(Q=self.Q)
-        strana = RSA(results_path=results_dir, fem=fem, code=code)
+        strana = RSA(results_path=results_path, fem=fem, code=code)
         design_moments, peak_shears, cs = strana.srss()
 
         fem = BilinFrame.from_elastic(
@@ -260,29 +259,27 @@ class CDMX2017Q4(CDMX2017Q1):
 
 @dataclass
 class CDMX2017Q1IMK(CDMX2017Q1):
-    def run(self, results_dir, *args, **kwargs) -> FiniteElementModel:
-        fem = super().run(results_dir=results_dir, *args, **kwargs)
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
+        fem = super().run(results_path=results_path, *args, **kwargs)
         fem = IMKFrame(**fem.to_dict)
         return fem
 
 
 class DesignCriterionFactory:
     seeds = {
-        EulerShearPre.__name__: EulerShearPre,
-        LoeraPre.__name__: LoeraPre,
-        ChopraPeriodsPre.__name__: ChopraPeriodsPre,
+        # EulerShearPre.__name__: EulerShearPre,
+        # LoeraPre.__name__: LoeraPre,
+        # ChopraPeriodsPre.__name__: ChopraPeriodsPre,
         ForceBasedPre.__name__: ForceBasedPre,
-        CodeMassesPre.__name__: CodeMassesPre,
-        ShearRSA.__name__: ShearRSA,
+        # CodeMassesPre.__name__: CodeMassesPre,
         CDMX2017Q1.__name__: CDMX2017Q1,
-        CDMX2017Q4.__name__: CDMX2017Q4,
-        CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
+        # CDMX2017Q4.__name__: CDMX2017Q4,
+        # CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
     }
 
     default_seeds = {
-        # ForceBasedPre.__name__: ForceBasedPre,
-        # CDMX2017Q1.__name__: CDMX2017Q1,
-        CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
+        CDMX2017Q1.__name__: CDMX2017Q1,
+        # CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
     }
 
     DEFAULT: str = CDMX2017Q1.__name__
