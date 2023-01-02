@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app.fem import Node, ElasticBeamColumn, FiniteElementModel
+from app.fem import Node, ElasticBeamColumn, FiniteElementModel, FE
 from app.hazard import Hazard, Record
 from abc import ABC, abstractmethod
 from pandas import DataFrame, set_option, read_csv
@@ -551,7 +551,7 @@ class GravityRecorderMixin(Recorder):
         for beams, beam_load in zip(
             self.fem.beams_by_storey, self.fem.uniform_beam_loads
         ):
-            beam_ids = ElasticBeamColumn.string_ids_for_list(beams)
+            beam_ids = FE.string_ids_for_list(beams)
             analysis_str += (
                 f"eleLoad -ele {beam_ids} -type beamUniform {-beam_load:.1f} \n"
             )
@@ -806,7 +806,6 @@ class StructuralAnalysis:
         self.static_path = self.results_path / AnalysisTypes.STATIC.value
         self.pushover_path = self.results_path / AnalysisTypes.PUSHOVER.value
         self.timehistory_path = self.results_path / AnalysisTypes.TIMEHISTORY.value
-
         self.K_recorder = KRecorder(self.K_path, fem=self.fem)
         self.modal_recorder = EigenRecorder(self.modal_path, fem=self.fem)
 
@@ -889,6 +888,7 @@ class StructuralAnalysis:
 
     def pushover(self, drift: float = 0.05):
         recorder = PushoverRecorder(self.pushover_path, fem=self.fem, drift=drift)
+        print("pushover", self.pushover_path)
         return self.run(recorder=recorder)
 
     def timehistory(

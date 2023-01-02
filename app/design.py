@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .utils import NamedYamlMixin
 from dataclasses import dataclass, field
 from abc import ABC
@@ -26,7 +27,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     damping: float = 0.05
     num_frames: int = 1
 
-    uniform_beam_loads_by_mass: Optional[list[float]] = None
+    uniform_beam_loads_by_mass: list[float] | None = None
     design_criteria: list[str] = field(
         default_factory=DesignCriterionFactory.default_criteria
     )
@@ -38,15 +39,15 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     _adjacency: Optional[list[tuple[float, int, dict[str, object]]]] = None
 
     _DEFAULT_RESULTS_PATH: Path = DESIGN_DIR
-    columns: Optional[list[float]] = None
-    floors: Optional[list[float]] = None
-    height: Optional[float] = None
-    width: Optional[float] = None
+    columns: list[float] | None = None
+    floors: list[float] | None = None
+    height: float | None = None
+    width: float | None = None
 
-    num_storeys: Optional[float] = None
-    num_floors: Optional[float] = None
-    num_bays: Optional[float] = None
-    num_cols: Optional[float] = None
+    num_storeys: float | None = None
+    num_floors: float | None = None
+    num_bays: float | None = None
+    num_cols: float | None = None
 
     occupancy: Optional[str] = None
     fems: list[FiniteElementModel] = field(default_factory=list)
@@ -205,6 +206,8 @@ class BuildingSpecification(ABC, NamedYamlMixin):
             results_dir = self._DEFAULT_RESULTS_PATH / f"{self.name}"
         else:
             results_dir = results_dir / f"{self.name}"
+
+        print("design results path", results_dir)
 
         if criteria is None:
             criteria = self._design_criteria

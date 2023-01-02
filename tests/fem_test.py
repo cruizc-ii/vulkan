@@ -231,9 +231,27 @@ class IMKFrameTest(TestCase):
             cls.expected_nodes_str = file.read()
 
     def test_node_strings(self) -> None:
+        # bilin = BilinFrame.from_file(self.file)
+        # with open(self.path / "bilin-output.tcl", "w") as f:
+        #     f.write(str(bilin))
         frame = IMKFrame.from_file(self.file)
         with open(self.path / "nodes-output.tcl", "w") as f:
             f.write(frame.nodes_str)
         with open(self.path / "elements-output.tcl", "w") as f:
             f.write(frame.elements_str)
+        with open(self.path / "frame-string-output.tcl", "w") as f:
+            f.write(str(frame))
+
         self.assertEqual(frame.nodes_str, self.expected_nodes_str)
+
+    def test_gravity(self) -> None:
+        pass
+
+    def test_modal(self) -> None:
+        pass
+
+    def test_pushover(self) -> None:
+        pass
+
+    def test_dynamic(self) -> None:
+        pass

@@ -11,7 +11,7 @@ from app.strana import (
     StructuralResultView,
 )
 from app.loss import LossAggregator, IDANotFoundException, LossModel
-from app.utils import DESIGN_DIR, MODELS_DIR, HAZARD_DIR, RESULTS_DIR, find_files
+from app.utils import DESIGN_DIR, HAZARD_DIR, RESULTS_DIR, find_files
 from app.occupancy import BuildingOccupancy
 import pandas as pd
 import numpy as np

@@ -64,6 +64,7 @@ class Node(FE, YamlMixin):
     free_dofs: int | None = 3
     zerolen: int | None = None  # wrt which id it is fixed to
     orientation: str = None
+    base: bool | None = False  # where base shear is recorded
 
     def __post_init__(self):
         if self.mass is not None and self.mass <= 0:
@@ -1294,25 +1295,9 @@ class IMKFrame(FiniteElementModel):
         # s += "source modal.tcl\n"
         return s
 
-    # @property
-    # def columnIDs(self) -> list[int]:
-    #     return
-
-    # @property
-    # def beamIDs(self) -> list[int]:
-    #     return
-
-    # @property
-    # def fixedIDs(self) -> list[int]:
-    #     return
-
-    # @property
-    # def beams(self):
-    #     return [e for e in self.elements if e.type == ElementTypes.BEAM.value]
-
     @property
-    def elements_str(self) -> str:
-        return "".join([str(e) for e in self.elements])
+    def fixedIDs(self):
+        return [n for n in self.nodes if n.base]
 
     @property
     def nodes_str(self) -> str:
@@ -1363,6 +1348,7 @@ class IMKFrame(FiniteElementModel):
                         floor=node.floor,
                         zerolen=node.id,
                         orientation=o,
+                        base=node.fixed,
                     )
                     nodes_by_id[node.id][o] = next_id
                     next_id += 1
