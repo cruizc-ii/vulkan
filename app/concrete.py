@@ -468,6 +468,7 @@ set stable {self.stable}
 
     @property
     def cost(self) -> float:
+        # normalized by 1k dollars
         STEEL_DENSITY_TON = 7.85
         STEEL_TON_UNIT_COST = 920
         CONCRETE_M3_UNIT_COST = 150
@@ -488,7 +489,8 @@ set stable {self.stable}
         # when unions/overlapping with beams are stricter it is more work
         work = 0.722 * num_stirrups**2 * WORK_UNIT_COST
         # print(f"{steel=} {concrete=} {work=}")
-        return steel + concrete + work
+        dollars = steel + concrete + work
+        return dollars
 
     def analyze(self, As: float | None = None, *, Ast=0, Asc=0, P=0, tol=5, iter=20):
         P = P or self.P

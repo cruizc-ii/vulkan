@@ -1417,27 +1417,12 @@ class IMKFrame(FiniteElementModel):
                         nodes_by_id[j].pop("col_up"),
                     )
                     type = ElementTypes.SPRING_COLUMN.value
-                imk1 = IMKSpring(
-                    id=elem_id,
-                    i=i,
-                    j=imk_i,
-                    length=elem.length,
-                    My=elem.My,
-                    Ix=elem.Ix,
-                    E=elem.E,
-                    storey=st,
-                    bay=bay,
-                    floor=fl,
-                    type=type,
-                )
-                data_imk1 = dict(i=i, j=imk_i)
-                d = {**elem.to_dict, **data_imk1}
-                print(d)
-                # imk1 = IMKSpring.from_bilin(**d)
+                data_imk1 = dict(i=i, j=imk_i, type=type, id=elem_id)
+                d1 = {**elem.to_dict, **data_imk1}
+                imk1 = IMKSpring.from_bilin(**d1)
                 elem_id += 1
                 elements.append(imk1)
                 Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1000
-                print(imk1.radius)
                 bc = BeamColumn(
                     id=elem_id,
                     radius=imk1.radius,
@@ -1445,26 +1430,16 @@ class IMKFrame(FiniteElementModel):
                     j=imk_j,
                     Ix=Ic,
                     E=elem.E,
+                    type=elem.type,
                     storey=st,
                     bay=bay,
                     floor=fl,
-                    type=elem.type,
                 )
                 elem_id += 1
                 elements.append(bc)
-                imk2 = IMKSpring(
-                    id=elem_id,
-                    i=imk_j,
-                    j=j,
-                    length=elem.length,
-                    My=elem.My,
-                    Ix=elem.Ix,
-                    E=elem.E,
-                    storey=st,
-                    bay=bay,
-                    floor=fl,
-                    type=type,
-                )
+                data_imk2 = dict(i=imk_j, j=j, type=type, id=elem_id)
+                d2 = {**elem.to_dict, **data_imk2}
+                imk2 = IMKSpring.from_bilin(**d2)
                 elements.append(imk2)
                 elem_id += 1
             self.elements = elements

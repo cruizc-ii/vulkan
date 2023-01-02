@@ -853,7 +853,6 @@ class StructuralAnalysis:
 
     def pushover(self, drift: float = 0.05):
         recorder = PushoverRecorder(self.pushover_path, fem=self.fem, drift=drift)
-        print("pushover", self.pushover_path)
         return self.run(recorder=recorder)
 
     def timehistory(
