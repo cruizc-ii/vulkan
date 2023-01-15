@@ -1445,6 +1445,27 @@ class IMKFrame(FiniteElementModel):
             self.elements = elements
             self.done = True
 
+    @property
+    def element_recorders(self) -> str:
+        s = ""
+        # for edp in OPENSEES_ELEMENT_EDPs:
+        #     for ele_type, ids in [
+        #         ("columns", self.columnIDs_str),
+        #         ("beams", self.beamIDs_str),
+        #     ]:
+        #         s += f"recorder Element         -file $abspath/{ele_type}.csv -ele {ids} -time {edp} \n"
+        #         s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope.csv -ele {ids} {edp} \n"
+        # for edp in OPENSEES_ELEMENT_EDPs:
+        #     for ele_type, elems_by_st in [
+        #         ("columns", self.columnIDs_by_storey),
+        #         ("beams", self.beamIDs_by_storey),
+        #     ]:
+        #         for st, elems in enumerate(elems_by_st, 1):
+        #             ids = " ".join([str(id) for id in elems])
+        #             s += f"recorder Element         -file $abspath/{ele_type}-{st}.csv -ele {ids} -time {edp} \n"
+        #             s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope.csv -ele {ids} {edp} \n"
+        return s
+
 
 class FEMFactory:
     DEFAULT = PlainFEM.__name__

@@ -909,8 +909,8 @@ class StructuralAnalysis:
 @dataclass
 class IDA(NamedYamlMixin):
     name: str
-    hazard_abspath: str
-    design_abspath: str
+    hazard_abspath: str | None = None
+    design_abspath: str | None = None
     start: float = 0.1
     stop: float = 1.0
     step: float = 0.1
@@ -923,6 +923,9 @@ class IDA(NamedYamlMixin):
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
+
+        print("hazard design abspaths")
+        print(self.hazard_abspath, self.design_abspath)
 
         try:
             if self.hazard_abspath is not None and not self._hazard:

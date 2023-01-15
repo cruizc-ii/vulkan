@@ -282,6 +282,7 @@ with st.sidebar:
             value=file.split(".")[0] if file else "default ida",
             help="to save just run",
         )
+        "file:", file
         try:
             if file:
                 ida = IDA.from_file(STRANA_DIR / file)
@@ -295,20 +296,19 @@ with st.sidebar:
                     hazard_abspath=str(state.hazard_abspath),
                 )
                 ida.name = name
-        except HazardNotFoundException:
-            ida = IDA(
-                name="default_ida",
-            )
+                file = ida.name_yml
+        except HazardNotFoundException as e:
+            e
+            print(e)
             hazard_missing = True
-        except SpecNotFoundException:
-            ida = IDA(
-                name="default_ida",
-            )
+        except SpecNotFoundException as e:
+            e
+            print(e)
             design_missing = True
 
-        if file or not (design_missing or hazard_missing):
-            "design:", state.design_abspath.name
-            "hazard:", state.hazard_abspath.name
+        if file and not (design_missing or hazard_missing):
+            "design:", state.design_abspath
+            "hazard:", state.hazard_abspath
             start = st.number_input(
                 r"start Sa (g)",
                 value=ida.start,
@@ -377,6 +377,7 @@ with st.sidebar:
                             selected_ix = ix
 
     if state.module == 4:
+        state.ida_abspath
         losses = find_files(LOSS_MODELS_DIR)
         ida_missing = False
         file = st.selectbox("select a loss file", options=losses)
@@ -393,7 +394,9 @@ with st.sidebar:
             try:
                 loss = LossAggregator(name=name, ida_model_path=(state.ida_abspath))
                 loss.name = name
-            except IDANotFoundException:
+            except IDANotFoundException as e:
+                e
+                print(e)
                 loss = LossAggregator(name=name)
                 ida_missing = True
 
@@ -530,8 +533,7 @@ if state.module == 3:
         st.warning("Please select a design")
     if hazard_missing:
         st.warning("Please select a hazard")
-    if ida and ida.results:
-        ida.design_abspath
+    if not (design_missing or hazard_missing) and ida and ida.results:
         fig = ida.view_ida_curves()
         # todo@carlo width 85% parent container
         fig.update_layout(width=1000)
