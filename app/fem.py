@@ -63,7 +63,7 @@ class Node(FE, YamlMixin):
     storey: int | None = None  # 0 for y=0
     free_dofs: int | None = 3
     zerolen: int | None = None  # wrt which id it is fixed to
-    orientation: str = None
+    orientation: str | None = None
     base: bool | None = False  # where base shear is recorded
 
     def __post_init__(self):
@@ -128,6 +128,7 @@ class BeamColumn(
     transf: int | None = 1
     length: float = 1.0
     net_worth: float = 0.0
+    category: str = "structural"
 
     def __post_init__(self):
         self.transf = 1 if self.type == ElementTypes.BEAM.value else 2

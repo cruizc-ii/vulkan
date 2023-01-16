@@ -386,82 +386,81 @@ with st.sidebar:
             value=file.split(".")[0] if file else "default loss",
             help="to save just run",
         )
-        if file:
-            loss = LossAggregator.from_file(LOSS_MODELS_DIR / file)
-            state.loss_abspath = LOSS_MODELS_DIR / file
-            loss.ida_model_path = state.ida_abspath
-        else:
-            try:
-                loss = LossAggregator(name=name, ida_model_path=(state.ida_abspath))
+        loss = None
+        try:
+            if file:
+                loss = LossAggregator.from_file(LOSS_MODELS_DIR / file)
+                state.loss_abspath = LOSS_MODELS_DIR / file
+                loss.ida_model_path = state.ida_abspath
+            else:
+                loss = LossAggregator(name=name, ida_model_path=str(state.ida_abspath))
                 loss.name = name
-            except IDANotFoundException as e:
-                e
-                print(e)
-                loss = LossAggregator(name=name)
-                ida_missing = True
+        except IDANotFoundException as e:
+            e
+            print(e)
+            # loss = LossAggregator(name=name)
+            ida_missing = True
 
-        if loss:
-            left, right = st.columns(2)
-            sample = left.button("run", help="perform loss computation")
-            if sample:
-                with st.spinner("running..."):
-                    loss = LossAggregator(
-                        **{
-                            **loss.to_dict,
-                            "name": name,
-                            "ida_model_path": str(state.ida_abspath),
-                        },
-                    )
-                    loss.run()
-                    loss.to_file(LOSS_MODELS_DIR)
-                st.success("success")
+        left, right = st.columns(2)
+        sample = left.button("run", help="perform loss computation")
+        if sample:
+            with st.spinner("running..."):
+                loss_dict = {**loss.to_dict} if loss else {}
+                loss = LossAggregator(
+                    **{
+                        **loss_dict,
+                        "name": name,
+                        "ida_model_path": str(state.ida_abspath),
+                    }
+                )
+                loss.run()
+                loss.to_file(LOSS_MODELS_DIR)
+            st.success("success")
 
-            rm = right.button("🗑️", help="delete")
-            if rm:
-                with st.spinner("deleting..."):
-                    time.sleep(1)
-                    loss.delete(LOSS_MODELS_DIR)
-                    loss = None
-                st.success("delete successful")
-            design = loss._ida._design
-            st.header("Design")
-            st.text(f"{design.name}")
-            st.text(f"St {design.num_storeys} bays {design.num_bays}")
-            st.text(f"{design.design_criteria}")
-            st.text(f"{design.occupancy.split('.')[0]}")
-            st.metric("$ Net worth", 3414)
+        rm = right.button("🗑️", help="delete")
+        if rm:
+            with st.spinner("deleting..."):
+                time.sleep(1)
+                loss.delete(LOSS_MODELS_DIR)
+                loss = None
+            st.success("delete successful")
+        design = loss._ida._design
+        st.header("Design")
+        st.text(f"{design.name}")
+        st.text(f"St {design.num_storeys} bays {design.num_bays}")
+        st.text(f"{design.design_criteria}")
+        st.text(f"{design.occupancy.split('.')[0]}")
+        st.metric("$ Net worth", 3414)
 
-            assets = loss.to_dict["loss_models"] or []
-            filtered_assets = assets
-            fig = design.fem.assets_pie_fig
+        assets = loss.to_dict["loss_models"] or []
+        filtered_assets = assets
+        fig = design.fem.assets_pie_fig
 
-            fig.update_layout(height=300, width=300)
-            st.plotly_chart(fig)
-            st.header("Filter")
-            all_categories = sorted(list(set([lm["category"] for lm in assets])))
-            selected_categories = st.multiselect(
-                "Category", options=all_categories, default=all_categories
-            )
-            all_floors = sorted(list(set([lm["floor"] for lm in assets])))
-            selected_floors = st.multiselect(
-                "Floor", options=all_floors, default=all_floors
-            )
+        fig.update_layout(height=300, width=300)
+        st.plotly_chart(fig)
+        st.header("Filter")
+        all_categories = sorted(list(set([lm["category"] for lm in assets])))
+        selected_categories = st.multiselect(
+            "Category", options=all_categories, default=all_categories
+        )
+        all_floors = sorted(list(set([lm["floor"] for lm in assets])))
+        selected_floors = st.multiselect(
+            "Floor", options=all_floors, default=all_floors
+        )
 
-            all_names = sorted(list(set([lm["name"] for lm in assets])))
-            selected_names = st.multiselect(
-                "Name", options=all_names, default=all_names
-            )
+        all_names = sorted(list(set([lm["name"] for lm in assets])))
+        selected_names = st.multiselect("Name", options=all_names, default=all_names)
 
-            st.header("View")
-            selected_ix = None
-            view_all = st.button("view all", help="view stats for building")
-            for ix, a in enumerate(filtered_assets):
-                with st.container():
-                    c1, c2 = st.columns([5, 1])
-                    c1.write(f'{a["name"]}-{a["category"]}-{a["floor"]}')
-                    view_asset = c2.button("view", key=f"asset{ix}")
-                    if view_asset:
-                        selected_ix = ix
+        st.header("View")
+        selected_ix = None
+        view_all = st.button("view all", help="view stats for building")
+        for ix, a in enumerate(filtered_assets):
+            with st.container():
+                c1, c2 = st.columns([5, 1])
+                c1.write(f'{a["name"]}-{a["category"]}-{a["floor"]}')
+                view_asset = c2.button("view", key=f"asset{ix}")
+                if view_asset:
+                    selected_ix = ix
 
 if state.module == 1:
     if design and design.fems:
@@ -549,15 +548,15 @@ if state.module == 3:
 
 if state.module == 4:
     if ida_missing:
-        st.warning("Please select a design")
+        st.warning("Please select an analysis")
     normalization = 1.0
     left, right = st.columns(2)
     normalize = left.checkbox("Normalize")
     # WIP normalization
     asset = loss
-    if view_all or selected_ix is None:
-        st.header("please run loss")
-    elif view_asset or selected_ix is not None:
+    # if not view_all or selected_ix is None:
+    #     st.header("please run loss")
+    if view_asset or selected_ix is not None:
         model_dict = asset.loss_models[selected_ix]
         asset = LossModel(**model_dict, _ida_results_df=asset._ida_results_df)
 

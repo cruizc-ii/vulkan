@@ -286,7 +286,7 @@ class RiskAsset(YamlMixin, Asset):
         *,
         strana_results_df: IDAResultsDataFrame,
     ) -> np.ndarray:
-        print(f"Processing {self.name=} {self.node=} {self.rugged=}")
+        print(f"processing {self.name=} {self.node=} {self.rugged=} {self.category=}")
         strana_results_df["collapse_losses"] = (
             strana_results_df["collapse"]
             .apply(lambda r: self.net_worth if r else 0)
@@ -341,6 +341,7 @@ class RiskAsset(YamlMixin, Asset):
             try:
                 edp = row[self.floor - 1]
             except IndexError as e:
+                e
                 print(
                     f"get_edp_by_floor.IndexError {self.name=} {self.edp=} {self.floor=}"
                 )

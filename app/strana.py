@@ -924,9 +924,6 @@ class IDA(NamedYamlMixin):
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
 
-        print("hazard design abspaths")
-        print(self.hazard_abspath, self.design_abspath)
-
         try:
             if self.hazard_abspath is not None and not self._hazard:
                 self._hazard: Hazard = Hazard.from_file(self.hazard_abspath)
