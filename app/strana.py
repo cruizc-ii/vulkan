@@ -335,6 +335,30 @@ class StructuralResultView(YamlMixin):
         moments = env.iloc[:, [c for c in env.columns if (c + 1) % 3 == 0]]
         return moments
 
+    def view_beam_springs_moments(self) -> DataFrame:
+        return self._read_timehistory("beams-M.csv")
+
+    def view_column_springs_moments(self) -> DataFrame:
+        return self._read_timehistory("columns-M.csv")
+
+    def view_springs_moments(self) -> dict[str, DataFrame]:
+        moments = {}
+        moments["columns"] = self.view_column_springs_moments()
+        moments["beams"] = self.view_beam_springs_moments()
+        return moments
+
+    def view_beam_springs_rotations(self) -> DataFrame:
+        return self._read_timehistory("beams-rot.csv")
+
+    def view_column_springs_rotations(self) -> DataFrame:
+        return self._read_timehistory("columns-rot.csv")
+
+    def view_springs_rotations(self) -> dict[str, DataFrame]:
+        rotations = {}
+        rotations["columns"] = self.view_column_springs_rotations()
+        rotations["beams"] = self.view_beam_springs_rotations()
+        return rotations
+
     def view_drifts(self) -> DataFrame:
         filename = "drifts.csv"
         return self._read_timehistory(filename)

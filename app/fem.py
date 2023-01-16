@@ -1349,6 +1349,30 @@ class IMKFrame(FiniteElementModel):
         ]
 
     @property
+    def springs_beams(self):
+        return [e for e in self.elements if e.type == ElementTypes.SPRING_BEAM.value]
+
+    @property
+    def spring_beams_ids(self):
+        return [c.id for c in self.springs_beams]
+
+    @property
+    def spring_beams_ids_str(self):
+        return " ".join([str(i) for i in self.spring_beams_ids])
+
+    @property
+    def springs_columns(self):
+        return [e for e in self.elements if e.type == ElementTypes.SPRING_COLUMN.value]
+
+    @property
+    def spring_columns_ids(self):
+        return [c.id for c in self.springs_columns]
+
+    @property
+    def spring_columns_ids_str(self):
+        return " ".join([str(i) for i in self.spring_columns_ids])
+
+    @property
     def springs_str(self) -> str:
         return " ".join([str(c) for c in self.springs])
 
@@ -1448,24 +1472,27 @@ class IMKFrame(FiniteElementModel):
 
     @property
     def element_recorders(self) -> str:
-        s = ""
-        # for edp in OPENSEES_ELEMENT_EDPs:
-        #     for ele_type, ids in [
-        #         ("columns", self.columnIDs_str),
-        #         ("beams", self.beamIDs_str),
-        #     ]:
-        #         s += f"recorder Element         -file $abspath/{ele_type}.csv -ele {ids} -time {edp} \n"
-        #         s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope.csv -ele {ids} {edp} \n"
-        # for edp in OPENSEES_ELEMENT_EDPs:
-        #     for ele_type, elems_by_st in [
-        #         ("columns", self.columnIDs_by_storey),
-        #         ("beams", self.beamIDs_by_storey),
-        #     ]:
-        #         for st, elems in enumerate(elems_by_st, 1):
-        #             ids = " ".join([str(id) for id in elems])
-        #             s += f"recorder Element         -file $abspath/{ele_type}-{st}.csv -ele {ids} -time {edp} \n"
-        #             s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope.csv -ele {ids} {edp} \n"
+        s = f"region 1 -ele {self.spring_columns_ids_str}\n"
+        s += f"recorder Element         -file $abspath/columns-M.csv -time      -region 1 -dof 3 force\n"
+        s += f"recorder EnvelopeElement -file $abspath/columns-M-envelope.csv   -region 1 -dof 3 force\n"
+        s += f"recorder Element         -file $abspath/columns-rot.csv -time    -region 1 -dof 2 deformation\n"
+        s += f"recorder EnvelopeElement -file $abspath/columns-rot-envelope.csv -region 1 -dof 2 deformation\n"
+        s += f"region 2 -ele {self.spring_beams_ids_str}\n"
+        s += f"recorder Element         -file $abspath/beams-M.csv -time      -region 2 -dof 3 force\n"
+        s += f"recorder EnvelopeElement -file $abspath/beams-M-envelope.csv   -region 2 -dof 3 force\n"
+        s += f"recorder Element         -file $abspath/beams-rot.csv -time    -region 2 -dof 2 deformation\n"
+        s += f"recorder EnvelopeElement -file $abspath/beams-rot-envelope.csv -region 2 -dof 2 deformation\n"
         return s
+
+    def determine_collapse_from_results(self, results: dict):
+        """
+        uses the following criteria
+        - residual drifts
+        - dynamical instability
+        - shear failure (Elwood drift)
+        - too much damage everywhere, impossible to restore without demolishing
+        """
+        return False
 
 
 class FEMFactory:

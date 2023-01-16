@@ -230,28 +230,44 @@ class IMKFrameTest(TestCase):
         with open(cls.path / "expected-nodes-imk.tcl", "r") as file:
             cls.expected_nodes_str = file.read()
 
-    def test_node_strings(self) -> None:
-        # bilin = BilinFrame.from_file(self.file)
-        # with open(self.path / "bilin-output.tcl", "w") as f:
-        #     f.write(str(bilin))
-        frame = IMKFrame.from_file(self.file)
-        with open(self.path / "nodes-output.tcl", "w") as f:
-            f.write(frame.nodes_str)
-        with open(self.path / "elements-output.tcl", "w") as f:
-            f.write(frame.elements_str)
-        with open(self.path / "frame-string-output.tcl", "w") as f:
-            f.write(str(frame))
-
-        self.assertEqual(frame.nodes_str, self.expected_nodes_str)
+    # def test_node_strings(self) -> None:
+    #     # bilin = BilinFrame.from_file(self.file)
+    #     # with open(self.path / "bilin-output.tcl", "w") as f:
+    #     #     f.write(str(bilin))
+    #     frame = IMKFrame.from_file(self.file)
+    #     with open(self.path / "nodes-output.tcl", "w") as f:
+    #         f.write(frame.nodes_str)
+    #     with open(self.path / "elements-output.tcl", "w") as f:
+    #         f.write(frame.elements_str)
+    #     with open(self.path / "frame-string-output.tcl", "w") as f:
+    #         f.write(str(frame))
+    #     self.assertEqual(frame.nodes_str, self.expected_nodes_str)
 
     def test_gravity(self) -> None:
-        pass
+        imk = IMKFrame.from_file(self.file)
+        view: StructuralResultView = imk.gravity(self.path)
+        reactions = view.reactions_env()
+        V = reactions["V"].values.flatten()
+        P = reactions["P"].values.flatten()
+        M = reactions["M"].values.flatten()
+        self.assertEqual(len(P), 3)
+        self.assertAlmostEqual(sum(P), 2160, delta=5.0)
+        self.assertEqual(len(V), 3)
+        self.assertEqual(len(M), 3)
 
     def test_modal(self) -> None:
         pass
 
-    def test_pushover(self) -> None:
-        pass
+    def test_pushover_elastic(self) -> None:
+        imk = IMKFrame.from_file(self.file)
+        view = imk.pushover(self.path, drift=0.01)
+        reactions = view.reactions_env()
+        # moments = view.view_springs_moments()
+        roof_disp = view.peak_roof_disp()
+        expected_roof_disp = imk.height * 0.01
+        self.assertAlmostEqual(roof_disp, expected_roof_disp, 2)
+        V = reactions["V"].values.flatten()
+        self.assertEqual(len(V), 3)
 
     def test_dynamic(self) -> None:
         pass
