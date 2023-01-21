@@ -590,9 +590,10 @@ set stable {self.stable}
         cyclic = area / self.Et
         DS = min([mono + cyclic, 1])
         cap = 100 * area / self.Et
-        title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f}"
+        total_cost = DS * self.cost
+        title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f} {total_cost=:.2f}"
         print(title)
-        return DS * self.cost
+        return total_cost
 
 
 def same_sign(arr) -> bool:

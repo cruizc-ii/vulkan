@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+import inspect
 
 from app.assets import (
     AssetFactory,
@@ -14,10 +15,10 @@ from app.utils import (
 )
 from dataclasses import dataclass, field
 import numpy as np
+import pandas as pd
 from pathlib import Path
 from app.utils import GRAVITY, SummaryEDP, YamlMixin, ASSETS_PATH
 from enum import Enum
-import pandas as pd
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line, Pie
 from app.concrete import RectangularConcreteColumn
 
@@ -323,10 +324,8 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self._risk.losses = self.losses
 
     def losses(self, xs: list[pd.DataFrame]) -> list[float]:
-        print("findme xs")
         costs = [self.park_ang_kunnath(df) for df in xs]
         print(costs)
-        # return xs
         return costs
 
     def dollars(self, *, strana_results_df):
@@ -342,22 +341,12 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         #         strana_results_df=strana_results_df
         #     )
         # elif self.type == ElementTypes.BEAM.value:
-        self.node = self.j
-        dollars_for_j = self.dollars_for_node(
+        dollars = self.dollars_for_node(
             strana_results_df=strana_results_df,
             ix=self.recorder_ix,
             ele_type=self.type,
         )["losses"].values
-        self.node = self.i
-        dollars_for_i = self.dollars_for_node(
-            strana_results_df=strana_results_df,
-            ix=self.recorder_ix,
-            ele_type=self.type,
-        )["losses"].values
-        df = pd.DataFrame(dict(i=dollars_for_i, j=dollars_for_j))
-        print("df", df)
-        df["peak"] = df.apply(max, axis=1)
-        strana_results_df["losses"] = df.peak.values
+        strana_results_df["losses"] = dollars
         losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
         return losses
 
@@ -449,10 +438,9 @@ class FiniteElementModel(ABC, YamlMixin):
         return fem
 
     @property
-    def elements_assets(self):
-        from app.assets import Asset
-
-        return [ele for ele in self.elements if Asset in ele.__class__.__bases__]
+    def elements_assets(self) -> list["Asset"]:
+        eles = [ele for ele in self.elements if Asset in inspect.getmro(ele.__class__)]
+        return eles
 
     @property
     def assets(self):
