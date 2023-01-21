@@ -275,7 +275,7 @@ class LossAggregator(NamedYamlMixin, Loss):
             self._assets = self._ida._design.fem.assets
             self._ida_results_df = pd.DataFrame.from_dict(self._ida.results)
             self._csv_name = "total"
-            self._scatter_csv_name = "1scatter"
+            self._scatter_csv_name = "scatter"
             self._loss_linspace = np.linspace(0, self.net_worth, self._RATE_NUM_BINS)
         except FileNotFoundError:
             raise IDANotFoundException

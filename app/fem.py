@@ -57,7 +57,7 @@ class Node(FE, YamlMixin):
     y: float | None = None
     mass: float | None = None
     fixed: bool = False
-    column: int = None  # 1 for first column
+    column: int | None = None  # 1 for first column
     bay: int | None = None  # 0 for first column
     floor: int | None = None  # 1 for y=0
     storey: int | None = None  # 0 for y=0
@@ -109,13 +109,9 @@ class DiaphragmNode(Node):
 
 
 @dataclass
-class BeamColumn(
-    FE,
-    RiskAsset,
-):
+class BeamColumn(FE, YamlMixin):
     type: str = ElementTypes.BEAM.value
     model: str = "BeamColumn"
-    name: str | None = None
     i: int | None = None
     j: int | None = None
     E: float = 1.0
@@ -125,21 +121,19 @@ class BeamColumn(
     storey: int | None = None
     floor: int | None = None
     bay: str | None = None  # 0 for first column
-    transf: int | None = 1
+    transf: int = 1
     length: float = 1.0
-    net_worth: float = 0.0
     category: str = "structural"
 
     def __post_init__(self):
         self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
-        super().__post_init__
 
     def __str__(self) -> str:
         return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A:.5g} {self.E:.6g} {self.Ix:.6g} {self.transf}\n"
 
 
 @dataclass
-class ElasticBeamColumn(BeamColumn):
+class ElasticBeamColumn(RiskAsset, BeamColumn):
     """
     circular & axially rigid.
     natural coordinates bay:ix storey:iy
@@ -281,6 +275,7 @@ class BilinBeamColumn(ElasticBeamColumn):
 
 @dataclass
 class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
+    recorder_ix: int = 0
     model: str = "IMKSpring"
     ASPECT_RATIO_B_TO_H: float = 0.5  # b = kappa * h, h = (12 Ix / kappa )**(1/4)
     left: bool = False
@@ -311,6 +306,8 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         return cls(**{"h": h, "b": b, "EFFECTIVE_INERTIA_COEFF": 1, **data})
 
     def __post_init__(self):
+        from app.strana import EDP
+
         super().__post_init__()
         self.model = self.__class__.__name__
         self.radius = self.h
@@ -322,6 +319,15 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self.imkMatTag = self.id + 200000
         self.elasticMatTag = self.id + 300000
         self.net_worth = self.cost
+        self._risk.edp = EDP.spring_moment_rotation_th.value
+        self._risk.losses = self.losses
+
+    def losses(self, xs: list[pd.DataFrame]) -> list[float]:
+        print("findme xs")
+        costs = [self.park_ang_kunnath(df) for df in xs]
+        print(costs)
+        # return xs
+        return costs
 
     def dollars(self, *, strana_results_df):
         print(f"Structural element {self.name=} {self.node=} {self.rugged=}")
@@ -330,22 +336,28 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
             .apply(lambda r: self.net_worth if r else 0)
             .values
         )
-        if self.type == ElementTypes.COLUMN.value:
-            strana_results_df = self.dollars_for_storey(
-                strana_results_df=strana_results_df
-            )
-        elif self.type == ElementTypes.BEAM.value:
-            self.node = self.j
-            dollars_for_j = self.dollars_for_node(strana_results_df=strana_results_df)[
-                "losses"
-            ].values
-            self.node = self.i
-            dollars_for_i = self.dollars_for_node(strana_results_df=strana_results_df)[
-                "losses"
-            ].values
-            df = pd.DataFrame(dict(i=dollars_for_i, j=dollars_for_j))
-            df["peak"] = df.apply(max, axis=1)
-            strana_results_df["losses"] = df.peak.values
+        # treat columns differently regarding shear collapse
+        # if self.type == ElementTypes.COLUMN.value:
+        #     strana_results_df = self.dollars_for_storey(
+        #         strana_results_df=strana_results_df
+        #     )
+        # elif self.type == ElementTypes.BEAM.value:
+        self.node = self.j
+        dollars_for_j = self.dollars_for_node(
+            strana_results_df=strana_results_df,
+            ix=self.recorder_ix,
+            ele_type=self.type,
+        )["losses"].values
+        self.node = self.i
+        dollars_for_i = self.dollars_for_node(
+            strana_results_df=strana_results_df,
+            ix=self.recorder_ix,
+            ele_type=self.type,
+        )["losses"].values
+        df = pd.DataFrame(dict(i=dollars_for_i, j=dollars_for_j))
+        print("df", df)
+        df["peak"] = df.apply(max, axis=1)
+        strana_results_df["losses"] = df.peak.values
         losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
         return losses
 
@@ -437,8 +449,14 @@ class FiniteElementModel(ABC, YamlMixin):
         return fem
 
     @property
+    def elements_assets(self):
+        from app.assets import Asset
+
+        return [ele for ele in self.elements if Asset in ele.__class__.__bases__]
+
+    @property
     def assets(self):
-        return self.elements + self.nonstructural_elements + self.contents
+        return self.elements_assets + self.nonstructural_elements + self.contents
 
     # @abstractmethod
     # def build_and_place_slabs(self) -> list[Asset]:
@@ -488,7 +506,7 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @property
     def elements_net_worth(self) -> float:
-        return sum([a.net_worth for a in self.elements])
+        return sum([a.net_worth for a in self.elements_assets])
 
     @property
     def nonstructural_net_worth(self) -> float:
@@ -1373,6 +1391,10 @@ class IMKFrame(FiniteElementModel):
         return " ".join([str(i) for i in self.spring_columns_ids])
 
     @property
+    def spring_ids_str(self):
+        return self.spring_columns_ids_str + " " + self.spring_beams_ids_str
+
+    @property
     def springs_str(self) -> str:
         return " ".join([str(c) for c in self.springs])
 
@@ -1428,6 +1450,10 @@ class IMKFrame(FiniteElementModel):
             self.nodes += nodes
             elements = []
             elem_id = 1
+            recorder_ixs = {
+                ElementTypes.SPRING_COLUMN.value: 1,
+                ElementTypes.SPRING_BEAM.value: 1,
+            }
             for elem in self.elements:
                 i, j, bay, st, fl = elem.i, elem.j, elem.bay, elem.storey, elem.floor
                 if elem.type == ElementTypes.BEAM.value:
@@ -1442,7 +1468,15 @@ class IMKFrame(FiniteElementModel):
                         nodes_by_id[j].pop("col_up"),
                     )
                     type = ElementTypes.SPRING_COLUMN.value
-                data_imk1 = dict(i=i, j=imk_i, type=type, id=elem_id)
+
+                data_imk1 = dict(
+                    i=i,
+                    j=imk_i,
+                    type=type,
+                    id=elem_id,
+                    recorder_ix=recorder_ixs[type],
+                )
+                recorder_ixs[type] = recorder_ixs[type] + 1
                 d1 = {**elem.to_dict, **data_imk1}
                 imk1 = IMKSpring.from_bilin(**d1)
                 elem_id += 1
@@ -1462,7 +1496,14 @@ class IMKFrame(FiniteElementModel):
                 )
                 elem_id += 1
                 elements.append(bc)
-                data_imk2 = dict(i=imk_j, j=j, type=type, id=elem_id)
+                data_imk2 = dict(
+                    i=imk_j,
+                    j=j,
+                    type=type,
+                    id=elem_id,
+                    recorder_ix=recorder_ixs[type],
+                )
+                recorder_ixs[type] = recorder_ixs[type] + 1
                 d2 = {**elem.to_dict, **data_imk2}
                 imk2 = IMKSpring.from_bilin(**d2)
                 elements.append(imk2)

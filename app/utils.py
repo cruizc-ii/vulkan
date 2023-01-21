@@ -97,6 +97,7 @@ class EDP(Enum):
     overturning_moments = "overturning_moments"
     rotations = "rotations"
     rotations_env = "rotations_env"
+    spring_moment_rotation_th = "spring_moment_rotation_th"
 
     @classmethod
     def list(cls):
@@ -250,7 +251,7 @@ def UploadComponent(id, msg: str = "Upload design criterion."):
 
 
 def eigenvectors_similar(a: np.ndarray, b: np.ndarray, rtol=1e-3) -> bool:
-    """a-b are similar in an eigenvector sense
+    """A, B are similar in an eigenvector sense
     if their columns are similar when multiplied by -1 or +1"""
     a = np.array(a)
     b = np.array(b)

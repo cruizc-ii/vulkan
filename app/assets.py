@@ -20,6 +20,10 @@ RISK_MODELS_DIR = Path(__file__).resolve().parent.parent / "models" / "risk"
 LossResultsDataFrame = pd.DataFrame  # accels vs loss values
 
 
+class AssetNotFoundException(Exception):
+    pass
+
+
 class Lognormal:
     """
     scipy.stats lognorm is a bit confusing.
@@ -232,17 +236,17 @@ class Asset(ABC):
     dollar, downtime or deaths.
     """
 
-    net_worth: float = None
-    category: str = None
-    name: str = None
-    node: int = None
-    edp: str = None
-    floor: int = None
-    x: float = None
-    y: float = None
-    icon: str = None
-    hidden: bool = None
-    rugged: bool = None
+    net_worth: float | None = None
+    category: str | None = None
+    name: str | None = None
+    node: int | None = None
+    edp: str | None = None
+    floor: int | None = None
+    x: float | None = None
+    y: float | None = None
+    icon: str | None = None
+    hidden: bool | None = None
+    rugged: bool | None = None
 
     @abstractmethod
     def dollars(
@@ -258,11 +262,13 @@ class Asset(ABC):
 
 
 @dataclass
-class RiskAsset(YamlMixin, Asset):
+class RiskAsset(Asset):
     _risk: Optional[
         LognormalRisk
     ] = None  # done this way to be able to have NormalRisk or GammaRisk using different functions..
     # though it is bad.. it should be agnostic to the class of the _risk... think about this more.
+    # the separation of risk/asset is probably artificial maybe they can be the same class
+    # it is better that it inherits a risk object instead of creating one.
 
     def __post_init__(self):
         self._risk: LognormalRisk = RiskModelFactory(self.name)
@@ -308,7 +314,9 @@ class RiskAsset(YamlMixin, Asset):
         losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
         return losses
 
-    def dollars_for_node(self, *, strana_results_df: IDAResultsDataFrame) -> np.ndarray:
+    def dollars_for_node(
+        self, *, strana_results_df: IDAResultsDataFrame, **kwargs
+    ) -> np.ndarray:
         from app.strana import StructuralResultView
 
         paths = strana_results_df["path"].values
@@ -316,13 +324,16 @@ class RiskAsset(YamlMixin, Asset):
         views = {}
         for path in paths:
             if not isinstance(path, str) and np.any(np.isnan(path)):
+                print("WARNING, path not set! is this collapse?")
                 x = 1e9
                 xs.append(x)
                 continue
             x = views.get(path)
             if not x:
                 view = StructuralResultView.from_file(Path(path))
-                x = view.view_result_by_edp_and_node(edp=self._risk.edp, node=self.node)
+                x = view.view_result_by_edp_and_node(
+                    edp=self._risk.edp, node=self.node, **kwargs
+                )
                 views[path] = x
             xs.append(x)
         losses = self.net_worth * np.array(self._risk.losses(xs))
@@ -368,7 +379,7 @@ class RiskAsset(YamlMixin, Asset):
         return self._risk.vulnerability_figure()
 
 
-class AssetNotFoundException(Exception):
+class YamlRiskAsset(RiskAsset, YamlMixin):
     pass
 
 
@@ -380,9 +391,9 @@ class AssetFactory:
         files = find_files(RiskModelFactory, only_yml=True)
         return [{"label": f, "value": f} for f in files]
 
-    def __new__(cls, **data) -> RiskAsset:
+    def __new__(cls, **data) -> YamlRiskAsset:
         try:
-            asset = RiskAsset(**data)
+            asset = YamlRiskAsset(**data)
         except FileNotFoundError:
             raise AssetNotFoundException
         return asset

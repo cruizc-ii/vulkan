@@ -58,6 +58,10 @@ class StructuralResultView(YamlMixin):
     _K_STATIC_NAME = "K-static.csv"
     _cache_modal_results: dict | None = None
     _init: bool = False
+    _beams_moments: DataFrame | None = None
+    _beams_rotations: DataFrame | None = None
+    _columns_moments: DataFrame | None = None
+    _columns_rotations: DataFrame | None = None
 
     def __post_init__(self) -> None:
         if isinstance(self.abs_folder, Path):
@@ -84,12 +88,12 @@ class StructuralResultView(YamlMixin):
         filepath = path / cls._DEFAULT_NAME
         return super().from_file(filepath)
 
-    def view_result_by_edp_and_node(self, edp: EDP, node: int) -> DataFrame:
+    def view_result_by_edp_and_node(self, edp: str, node: int, **kwargs) -> DataFrame:
         fns = {
             EDP.rotations_env.value: self.view_rotations_envelope,
-            # EDP.disp_env.value: self.view_displacements_envelope
+            EDP.spring_moment_rotation_th.value: self.view_spring_moment_rotation_th,
         }
-        result = fns[edp](node=node)
+        result = fns[edp](node=node, **kwargs)
         return result
 
     def _read_eigen_values(self) -> DataFrame:
@@ -336,28 +340,52 @@ class StructuralResultView(YamlMixin):
         return moments
 
     def view_beam_springs_moments(self) -> DataFrame:
-        return self._read_timehistory("beams-M.csv")
+        if not self._beams_moments:
+            self._beams_moments = self._read_timehistory("beams-M.csv")
+        return self._beams_moments
 
     def view_column_springs_moments(self) -> DataFrame:
-        return self._read_timehistory("columns-M.csv")
+        if not self._columns_moments:
+            self._columns_moments = self._read_timehistory("columns-M.csv")
+        return self._columns_moments
 
     def view_springs_moments(self) -> dict[str, DataFrame]:
+        from app.fem import ElementTypes
+
         moments = {}
-        moments["columns"] = self.view_column_springs_moments()
-        moments["beams"] = self.view_beam_springs_moments()
+        moments[ElementTypes.SPRING_COLUMN.value] = self.view_column_springs_moments()
+        moments[ElementTypes.SPRING_BEAM.value] = self.view_beam_springs_moments()
         return moments
 
     def view_beam_springs_rotations(self) -> DataFrame:
-        return self._read_timehistory("beams-rot.csv")
+        if not self._beams_rotations:
+            self._beams_rotations = self._read_timehistory("beams-rot.csv")
+        return self._beams_rotations
 
     def view_column_springs_rotations(self) -> DataFrame:
-        return self._read_timehistory("columns-rot.csv")
+        if not self._columns_rotations:
+            self._columns_rotations = self._read_timehistory("columns-rot.csv")
+        return self._columns_rotations
 
     def view_springs_rotations(self) -> dict[str, DataFrame]:
+        from app.fem import ElementTypes
+
         rotations = {}
-        rotations["columns"] = self.view_column_springs_rotations()
-        rotations["beams"] = self.view_beam_springs_rotations()
+        rotations[
+            ElementTypes.SPRING_COLUMN.value
+        ] = self.view_column_springs_rotations()
+        rotations[ElementTypes.SPRING_BEAM.value] = self.view_beam_springs_rotations()
         return rotations
+
+    def view_spring_moment_rotation_th(
+        self, *, ele_type: str, node: int, ix: int
+    ) -> DataFrame:
+        moments = self.view_springs_moments()[ele_type]
+        rotations = self.view_springs_rotations()[ele_type]
+        M = moments[ix].values.flatten()
+        r = rotations[ix].values.flatten()
+        df = DataFrame(dict(M=M, r=r), index=moments.index)
+        return df
 
     def view_drifts(self) -> DataFrame:
         filename = "drifts.csv"
