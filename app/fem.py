@@ -387,6 +387,10 @@ class FiniteElementModel(ABC, YamlMixin):
         t += f"geomTransf PDelta {self._transf_col}\n"
         return h + t + self.nodes_str + self.elements_str
 
+    @property
+    def rayleigh_damping_string(self) -> str:
+        return f"rayleigh {self.a0} 0 {self.a1} 0\n"
+
     def __post_init__(self):
         from app.occupancy import BuildingOccupancy
 
@@ -1328,6 +1332,12 @@ class BilinFrame(FiniteElementModel):
 @dataclass
 class IMKFrame(FiniteElementModel):
     done: bool = False
+
+    @property
+    def rayleigh_damping_string(self) -> str:
+        s = f"region 4 -eleRange {self.elementIDS_as_str} -rayleigh 0. 0. {self.a1} 0.\n"
+        s += f"region 5 -node {self.massIDs_str} -rayleigh {self.a0} 0. 0. 0.\n"
+        return s
 
     @property
     def fixedIDs(self):

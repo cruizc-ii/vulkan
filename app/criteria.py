@@ -106,7 +106,7 @@ class LoeraPre(DesignCriterion):
     beam depth is a percentage of the column
     """
 
-    WORKING_STRESS_PCT = 0.1  # measure of flexibility
+    WORKING_STRESS_PCT = 0.1  # measure of flexibility, higher -> slender
     BEAM_TO_COLUMN_RATIO = 0.5
     _COLUMN_CRACKED_INERTIAS = 1.0
     _BEAM_CRACKED_INERTIAS = 1.0

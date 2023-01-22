@@ -25,7 +25,7 @@ from shortuuid import uuid
 from app.codes import BuildingCode
 from app.utils import ROOT_DIR
 from subprocess import Popen
-from iteration_utilities import grouper
+from iteration_utilities import grouper as itertools_grouper
 
 MODELS_DIR = ROOT_DIR / "models"
 STRANA_DIR = MODELS_DIR / "strana"
@@ -400,7 +400,8 @@ class StructuralResultView(YamlMixin):
         accels = storey_accels.merge(
             ground_accel, how="outer", left_index=True, right_index=True
         )
-        accels = accels.interpolate("cubic").fillna(0)
+        print(accels)
+        # accels = accels.interpolate("cubic").fillna(0)
         return accels
 
     def view_floor_accels_envelope(self) -> DataFrame:
@@ -745,6 +746,8 @@ class TimehistoryRecorder(GravityRecorderMixin):
     scale: float | None = None
     gravity_loads: bool = True
     EXTRA_FREE_VIBRATION_SECONDS: float = 10.0
+    dt_subdivision: int = 10
+    max_retries: int = 3
 
     def __post_init__(self):
         os.makedirs(self.abspath, exist_ok=True)
@@ -755,45 +758,12 @@ class TimehistoryRecorder(GravityRecorderMixin):
     def __str__(self) -> str:
         """https://portwooddigital.com/2021/02/28/norms-and-tolerance/"""
         s = str(self.fem)
-        num_nodes = len(self.fem.nodes)
-        tol = 1e-5 * num_nodes
         if self.gravity_loads:
             s += self.gravity_str
         s += self.recorders
         s += f'set timeSeries "Series -dt {self.record.dt} -filePath {self.record.abspath} -factor {self.scale}"\n'
         s += "pattern UniformExcitation 2 1 -accel $timeSeries\n"
-        # todo figure out correct a0, a1 placement for NONLIN analyses. where Ke changes.
-        # s += f"rayleigh {self.a0} {self.a1} 0 0\n"
-        s += f"rayleigh {self.a0} 0 {self.a1} 0\n"
-        # s += f"rayleigh {self.a0} 0 0 {self.a1}\n"
-        s += self.elastic_dynamic_solvers
-        # s += f"analyze {self.record.steps} {self.record.dt}\n"
-        s += """
-set converged 0
-set time [getTime]
-set duration %s
-while {$converged == 0 && $time <= $duration} {
-    set tol %s
-    test NormUnbalance $tol 100
-    set time [getTime]
-    set converged [analyze 1 0.01]
-    set loops 0
-    while {$converged !=0} {
-        incr loops
-        set tol %s
-        test NormUnbalance $tol 100
-        set converged [analyze 10 0.001]
-        if {$loops > 10} {
-            puts "Analysis did not converge"
-            break
-        }
-    }
-}
-        """ % (
-            self.record.duration + self.EXTRA_FREE_VIBRATION_SECONDS,
-            tol,
-            tol,
-        )
+        s += self.inelastic_dynamic_direct_solver
         return s
 
     @property
@@ -808,6 +778,73 @@ while {$converged == 0 && $time <= $duration} {
         s += "integrator Newmark 0.5 0.25\n"
         s += "system BandGeneral\n"
         s += "analysis Transient\n"
+        return s
+
+    @property
+    def inelastic_dynamic_direct_solver(
+        self,
+    ) -> str:
+        self.dt_subdivision = 1
+        self.max_retries = 1
+        s = self.inelastic_subdivision_solver
+        return s
+
+    @property
+    def inelastic_subdivision_solver(self) -> str:
+        num_nodes = len(self.fem.nodes)
+        tol = 1e-8 * num_nodes
+        s = self.fem.rayleigh_damping_string
+        s += """
+set duration %s
+set record_dt %s
+set tol %s
+
+set converged 0
+set subdivision %s
+set max_retries %s
+set time [getTime]
+
+set analysis_dt [expr $record_dt]
+
+constraints Transformation
+numberer RCM
+test NormDispIncr $tol 100 0
+algorithm KrylovNewton
+integrator Newmark 0.5 0.25
+system BandGeneral
+analysis Transient
+set break_outer 0
+
+while {!$break_outer && $converged == 0 && $time <= $duration} {
+    puts $time
+    set tol $tol
+    test NormDispIncr $tol 100
+    set time [getTime]
+    set converged [analyze 1 $analysis_dt]
+    set retries 0
+    set sub $subdivision
+    while {$converged != 0} {
+        puts "retrying"
+        incr retries
+        set sub [expr {$subdivision ** $retries}]
+        test NormDispIncr [expr {$tol*$sub}] 100 0
+        set reduced_dt [expr {$analysis_dt/$sub}]
+        puts $sub
+        set converged [analyze $sub $reduced_dt]
+        if {$retries > $max_retries} {
+            puts "Analysis did not converge"
+            set break_outer 1
+            break
+        }
+    }
+}
+        """ % (
+            self.record.duration + self.EXTRA_FREE_VIBRATION_SECONDS,
+            self.record.dt,
+            tol,
+            self.dt_subdivision,
+            self.max_retries,
+        )
         return s
 
 
@@ -972,6 +1009,7 @@ class IDA(NamedYamlMixin):
     _design = None
     _intensities: np.ndarray | None = None
     _COLLAPSE_DRIFT: float = 0.2
+    _NUM_PARALLEL_RECORDS: int = 10
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
@@ -1061,7 +1099,7 @@ class IDA(NamedYamlMixin):
         dataframe_records = []
         views = []
 
-        for group in grouper(inputs, 10):
+        for group in itertools_grouper(inputs, self._NUM_PARALLEL_RECORDS):
             cmds = []
             for g in group:
                 record: Record = g["record"]
@@ -1073,7 +1111,8 @@ class IDA(NamedYamlMixin):
                 cmds.append(cmd)
             procs = [Popen(cmd, shell=True) for cmd in cmds]
             for proc in procs:
-                proc.wait()
+                code = proc.wait(timeout=600)
+                print(f"{code=}")
 
         for input, view in zip(inputs, views):
             results = view.get_and_set_timehistory_summary()
@@ -1197,6 +1236,7 @@ class IDA(NamedYamlMixin):
             title="IDA curves",
             # marginal_x="histogram", marginal_y="rug",
             # yaxis_range=[0.0, 0.3],
+            # xaxis_range=[0, 20],
             # width=1100,
             # height=600,
             # autosize=True,

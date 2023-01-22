@@ -296,6 +296,7 @@ class LossAggregator(NamedYamlMixin, Loss):
                 _ida_results_df=self._ida_results_df,
             )
             for asset in self._assets
+            if asset
         ]
         return self.loss_models
 
