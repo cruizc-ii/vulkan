@@ -31,8 +31,8 @@ st.set_page_config(
 )
 
 
+DEFAULT_MODULE = 5
 padding_top = 2
-DEFAULT_MODULE = 1
 
 st.markdown(
     f"""
@@ -467,7 +467,7 @@ with st.sidebar:
                     selected_ix = ix
 
     if state.module == 5:
-        state.hazard_abspath
+        state.hazard_abspath, type(state.hazard_abspath)
         state.compare_abspath
         compares = find_files(COMPARE_DIR)
         compares
@@ -479,13 +479,11 @@ with st.sidebar:
         )
         compare = None
         hazard_missing = False
-        hazard_abspath = state.hazard_abspath
+        hazard_abspath = str(state.hazard_abspath)
         try:
             if compare_file:
                 compare = IDACompare.from_file(COMPARE_DIR / compare_file)
                 compare.hazard_abspath = hazard_abspath
-            #         state.loss_abspath = LOSS_MODELS_DIR / file
-            #         loss.ida_model_path = state.ida_abspath
             else:
                 compare = IDACompare(name=name, hazard_abspath=hazard_abspath)
                 compare.name = name
@@ -497,10 +495,6 @@ with st.sidebar:
 
         num_designs = 3
         left, right = st.columns(2)
-        # go = left.button("run", help="perform loss computation")
-        # if go:
-        #     with st.spinner("running..."):
-
         hazards = find_files(HAZARD_DIR)
         hazard = Hazard(
             name="sample_hazard",
@@ -515,9 +509,24 @@ with st.sidebar:
         logx = left.checkbox("log x", value=True)
         logy = right.checkbox("log y", value=True)
         if hazard:
-            fig = hazard.rate_figure(logx=logx, logy=logy)
-        fig.update_layout(width=350, height=300)
-        fig
+            hazard_fig = hazard.rate_figure(logx=logx, logy=logy)
+        hazard_fig.update_layout(width=350, height=300)
+        st.plotly_chart(hazard_fig)
+
+        go = left.button("go", help="perform ida comparison")
+        if go and hazard and compare:
+            with st.spinner("running..."):
+                compare_dict = compare.to_dict
+                compare = IDACompare(
+                    **{
+                        **compare_dict,
+                        "name": name,
+                        "hazard_abspath": hazard_abspath,
+                    }
+                )
+                compare.run()
+                compare.to_file(COMPARE_DIR)
+            st.success("success")
 
 
 if state.module == 1:
