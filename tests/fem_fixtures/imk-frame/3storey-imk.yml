@@ -1,34 +1,13 @@
-Ebeams: 30000000.0
-Ec: 24099792.53022731
-Ecols: 30000000.0
-Es: 210000000.0
-Ibeams: 0.0015
-Icols: 0.0015
-bays:
-- 3
-- 3
-- 3
-columns:
-- 0.0
-- 3
-- 3
-- 3
-damping: 0.05
-design_criteria:
-- CDMX2017Q1
-design_spectra: {}
-fc: 30000.0
-fems:
-- a0: 0.9460138322287245
-  a1: 0.0023252883861043633
-  contents:
+a0: 2.293024281456408
+a1: 0.0024057849127265152
+contents:
   - category: contents
     edp: pfa
     floor: 1
     hidden: false
     icon: flower_vase.png
     name: FlowerVase
-    net_worth: 0.04
+    net_worth: 0.08
     node: null
     rugged: false
     x: 0.0
@@ -39,7 +18,7 @@ fems:
     hidden: false
     icon: flower_vase.png
     name: FlowerVase
-    net_worth: 0.04
+    net_worth: 0.08
     node: null
     rugged: false
     x: 0.11666666666666667
@@ -50,7 +29,7 @@ fems:
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 0.23333333333333334
@@ -61,7 +40,7 @@ fems:
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 0.35
@@ -72,7 +51,7 @@ fems:
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 0.4666666666666667
@@ -83,7 +62,7 @@ fems:
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 0.5833333333333334
@@ -94,7 +73,7 @@ fems:
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 0.7
@@ -105,7 +84,7 @@ fems:
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 0.8166666666666667
@@ -116,7 +95,7 @@ fems:
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 0.9333333333333333
@@ -127,7 +106,7 @@ fems:
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 1.05
@@ -138,7 +117,7 @@ fems:
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 1.1666666666666667
@@ -149,7 +128,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 1.2833333333333334
@@ -160,7 +139,7 @@ fems:
     hidden: false
     icon: radio.png
     name: Radio
-    net_worth: 0.18
+    net_worth: 0.36
     node: null
     rugged: false
     x: 1.4
@@ -171,7 +150,7 @@ fems:
     hidden: false
     icon: telephone.png
     name: Telephone
-    net_worth: 0.1
+    net_worth: 0.2
     node: null
     rugged: false
     x: 1.5166666666666666
@@ -182,7 +161,7 @@ fems:
     hidden: false
     icon: 21_in_tv.png
     name: 21inTV
-    net_worth: 1.8
+    net_worth: 3.6
     node: null
     rugged: false
     x: 1.6333333333333333
@@ -193,7 +172,7 @@ fems:
     hidden: false
     icon: sofa.png
     name: Sofa
-    net_worth: 0.3
+    net_worth: 0.6
     node: null
     rugged: true
     x: 1.75
@@ -204,7 +183,7 @@ fems:
     hidden: false
     icon: sofa.png
     name: Sofa
-    net_worth: 0.3
+    net_worth: 0.6
     node: null
     rugged: true
     x: 1.8666666666666667
@@ -215,7 +194,7 @@ fems:
     hidden: true
     icon: laptop.png
     name: Laptop
-    net_worth: 1.2
+    net_worth: 2.4
     node: null
     rugged: false
     x: 1.9833333333333334
@@ -226,7 +205,7 @@ fems:
     hidden: false
     icon: 22_in_monitor.png
     name: 22inMonitor
-    net_worth: 0.328
+    net_worth: 0.656
     node: null
     rugged: false
     x: 2.1
@@ -237,7 +216,7 @@ fems:
     hidden: false
     icon: small_cpu.png
     name: SmallCPU
-    net_worth: 1.1
+    net_worth: 2.2
     node: null
     rugged: false
     x: 2.216666666666667
@@ -248,7 +227,7 @@ fems:
     hidden: true
     icon: minicomponent.png
     name: Minicomponent
-    net_worth: 1.1
+    net_worth: 2.2
     node: null
     rugged: false
     x: 3.033333333333333
@@ -259,7 +238,7 @@ fems:
     hidden: false
     icon: 60_in_plotter.png
     name: 60inPlotter
-    net_worth: 3.2
+    net_worth: 6.4
     node: null
     rugged: false
     x: 3.15
@@ -270,7 +249,7 @@ fems:
     hidden: true
     icon: copy_machine.png
     name: CopyMachine
-    net_worth: 2.2
+    net_worth: 4.4
     node: null
     rugged: false
     x: 3.2666666666666666
@@ -281,7 +260,7 @@ fems:
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 3.3833333333333333
@@ -292,7 +271,7 @@ fems:
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 3.5
@@ -303,7 +282,7 @@ fems:
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 3.6166666666666667
@@ -314,7 +293,7 @@ fems:
     hidden: false
     icon: water_dispenser.png
     name: WaterDispenser
-    net_worth: 0.3
+    net_worth: 0.6
     node: null
     rugged: false
     x: 3.7333333333333334
@@ -325,7 +304,7 @@ fems:
     hidden: false
     icon: multiprinter.png
     name: Multiprinter
-    net_worth: 2.85
+    net_worth: 5.7
     node: null
     rugged: false
     x: 3.85
@@ -336,7 +315,7 @@ fems:
     hidden: false
     icon: small_printer.png
     name: SmallPrinter
-    net_worth: 0.4
+    net_worth: 0.8
     node: null
     rugged: false
     x: 3.966666666666667
@@ -347,7 +326,7 @@ fems:
     hidden: false
     icon: digital_camera.png
     name: DigitalCamera
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 4.083333333333333
@@ -358,7 +337,7 @@ fems:
     hidden: false
     icon: digital_camera.png
     name: DigitalCamera
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 4.2
@@ -369,7 +348,7 @@ fems:
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 4.666666666666667
@@ -380,7 +359,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 4.783333333333333
@@ -391,7 +370,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 4.9
@@ -402,7 +381,7 @@ fems:
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 5.016666666666667
@@ -413,7 +392,7 @@ fems:
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 5.133333333333334
@@ -424,7 +403,7 @@ fems:
     hidden: false
     icon: 22_in_monitor.png
     name: 22inMonitor
-    net_worth: 0.328
+    net_worth: 0.656
     node: null
     rugged: false
     x: 5.25
@@ -435,7 +414,7 @@ fems:
     hidden: false
     icon: small_cpu.png
     name: SmallCPU
-    net_worth: 1.1
+    net_worth: 2.2
     node: null
     rugged: false
     x: 5.366666666666667
@@ -446,7 +425,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 5.483333333333333
@@ -457,7 +436,7 @@ fems:
     hidden: false
     icon: digital_camera.png
     name: DigitalCamera
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 5.6
@@ -468,7 +447,7 @@ fems:
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 5.716666666666667
@@ -479,7 +458,7 @@ fems:
     hidden: false
     icon: radio.png
     name: Radio
-    net_worth: 0.18
+    net_worth: 0.36
     node: null
     rugged: false
     x: 6.3
@@ -490,7 +469,7 @@ fems:
     hidden: true
     icon: toilet.png
     name: Toilet
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 6.416666666666667
@@ -501,7 +480,7 @@ fems:
     hidden: true
     icon: toilet.png
     name: Toilet
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 6.533333333333333
@@ -512,7 +491,7 @@ fems:
     hidden: true
     icon: microwave.png
     name: Microwave
-    net_worth: 0.18
+    net_worth: 0.36
     node: null
     rugged: false
     x: 0.0
@@ -523,7 +502,7 @@ fems:
     hidden: false
     icon: coffee_machine.png
     name: CoffeeMachine
-    net_worth: 1.6
+    net_worth: 3.2
     node: null
     rugged: false
     x: 0.08585858585858586
@@ -534,7 +513,7 @@ fems:
     hidden: false
     icon: minifridge.png
     name: MiniFridge
-    net_worth: 0.33
+    net_worth: 0.66
     node: null
     rugged: false
     x: 0.1717171717171717
@@ -545,7 +524,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.25757575757575757
@@ -556,7 +535,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.3434343434343434
@@ -567,7 +546,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.4292929292929293
@@ -578,7 +557,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.5151515151515151
@@ -589,7 +568,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.601010101010101
@@ -600,7 +579,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.6868686868686869
@@ -611,7 +590,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.7727272727272727
@@ -622,7 +601,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.8585858585858586
@@ -633,7 +612,7 @@ fems:
     hidden: false
     icon: glass_bottle.png
     name: GlassBottle
-    net_worth: 0.019
+    net_worth: 0.038
     node: null
     rugged: false
     x: 0.9444444444444444
@@ -644,7 +623,7 @@ fems:
     hidden: false
     icon: glass_bottle.png
     name: GlassBottle
-    net_worth: 0.019
+    net_worth: 0.038
     node: null
     rugged: false
     x: 1.0303030303030303
@@ -655,7 +634,7 @@ fems:
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 1.1161616161616161
@@ -666,7 +645,7 @@ fems:
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 1.202020202020202
@@ -677,7 +656,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 1.2878787878787878
@@ -688,7 +667,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 1.3737373737373737
@@ -699,7 +678,7 @@ fems:
     hidden: true
     icon: minicomponent.png
     name: Minicomponent
-    net_worth: 1.1
+    net_worth: 2.2
     node: null
     rugged: false
     x: 1.803030303030303
@@ -710,7 +689,7 @@ fems:
     hidden: false
     icon: 60_in_plotter.png
     name: 60inPlotter
-    net_worth: 3.2
+    net_worth: 6.4
     node: null
     rugged: false
     x: 1.8888888888888888
@@ -721,7 +700,7 @@ fems:
     hidden: true
     icon: copy_machine.png
     name: CopyMachine
-    net_worth: 2.2
+    net_worth: 4.4
     node: null
     rugged: false
     x: 1.9747474747474747
@@ -732,7 +711,7 @@ fems:
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 2.0606060606060606
@@ -743,7 +722,7 @@ fems:
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 2.146464646464646
@@ -754,7 +733,7 @@ fems:
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 2.2323232323232323
@@ -765,7 +744,7 @@ fems:
     hidden: false
     icon: water_dispenser.png
     name: WaterDispenser
-    net_worth: 0.3
+    net_worth: 0.6
     node: null
     rugged: false
     x: 2.3181818181818183
@@ -776,7 +755,7 @@ fems:
     hidden: false
     icon: multiprinter.png
     name: Multiprinter
-    net_worth: 2.85
+    net_worth: 5.7
     node: null
     rugged: false
     x: 2.404040404040404
@@ -787,7 +766,7 @@ fems:
     hidden: false
     icon: small_printer.png
     name: SmallPrinter
-    net_worth: 0.4
+    net_worth: 0.8
     node: null
     rugged: false
     x: 2.4898989898989896
@@ -798,7 +777,7 @@ fems:
     hidden: false
     icon: digital_camera.png
     name: DigitalCamera
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 2.5757575757575757
@@ -809,7 +788,7 @@ fems:
     hidden: false
     icon: digital_camera.png
     name: DigitalCamera
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 2.6616161616161618
@@ -820,7 +799,7 @@ fems:
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 3.005050505050505
@@ -831,7 +810,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 3.090909090909091
@@ -842,7 +821,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 3.1767676767676765
@@ -853,7 +832,7 @@ fems:
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 3.2626262626262625
@@ -864,7 +843,7 @@ fems:
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 3.3484848484848486
@@ -875,7 +854,7 @@ fems:
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 3.4343434343434343
@@ -886,7 +865,7 @@ fems:
     hidden: false
     icon: telephone.png
     name: Telephone
-    net_worth: 0.1
+    net_worth: 0.2
     node: null
     rugged: false
     x: 3.52020202020202
@@ -897,7 +876,7 @@ fems:
     hidden: false
     icon: 22_in_monitor.png
     name: 22inMonitor
-    net_worth: 0.328
+    net_worth: 0.656
     node: null
     rugged: false
     x: 3.606060606060606
@@ -908,7 +887,7 @@ fems:
     hidden: false
     icon: 22_in_monitor.png
     name: 22inMonitor
-    net_worth: 0.328
+    net_worth: 0.656
     node: null
     rugged: false
     x: 3.691919191919192
@@ -919,7 +898,7 @@ fems:
     hidden: false
     icon: small_cpu.png
     name: SmallCPU
-    net_worth: 1.1
+    net_worth: 2.2
     node: null
     rugged: false
     x: 3.7777777777777777
@@ -930,7 +909,7 @@ fems:
     hidden: false
     icon: small_cpu.png
     name: SmallCPU
-    net_worth: 1.1
+    net_worth: 2.2
     node: null
     rugged: false
     x: 3.8636363636363633
@@ -941,7 +920,7 @@ fems:
     hidden: true
     icon: laptop.png
     name: Laptop
-    net_worth: 1.2
+    net_worth: 2.4
     node: null
     rugged: false
     x: 3.9494949494949494
@@ -952,7 +931,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 4.0353535353535355
@@ -963,7 +942,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 4.121212121212121
@@ -974,7 +953,7 @@ fems:
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 4.207070707070707
@@ -985,7 +964,7 @@ fems:
     hidden: false
     icon: radio.png
     name: Radio
-    net_worth: 0.18
+    net_worth: 0.36
     node: null
     rugged: false
     x: 4.808080808080808
@@ -996,7 +975,7 @@ fems:
     hidden: false
     icon: flower_vase.png
     name: FlowerVase
-    net_worth: 0.04
+    net_worth: 0.08
     node: null
     rugged: false
     x: 4.893939393939394
@@ -1007,7 +986,7 @@ fems:
     hidden: false
     icon: projector.png
     name: Projector
-    net_worth: 1.25
+    net_worth: 2.5
     node: null
     rugged: false
     x: 4.979797979797979
@@ -1018,7 +997,7 @@ fems:
     hidden: true
     icon: dvd_machine.png
     name: DVDMachine
-    net_worth: 0.3
+    net_worth: 0.6
     node: null
     rugged: false
     x: 5.065656565656566
@@ -1029,7 +1008,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.151515151515151
@@ -1040,7 +1019,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.237373737373737
@@ -1051,7 +1030,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.3232323232323235
@@ -1062,7 +1041,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.409090909090909
@@ -1073,7 +1052,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.494949494949495
@@ -1084,7 +1063,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.58080808080808
@@ -1095,7 +1074,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.666666666666666
@@ -1106,7 +1085,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.752525252525253
@@ -1117,7 +1096,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.838383838383838
@@ -1128,7 +1107,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.924242424242424
@@ -1139,7 +1118,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.01010101010101
@@ -1150,7 +1129,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.095959595959596
@@ -1161,7 +1140,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.181818181818182
@@ -1172,7 +1151,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.267676767676767
@@ -1183,7 +1162,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.353535353535353
@@ -1194,7 +1173,7 @@ fems:
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.4393939393939394
@@ -1205,7 +1184,7 @@ fems:
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 6.525252525252525
@@ -1216,7 +1195,7 @@ fems:
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 6.611111111111111
@@ -1227,7 +1206,7 @@ fems:
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 6.696969696969697
@@ -1238,7 +1217,7 @@ fems:
     hidden: true
     icon: laptop.png
     name: Laptop
-    net_worth: 1.2
+    net_worth: 2.4
     node: null
     rugged: false
     x: 6.782828282828283
@@ -1249,7 +1228,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 6.8686868686868685
@@ -1260,7 +1239,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 6.954545454545454
@@ -1271,7 +1250,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 7.04040404040404
@@ -1282,7 +1261,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 7.126262626262626
@@ -1293,7 +1272,7 @@ fems:
     hidden: false
     icon: radio.png
     name: Radio
-    net_worth: 0.18
+    net_worth: 0.36
     node: null
     rugged: false
     x: 7.212121212121212
@@ -1304,7 +1283,7 @@ fems:
     hidden: false
     icon: telephone.png
     name: Telephone
-    net_worth: 0.1
+    net_worth: 0.2
     node: null
     rugged: false
     x: 7.297979797979798
@@ -1315,7 +1294,7 @@ fems:
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 7.383838383838384
@@ -1326,7 +1305,7 @@ fems:
     hidden: false
     icon: 21_in_tv.png
     name: 21inTV
-    net_worth: 1.8
+    net_worth: 3.6
     node: null
     rugged: false
     x: 7.46969696969697
@@ -1337,7 +1316,7 @@ fems:
     hidden: true
     icon: toilet.png
     name: Toilet
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 8.070707070707071
@@ -1348,7 +1327,7 @@ fems:
     hidden: true
     icon: toilet.png
     name: Toilet
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 8.156565656565656
@@ -1359,7 +1338,7 @@ fems:
     hidden: true
     icon: microwave.png
     name: Microwave
-    net_worth: 0.18
+    net_worth: 0.36
     node: null
     rugged: false
     x: 0.0
@@ -1370,7 +1349,7 @@ fems:
     hidden: false
     icon: coffee_machine.png
     name: CoffeeMachine
-    net_worth: 1.6
+    net_worth: 3.2
     node: null
     rugged: false
     x: 0.08585858585858586
@@ -1381,7 +1360,7 @@ fems:
     hidden: false
     icon: minifridge.png
     name: MiniFridge
-    net_worth: 0.33
+    net_worth: 0.66
     node: null
     rugged: false
     x: 0.1717171717171717
@@ -1392,7 +1371,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.25757575757575757
@@ -1403,7 +1382,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.3434343434343434
@@ -1414,7 +1393,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.4292929292929293
@@ -1425,7 +1404,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.5151515151515151
@@ -1436,7 +1415,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.601010101010101
@@ -1447,7 +1426,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.6868686868686869
@@ -1458,7 +1437,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.7727272727272727
@@ -1469,7 +1448,7 @@ fems:
     hidden: false
     icon: glass_cup.png
     name: GlassCup
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 0.8585858585858586
@@ -1480,7 +1459,7 @@ fems:
     hidden: false
     icon: glass_bottle.png
     name: GlassBottle
-    net_worth: 0.019
+    net_worth: 0.038
     node: null
     rugged: false
     x: 0.9444444444444444
@@ -1491,7 +1470,7 @@ fems:
     hidden: false
     icon: glass_bottle.png
     name: GlassBottle
-    net_worth: 0.019
+    net_worth: 0.038
     node: null
     rugged: false
     x: 1.0303030303030303
@@ -1502,7 +1481,7 @@ fems:
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 1.1161616161616161
@@ -1513,7 +1492,7 @@ fems:
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 1.202020202020202
@@ -1524,7 +1503,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 1.2878787878787878
@@ -1535,7 +1514,7 @@ fems:
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 1.3737373737373737
@@ -1546,7 +1525,7 @@ fems:
     hidden: true
     icon: minicomponent.png
     name: Minicomponent
-    net_worth: 1.1
+    net_worth: 2.2
     node: null
     rugged: false
     x: 1.803030303030303
@@ -1557,7 +1536,7 @@ fems:
     hidden: false
     icon: 60_in_plotter.png
     name: 60inPlotter
-    net_worth: 3.2
+    net_worth: 6.4
     node: null
     rugged: false
     x: 1.8888888888888888
@@ -1568,7 +1547,7 @@ fems:
     hidden: true
     icon: copy_machine.png
     name: CopyMachine
-    net_worth: 2.2
+    net_worth: 4.4
     node: null
     rugged: false
     x: 1.9747474747474747
@@ -1579,1484 +1558,637 @@ fems:
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
-    node: null
-    rugged: false
-    x: 2.0606060606060606
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: fax_machine.png
-    name: FaxMachine
-    net_worth: 0.8
-    node: null
-    rugged: false
-    x: 2.146464646464646
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: medium_shelf.png
-    name: MediumShelf
-    net_worth: 0.44
-    node: null
-    rugged: false
-    x: 2.2323232323232323
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: water_dispenser.png
-    name: WaterDispenser
-    net_worth: 0.3
-    node: null
-    rugged: false
-    x: 2.3181818181818183
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: multiprinter.png
-    name: Multiprinter
-    net_worth: 2.85
-    node: null
-    rugged: false
-    x: 2.404040404040404
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: small_printer.png
-    name: SmallPrinter
-    net_worth: 0.4
-    node: null
-    rugged: false
-    x: 2.4898989898989896
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: digital_camera.png
-    name: DigitalCamera
-    net_worth: 0.44
-    node: null
-    rugged: false
-    x: 2.5757575757575757
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: digital_camera.png
-    name: DigitalCamera
-    net_worth: 0.44
-    node: null
-    rugged: false
-    x: 2.6616161616161618
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: slim_jar.png
-    name: SlimJar
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 3.005050505050505
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 3.090909090909091
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 3.1767676767676765
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: chair.png
-    name: Chair
-    net_worth: 0.14
-    node: null
-    rugged: true
-    x: 3.2626262626262625
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: fax_machine.png
-    name: FaxMachine
-    net_worth: 0.8
-    node: null
-    rugged: false
-    x: 3.3484848484848486
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: chair.png
-    name: Chair
-    net_worth: 0.14
-    node: null
-    rugged: true
-    x: 3.4343434343434343
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: telephone.png
-    name: Telephone
-    net_worth: 0.1
-    node: null
-    rugged: false
-    x: 3.52020202020202
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: 22_in_monitor.png
-    name: 22inMonitor
-    net_worth: 0.328
-    node: null
-    rugged: false
-    x: 3.606060606060606
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: 22_in_monitor.png
-    name: 22inMonitor
-    net_worth: 0.328
-    node: null
-    rugged: false
-    x: 3.691919191919192
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: small_cpu.png
-    name: SmallCPU
-    net_worth: 1.1
-    node: null
-    rugged: false
-    x: 3.7777777777777777
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: small_cpu.png
-    name: SmallCPU
-    net_worth: 1.1
-    node: null
-    rugged: false
-    x: 3.8636363636363633
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: laptop.png
-    name: Laptop
-    net_worth: 1.2
-    node: null
-    rugged: false
-    x: 3.9494949494949494
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 4.0353535353535355
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 4.121212121212121
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: medium_shelf.png
-    name: MediumShelf
-    net_worth: 0.44
-    node: null
-    rugged: false
-    x: 4.207070707070707
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: radio.png
-    name: Radio
-    net_worth: 0.18
-    node: null
-    rugged: false
-    x: 4.808080808080808
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: flower_vase.png
-    name: FlowerVase
-    net_worth: 0.04
-    node: null
-    rugged: false
-    x: 4.893939393939394
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: projector.png
-    name: Projector
-    net_worth: 1.25
-    node: null
-    rugged: false
-    x: 4.979797979797979
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: dvd_machine.png
-    name: DVDMachine
-    net_worth: 0.3
-    node: null
-    rugged: false
-    x: 5.065656565656566
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.151515151515151
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.237373737373737
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.3232323232323235
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.409090909090909
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.494949494949495
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.58080808080808
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.666666666666666
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.752525252525253
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.838383838383838
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 5.924242424242424
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 6.01010101010101
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 6.095959595959596
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 6.181818181818182
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 6.267676767676767
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 6.353535353535353
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: false
-    icon: large_office_chair.png
-    name: LargeOfficeChair
-    net_worth: 0.188
-    node: null
-    rugged: true
-    x: 6.4393939393939394
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: medium_shelf.png
-    name: MediumShelf
-    net_worth: 0.44
-    node: null
-    rugged: false
-    x: 6.525252525252525
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: medium_shelf.png
-    name: MediumShelf
-    net_worth: 0.44
-    node: null
-    rugged: false
-    x: 6.611111111111111
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: fax_machine.png
-    name: FaxMachine
-    net_worth: 0.8
-    node: null
-    rugged: false
-    x: 6.696969696969697
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: laptop.png
-    name: Laptop
-    net_worth: 1.2
-    node: null
-    rugged: false
-    x: 6.782828282828283
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 6.8686868686868685
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 6.954545454545454
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 7.04040404040404
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 7.126262626262626
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: radio.png
-    name: Radio
-    net_worth: 0.18
-    node: null
-    rugged: false
-    x: 7.212121212121212
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: telephone.png
-    name: Telephone
-    net_worth: 0.1
-    node: null
-    rugged: false
-    x: 7.297979797979798
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: slim_jar.png
-    name: SlimJar
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 7.383838383838384
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 3
-    hidden: false
-    icon: 21_in_tv.png
-    name: 21inTV
-    net_worth: 1.8
-    node: null
-    rugged: false
-    x: 7.46969696969697
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: true
-    icon: toilet.png
-    name: Toilet
-    net_worth: 0.9
-    node: null
-    rugged: true
-    x: 8.070707070707071
-    y: null
-  - category: contents
-    edp: null
-    floor: 3
-    hidden: true
-    icon: toilet.png
-    name: Toilet
-    net_worth: 0.9
-    node: null
-    rugged: true
-    x: 8.156565656565656
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: microwave.png
-    name: Microwave
-    net_worth: 0.18
-    node: null
-    rugged: false
-    x: 0.0
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: coffee_machine.png
-    name: CoffeeMachine
     net_worth: 1.6
     node: null
     rugged: false
-    x: 0.08585858585858586
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: minifridge.png
-    name: MiniFridge
-    net_worth: 0.33
-    node: null
-    rugged: false
-    x: 0.1717171717171717
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_cup.png
-    name: GlassCup
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 0.25757575757575757
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_cup.png
-    name: GlassCup
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 0.3434343434343434
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_cup.png
-    name: GlassCup
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 0.4292929292929293
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_cup.png
-    name: GlassCup
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 0.5151515151515151
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_cup.png
-    name: GlassCup
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 0.601010101010101
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_cup.png
-    name: GlassCup
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 0.6868686868686869
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_cup.png
-    name: GlassCup
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 0.7727272727272727
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_cup.png
-    name: GlassCup
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 0.8585858585858586
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_bottle.png
-    name: GlassBottle
-    net_worth: 0.019
-    node: null
-    rugged: false
-    x: 0.9444444444444444
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: glass_bottle.png
-    name: GlassBottle
-    net_worth: 0.019
-    node: null
-    rugged: false
-    x: 1.0303030303030303
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: slim_jar.png
-    name: SlimJar
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 1.1161616161616161
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: slim_jar.png
-    name: SlimJar
-    net_worth: 0.025
-    node: null
-    rugged: false
-    x: 1.202020202020202
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 1.2878787878787878
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: medium_table.png
-    name: MediumTable
-    net_worth: 0.17
-    node: null
-    rugged: false
-    x: 1.3737373737373737
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: minicomponent.png
-    name: Minicomponent
-    net_worth: 1.1
-    node: null
-    rugged: false
-    x: 1.803030303030303
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: 60_in_plotter.png
-    name: 60inPlotter
-    net_worth: 3.2
-    node: null
-    rugged: false
-    x: 1.8888888888888888
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: copy_machine.png
-    name: CopyMachine
-    net_worth: 2.2
-    node: null
-    rugged: false
-    x: 1.9747474747474747
-    y: null
-  - category: contents
-    edp: pfa
-    floor: 4
-    hidden: false
-    icon: fax_machine.png
-    name: FaxMachine
-    net_worth: 0.8
-    node: null
-    rugged: false
     x: 2.0606060606060606
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 2.146464646464646
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 2.2323232323232323
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: water_dispenser.png
     name: WaterDispenser
-    net_worth: 0.3
+    net_worth: 0.6
     node: null
     rugged: false
     x: 2.3181818181818183
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: multiprinter.png
     name: Multiprinter
-    net_worth: 2.85
+    net_worth: 5.7
     node: null
     rugged: false
     x: 2.404040404040404
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: small_printer.png
     name: SmallPrinter
-    net_worth: 0.4
+    net_worth: 0.8
     node: null
     rugged: false
     x: 2.4898989898989896
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: digital_camera.png
     name: DigitalCamera
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 2.5757575757575757
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: digital_camera.png
     name: DigitalCamera
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 2.6616161616161618
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 3.005050505050505
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 3.090909090909091
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 3.1767676767676765
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 3.2626262626262625
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 3.3484848484848486
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: chair.png
     name: Chair
-    net_worth: 0.14
+    net_worth: 0.28
     node: null
     rugged: true
     x: 3.4343434343434343
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: telephone.png
     name: Telephone
-    net_worth: 0.1
+    net_worth: 0.2
     node: null
     rugged: false
     x: 3.52020202020202
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: 22_in_monitor.png
     name: 22inMonitor
-    net_worth: 0.328
+    net_worth: 0.656
     node: null
     rugged: false
     x: 3.606060606060606
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: 22_in_monitor.png
     name: 22inMonitor
-    net_worth: 0.328
+    net_worth: 0.656
     node: null
     rugged: false
     x: 3.691919191919192
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: small_cpu.png
     name: SmallCPU
-    net_worth: 1.1
+    net_worth: 2.2
     node: null
     rugged: false
     x: 3.7777777777777777
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: small_cpu.png
     name: SmallCPU
-    net_worth: 1.1
+    net_worth: 2.2
     node: null
     rugged: false
     x: 3.8636363636363633
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: laptop.png
     name: Laptop
-    net_worth: 1.2
+    net_worth: 2.4
     node: null
     rugged: false
     x: 3.9494949494949494
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 4.0353535353535355
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 4.121212121212121
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 4.207070707070707
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: radio.png
     name: Radio
-    net_worth: 0.18
+    net_worth: 0.36
     node: null
     rugged: false
     x: 4.808080808080808
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: flower_vase.png
     name: FlowerVase
-    net_worth: 0.04
+    net_worth: 0.08
     node: null
     rugged: false
     x: 4.893939393939394
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: projector.png
     name: Projector
-    net_worth: 1.25
+    net_worth: 2.5
     node: null
     rugged: false
     x: 4.979797979797979
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: dvd_machine.png
     name: DVDMachine
-    net_worth: 0.3
+    net_worth: 0.6
     node: null
     rugged: false
     x: 5.065656565656566
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.151515151515151
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.237373737373737
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.3232323232323235
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.409090909090909
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.494949494949495
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.58080808080808
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.666666666666666
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.752525252525253
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.838383838383838
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 5.924242424242424
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.01010101010101
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.095959595959596
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.181818181818182
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.267676767676767
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.353535353535353
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: false
     icon: large_office_chair.png
     name: LargeOfficeChair
-    net_worth: 0.188
+    net_worth: 0.376
     node: null
     rugged: true
     x: 6.4393939393939394
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 6.525252525252525
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: medium_shelf.png
     name: MediumShelf
-    net_worth: 0.44
+    net_worth: 0.88
     node: null
     rugged: false
     x: 6.611111111111111
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: fax_machine.png
     name: FaxMachine
-    net_worth: 0.8
+    net_worth: 1.6
     node: null
     rugged: false
     x: 6.696969696969697
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: laptop.png
     name: Laptop
-    net_worth: 1.2
+    net_worth: 2.4
     node: null
     rugged: false
     x: 6.782828282828283
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 6.8686868686868685
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 6.954545454545454
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 7.04040404040404
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: true
     icon: medium_table.png
     name: MediumTable
-    net_worth: 0.17
+    net_worth: 0.34
     node: null
     rugged: false
     x: 7.126262626262626
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: radio.png
     name: Radio
-    net_worth: 0.18
+    net_worth: 0.36
     node: null
     rugged: false
     x: 7.212121212121212
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: telephone.png
     name: Telephone
-    net_worth: 0.1
+    net_worth: 0.2
     node: null
     rugged: false
     x: 7.297979797979798
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: slim_jar.png
     name: SlimJar
-    net_worth: 0.025
+    net_worth: 0.05
     node: null
     rugged: false
     x: 7.383838383838384
     y: null
   - category: contents
     edp: pfa
-    floor: 4
+    floor: 3
     hidden: false
     icon: 21_in_tv.png
     name: 21inTV
-    net_worth: 1.8
+    net_worth: 3.6
     node: null
     rugged: false
     x: 7.46969696969697
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: true
     icon: toilet.png
     name: Toilet
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 8.070707070707071
     y: null
   - category: contents
     edp: null
-    floor: 4
+    floor: 3
     hidden: true
     icon: toilet.png
     name: Toilet
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 8.156565656565656
     y: null
-  damping: 0.05
-  elements:
-  - A: 100000
+damping: 0.08
+elements:
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0058011976756995876
-    My: 543.4021528352644
+    Ix: 0.018334649444186342
+    My: 719.2258654122501
     Q: 1
     Vy: null
-    alpha: '0.0055'
+    alpha: "0.0055"
     bay: 0
     category: structural
     edp: peak_drifts
@@ -3066,27 +2198,26 @@ fems:
     icon: null
     id: 0
     integration_points: 5
-    j: 4
-    k: 24516.70693148773
-    length: 4.4
+    j: 3
+    k: 72433.18298937814
+    length: 4.5
     name: FragileConcreteColumnAsset
-    net_worth: 1.7820041670911646
+    net_worth: 12.960030306117558
     node: 0
-    radius: 0.293161507141752
+    radius: 0.3908820095223359
     rugged: false
     storey: 1
-    transf: 1
     type: column
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0058011976756995876
-    My: 543.4021528352644
+    Ix: 0.018334649444186342
+    My: 719.2258654122501
     Q: 1
     Vy: null
-    alpha: '0.0055'
+    alpha: "0.0055"
     bay: 1
     category: structural
     edp: peak_drifts
@@ -3096,57 +2227,55 @@ fems:
     icon: null
     id: 1
     integration_points: 5
-    j: 5
-    k: 24516.70693148773
-    length: 4.4
+    j: 4
+    k: 72433.18298937814
+    length: 4.5
     name: FragileConcreteColumnAsset
-    net_worth: 1.7820041670911646
+    net_worth: 12.960030306117558
     node: 1
-    radius: 0.293161507141752
+    radius: 0.3908820095223359
     rugged: false
     storey: 1
-    transf: 1
     type: column
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0928191628111934
-    My: 407.55161462644827
+    Ix: 0.29335439110698147
+    My: 539.4193990591875
     Q: 1
     Vy: null
-    alpha: '0.0055'
+    alpha: "0.0055"
     bay: 1
     category: structural
     edp: rotations_env
     floor: 2
     hidden: false
-    i: 4
+    i: 3
     icon: null
     id: 2
     integration_points: 5
-    j: 5
-    k: 1237588.8374825786
-    length: 3
+    j: 4
+    k: 488923.98517830245
+    length: 6.0
     name: ConcreteBeamAsset
-    net_worth: 1.5187535514981514
-    node: 4
-    radius: 0.146580753570876
+    net_worth: 21.600050510195928
+    node: 3
+    radius: 0.19544100476116796
     rugged: false
     storey: 1
-    transf: 1
     type: beam
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0058011976756995876
-    My: 543.4021528352644
+    Ix: 0.018334649444186342
+    My: 719.2258654122501
     Q: 1
     Vy: null
-    alpha: '0.0055'
+    alpha: "0.0055"
     bay: 2
     category: structural
     edp: peak_drifts
@@ -3156,148 +2285,143 @@ fems:
     icon: null
     id: 3
     integration_points: 5
-    j: 6
-    k: 24516.70693148773
-    length: 4.4
+    j: 5
+    k: 72433.18298937814
+    length: 4.5
     name: FragileConcreteColumnAsset
-    net_worth: 1.7820041670911646
+    net_worth: 12.960030306117558
     node: 2
-    radius: 0.293161507141752
+    radius: 0.3908820095223359
     rugged: false
     storey: 1
-    transf: 1
     type: column
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0928191628111934
-    My: 407.55161462644827
+    Ix: 0.29335439110698147
+    My: 539.4193990591875
     Q: 1
     Vy: null
-    alpha: '0.0055'
+    alpha: "0.0055"
     bay: 2
     category: structural
     edp: rotations_env
     floor: 2
     hidden: false
-    i: 5
+    i: 4
     icon: null
     id: 4
     integration_points: 5
-    j: 6
-    k: 1237588.8374825786
-    length: 3
+    j: 5
+    k: 488923.98517830245
+    length: 6.0
     name: ConcreteBeamAsset
-    net_worth: 1.5187535514981514
-    node: 5
-    radius: 0.146580753570876
+    net_worth: 21.600050510195928
+    node: 4
+    radius: 0.19544100476116796
     rugged: false
     storey: 1
-    transf: 1
     type: beam
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0058011976756995876
-    My: 543.4021528352644
+    Ix: 0.00814873308630504
+    My: 183.36741050058487
     Q: 1
     Vy: null
-    alpha: '0.0055'
-    bay: 3
+    alpha: "0.0055"
+    bay: 0
     category: structural
     edp: peak_drifts
-    floor: 1
+    floor: 2
     hidden: false
     i: 3
     icon: null
     id: 5
     integration_points: 5
-    j: 7
-    k: 24516.70693148773
-    length: 4.4
+    j: 6
+    k: 89524.65548919108
+    length: 3.2
     name: FragileConcreteColumnAsset
-    net_worth: 1.7820041670911646
+    net_worth: 6.144014367344619
     node: 3
-    radius: 0.293161507141752
+    radius: 0.31915382432114614
     rugged: false
-    storey: 1
-    transf: 1
+    storey: 2
     type: column
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0928191628111934
-    My: 407.55161462644827
+    Ix: 0.00814873308630504
+    My: 183.36741050058487
     Q: 1
     Vy: null
-    alpha: '0.0055'
-    bay: 3
-    category: structural
-    edp: rotations_env
-    floor: 2
-    hidden: false
-    i: 6
-    icon: null
-    id: 6
-    integration_points: 5
-    j: 7
-    k: 1237588.8374825786
-    length: 3
-    name: ConcreteBeamAsset
-    net_worth: 1.5187535514981514
-    node: 6
-    radius: 0.146580753570876
-    rugged: false
-    storey: 1
-    transf: 1
-    type: beam
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0032631736925810167
-    My: 158.12528917048658
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 0
+    alpha: "0.0055"
+    bay: 1
     category: structural
     edp: peak_drifts
     floor: 2
     hidden: false
     i: 4
     icon: null
-    id: 7
+    id: 6
     integration_points: 5
-    j: 8
-    k: 35850.29691556292
+    j: 7
+    k: 89524.65548919108
     length: 3.2
     name: FragileConcreteColumnAsset
-    net_worth: 0.972002272958817
+    net_worth: 6.144014367344619
     node: 4
-    radius: 0.25388531259649033
+    radius: 0.31915382432114614
     rugged: false
     storey: 2
-    transf: 1
     type: column
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0032631736925810167
-    My: 158.12528917048658
+    Ix: 0.13037972938088063
+    My: 137.52555787543866
     Q: 1
     Vy: null
-    alpha: '0.0055'
+    alpha: "0.0055"
     bay: 1
+    category: structural
+    edp: rotations_env
+    floor: 3
+    hidden: false
+    i: 6
+    icon: null
+    id: 7
+    integration_points: 5
+    j: 7
+    k: 217299.5489681344
+    length: 6.0
+    name: ConcreteBeamAsset
+    net_worth: 14.400033673463955
+    node: 6
+    radius: 0.15957691216057307
+    rugged: false
+    storey: 2
+    type: beam
+    x: null
+    y: null
+  - A: 1e6
+    E: 30000000.0
+    EA: 1000000000.0
+    Ix: 0.00814873308630504
+    My: 183.36741050058487
+    Q: 1
+    Vy: null
+    alpha: "0.0055"
+    bay: 2
     category: structural
     edp: peak_drifts
     floor: 2
@@ -3306,608 +2430,208 @@ fems:
     icon: null
     id: 8
     integration_points: 5
-    j: 9
-    k: 35850.29691556292
+    j: 8
+    k: 89524.65548919108
     length: 3.2
     name: FragileConcreteColumnAsset
-    net_worth: 0.972002272958817
+    net_worth: 6.144014367344619
     node: 5
-    radius: 0.25388531259649033
+    radius: 0.31915382432114614
     rugged: false
     storey: 2
-    transf: 1
     type: column
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.05221077908129627
-    My: 118.59396687786494
+    Ix: 0.13037972938088063
+    My: 137.52555787543866
     Q: 1
     Vy: null
-    alpha: '0.0055'
-    bay: 1
+    alpha: "0.0055"
+    bay: 2
     category: structural
     edp: rotations_env
     floor: 3
     hidden: false
-    i: 8
+    i: 7
     icon: null
     id: 9
     integration_points: 5
-    j: 9
-    k: 696143.7210839503
-    length: 3
+    j: 8
+    k: 217299.5489681344
+    length: 6.0
     name: ConcreteBeamAsset
-    net_worth: 1.1390651636236135
-    node: 8
-    radius: 0.12694265629824517
+    net_worth: 14.400033673463955
+    node: 7
+    radius: 0.15957691216057307
     rugged: false
     storey: 2
-    transf: 1
     type: beam
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0032631736925810167
-    My: 158.12528917048658
+    Ix: 0.0020371832715762603
+    My: 51.81729216303763
     Q: 1
     Vy: null
-    alpha: '0.0055'
-    bay: 2
+    alpha: "0.0055"
+    bay: 0
     category: structural
     edp: peak_drifts
-    floor: 2
+    floor: 3
     hidden: false
     i: 6
     icon: null
     id: 10
     integration_points: 5
-    j: 10
-    k: 35850.29691556292
+    j: 9
+    k: 22381.163872297777
     length: 3.2
     name: FragileConcreteColumnAsset
-    net_worth: 0.972002272958817
+    net_worth: 3.0720071836723104
     node: 6
-    radius: 0.25388531259649033
+    radius: 0.22567583341910252
     rugged: false
-    storey: 2
-    transf: 1
+    storey: 3
     type: column
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.05221077908129627
-    My: 118.59396687786494
+    Ix: 0.0020371832715762603
+    My: 51.81729216303763
     Q: 1
     Vy: null
-    alpha: '0.0055'
-    bay: 2
+    alpha: "0.0055"
+    bay: 1
     category: structural
-    edp: rotations_env
+    edp: peak_drifts
     floor: 3
     hidden: false
-    i: 9
+    i: 7
     icon: null
     id: 11
     integration_points: 5
     j: 10
-    k: 696143.7210839503
-    length: 3
-    name: ConcreteBeamAsset
-    net_worth: 1.1390651636236135
-    node: 9
-    radius: 0.12694265629824517
-    rugged: false
-    storey: 2
-    transf: 1
-    type: beam
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0032631736925810167
-    My: 158.12528917048658
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 3
-    category: structural
-    edp: peak_drifts
-    floor: 2
-    hidden: false
-    i: 7
-    icon: null
-    id: 12
-    integration_points: 5
-    j: 11
-    k: 35850.29691556292
+    k: 22381.163872297777
     length: 3.2
     name: FragileConcreteColumnAsset
-    net_worth: 0.972002272958817
+    net_worth: 3.0720071836723104
     node: 7
-    radius: 0.25388531259649033
+    radius: 0.22567583341910252
     rugged: false
-    storey: 2
-    transf: 1
+    storey: 3
     type: column
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.05221077908129627
-    My: 118.59396687786494
+    Ix: 0.032594932345220165
+    My: 38.86296912227822
     Q: 1
     Vy: null
-    alpha: '0.0055'
-    bay: 3
+    alpha: "0.0055"
+    bay: 1
     category: structural
     edp: rotations_env
-    floor: 3
+    floor: 4
     hidden: false
-    i: 10
+    i: 9
     icon: null
-    id: 13
+    id: 12
     integration_points: 5
-    j: 11
-    k: 696143.7210839503
-    length: 3
+    j: 10
+    k: 54324.88724203361
+    length: 6.0
     name: ConcreteBeamAsset
-    net_worth: 1.1390651636236135
-    node: 10
-    radius: 0.12694265629824517
+    net_worth: 7.200016836731978
+    node: 9
+    radius: 0.11283791670955126
     rugged: false
-    storey: 2
-    transf: 1
+    storey: 3
     type: beam
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0014502994189248962
-    My: 56.530375486922956
+    Ix: 0.0020371832715762603
+    My: 51.81729216303763
     Q: 1
     Vy: null
-    alpha: '0.0055'
-    bay: 0
+    alpha: "0.0055"
+    bay: 2
     category: structural
     edp: peak_drifts
     floor: 3
     hidden: false
     i: 8
     icon: null
-    id: 14
+    id: 13
     integration_points: 5
-    j: 12
-    k: 15933.465295805741
+    j: 11
+    k: 22381.163872297777
     length: 3.2
     name: FragileConcreteColumnAsset
-    net_worth: 0.6480015153058779
+    net_worth: 3.0720071836723104
     node: 8
-    radius: 0.2072964896828013
+    radius: 0.22567583341910252
     rugged: false
     storey: 3
-    transf: 1
     type: column
     x: null
     y: null
-  - A: 100000
+  - A: 1e6
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0014502994189248962
-    My: 56.530375486922956
+    Ix: 0.032594932345220165
+    My: 38.86296912227822
     Q: 1
     Vy: null
-    alpha: '0.0055'
-    bay: 1
-    category: structural
-    edp: peak_drifts
-    floor: 3
-    hidden: false
-    i: 9
-    icon: null
-    id: 15
-    integration_points: 5
-    j: 13
-    k: 15933.465295805741
-    length: 3.2
-    name: FragileConcreteColumnAsset
-    net_worth: 0.6480015153058779
-    node: 9
-    radius: 0.2072964896828013
-    rugged: false
-    storey: 3
-    transf: 1
-    type: column
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.02320479070279834
-    My: 42.397781615192216
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 1
+    alpha: "0.0055"
+    bay: 2
     category: structural
     edp: rotations_env
     floor: 4
-    hidden: false
-    i: 12
-    icon: null
-    id: 16
-    integration_points: 5
-    j: 13
-    k: 309397.20937064453
-    length: 3
-    name: ConcreteBeamAsset
-    net_worth: 0.7593767757490756
-    node: 12
-    radius: 0.10364824484140064
-    rugged: false
-    storey: 3
-    transf: 1
-    type: beam
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0014502994189248962
-    My: 56.530375486922956
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 2
-    category: structural
-    edp: peak_drifts
-    floor: 3
     hidden: false
     i: 10
     icon: null
-    id: 17
+    id: 14
     integration_points: 5
-    j: 14
-    k: 15933.465295805741
-    length: 3.2
-    name: FragileConcreteColumnAsset
-    net_worth: 0.6480015153058779
+    j: 11
+    k: 54324.88724203361
+    length: 6.0
+    name: ConcreteBeamAsset
+    net_worth: 7.200016836731978
     node: 10
-    radius: 0.2072964896828013
+    radius: 0.11283791670955126
     rugged: false
     storey: 3
-    transf: 1
-    type: column
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.02320479070279834
-    My: 42.397781615192216
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 2
-    category: structural
-    edp: rotations_env
-    floor: 4
-    hidden: false
-    i: 13
-    icon: null
-    id: 18
-    integration_points: 5
-    j: 14
-    k: 309397.20937064453
-    length: 3
-    name: ConcreteBeamAsset
-    net_worth: 0.7593767757490756
-    node: 13
-    radius: 0.10364824484140064
-    rugged: false
-    storey: 3
-    transf: 1
     type: beam
     x: null
     y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0014502994189248962
-    My: 56.530375486922956
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 3
-    category: structural
-    edp: peak_drifts
-    floor: 3
-    hidden: false
-    i: 11
-    icon: null
-    id: 19
-    integration_points: 5
-    j: 15
-    k: 15933.465295805741
-    length: 3.2
-    name: FragileConcreteColumnAsset
-    net_worth: 0.6480015153058779
-    node: 11
-    radius: 0.2072964896828013
-    rugged: false
-    storey: 3
-    transf: 1
-    type: column
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.02320479070279834
-    My: 42.397781615192216
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 3
-    category: structural
-    edp: rotations_env
-    floor: 4
-    hidden: false
-    i: 14
-    icon: null
-    id: 20
-    integration_points: 5
-    j: 15
-    k: 309397.20937064453
-    length: 3
-    name: ConcreteBeamAsset
-    net_worth: 0.7593767757490756
-    node: 14
-    radius: 0.10364824484140064
-    rugged: false
-    storey: 3
-    transf: 1
-    type: beam
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0003625748547312242
-    My: 22.228984143709514
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 0
-    category: structural
-    edp: peak_drifts
-    floor: 4
-    hidden: false
-    i: 12
-    icon: null
-    id: 21
-    integration_points: 5
-    j: 16
-    k: 3983.3663239514367
-    length: 3.2
-    name: FragileConcreteColumnAsset
-    net_worth: 0.324000757652939
-    node: 12
-    radius: 0.146580753570876
-    rugged: false
-    storey: 4
-    transf: 1
-    type: column
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0003625748547312242
-    My: 22.228984143709514
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 1
-    category: structural
-    edp: peak_drifts
-    floor: 4
-    hidden: false
-    i: 13
-    icon: null
-    id: 22
-    integration_points: 5
-    j: 17
-    k: 3983.3663239514367
-    length: 3.2
-    name: FragileConcreteColumnAsset
-    net_worth: 0.324000757652939
-    node: 13
-    radius: 0.146580753570876
-    rugged: false
-    storey: 4
-    transf: 1
-    type: column
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0058011976756995876
-    My: 16.671738107782136
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 1
-    category: structural
-    edp: rotations_env
-    floor: 5
-    hidden: false
-    i: 16
-    icon: null
-    id: 23
-    integration_points: 5
-    j: 17
-    k: 77349.30234266116
-    length: 3
-    name: ConcreteBeamAsset
-    net_worth: 0.37968838787453785
-    node: 16
-    radius: 0.073290376785438
-    rugged: false
-    storey: 4
-    transf: 1
-    type: beam
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0003625748547312242
-    My: 22.228984143709514
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 2
-    category: structural
-    edp: peak_drifts
-    floor: 4
-    hidden: false
-    i: 14
-    icon: null
-    id: 24
-    integration_points: 5
-    j: 18
-    k: 3983.3663239514367
-    length: 3.2
-    name: FragileConcreteColumnAsset
-    net_worth: 0.324000757652939
-    node: 14
-    radius: 0.146580753570876
-    rugged: false
-    storey: 4
-    transf: 1
-    type: column
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0058011976756995876
-    My: 16.671738107782136
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 2
-    category: structural
-    edp: rotations_env
-    floor: 5
-    hidden: false
-    i: 17
-    icon: null
-    id: 25
-    integration_points: 5
-    j: 18
-    k: 77349.30234266116
-    length: 3
-    name: ConcreteBeamAsset
-    net_worth: 0.37968838787453785
-    node: 17
-    radius: 0.073290376785438
-    rugged: false
-    storey: 4
-    transf: 1
-    type: beam
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0003625748547312242
-    My: 22.228984143709514
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 3
-    category: structural
-    edp: peak_drifts
-    floor: 4
-    hidden: false
-    i: 15
-    icon: null
-    id: 26
-    integration_points: 5
-    j: 19
-    k: 3983.3663239514367
-    length: 3.2
-    name: FragileConcreteColumnAsset
-    net_worth: 0.324000757652939
-    node: 15
-    radius: 0.146580753570876
-    rugged: false
-    storey: 4
-    transf: 1
-    type: column
-    x: null
-    y: null
-  - A: 100000
-    E: 30000000.0
-    EA: 1000000000.0
-    Ix: 0.0058011976756995876
-    My: 16.671738107782136
-    Q: 1
-    Vy: null
-    alpha: '0.0055'
-    bay: 3
-    category: structural
-    edp: rotations_env
-    floor: 5
-    hidden: false
-    i: 18
-    icon: null
-    id: 27
-    integration_points: 5
-    j: 19
-    k: 77349.30234266116
-    length: 3
-    name: ConcreteBeamAsset
-    net_worth: 0.37968838787453785
-    node: 18
-    radius: 0.073290376785438
-    rugged: false
-    storey: 4
-    transf: 1
-    type: beam
-    x: null
-    y: null
-  extras:
-    c_design: 0.33771661569826705
-    column_design_moments:
-    - 543.4021528352644
-    - 158.12528917048658
-    - 56.530375486922956
-    - 22.228984143709514
-    design_shears:
-    - 121.07889707235232
-    - 106.8235049570223
-    - 88.03791019456625
-    - 62.900655734190146
-  frequencies:
-  - 2.2362719409911795
-  - 4.608252980863059
-  - 8.648357179867748
-  - 15.05860623523223
-  model: BilinFrame
-  nodes:
+extras:
+  c_design: 0.2691131498470948
+  column_design_moments:
+    - 719.2258654122501
+    - 183.36741050058487
+    - 51.81729216303763
+  design_shears:
+    - 179.0315945071727
+    - 146.6980575067762
+    - 102.32135802263785
+frequencies:
+  - 3.3260576834886346
+  - 7.258758423718385
+  - 15.187649293216813
+model: BilinFrame
+nodes:
   - bay: 0
     column: 1
     fixed: true
@@ -3915,11 +2639,9 @@ fems:
     free_dofs: 0
     id: 0
     mass: null
-    orientation: null
     storey: 0
     x: 0.0
     y: 0.0
-    zerolen: null
   - bay: 1
     column: 2
     fixed: true
@@ -3927,11 +2649,9 @@ fems:
     free_dofs: 0
     id: 1
     mass: null
-    orientation: null
     storey: 0
-    x: 3.0
+    x: 6.0
     y: 0.0
-    zerolen: null
   - bay: 2
     column: 3
     fixed: true
@@ -3939,223 +2659,107 @@ fems:
     free_dofs: 0
     id: 2
     mass: null
-    orientation: null
     storey: 0
-    x: 6.0
+    x: 12.0
     y: 0.0
-    zerolen: null
-  - bay: 3
-    column: 4
-    fixed: true
-    floor: 1
-    free_dofs: 0
-    id: 3
-    mass: null
-    orientation: null
-    storey: 0
-    x: 9.0
-    y: 0.0
-    zerolen: null
   - bay: 0
     column: 1
     fixed: false
     floor: 2
     free_dofs: 3
-    id: 4
-    mass: 41.28440366972477
-    orientation: null
+    id: 3
+    mass: 73.39449541284404
     storey: 1
     x: 0.0
-    y: 4.4
-    zerolen: null
+    y: 4.5
   - bay: 1
     column: 2
+    fixed: false
+    floor: 2
+    free_dofs: 3
+    id: 4
+    mass: null
+    storey: 1
+    x: 6.0
+    y: 4.5
+  - bay: 2
+    column: 3
     fixed: false
     floor: 2
     free_dofs: 3
     id: 5
     mass: null
-    orientation: null
     storey: 1
-    x: 3.0
-    y: 4.4
-    zerolen: null
-  - bay: 2
-    column: 3
+    x: 12.0
+    y: 4.5
+  - bay: 0
+    column: 1
     fixed: false
-    floor: 2
+    floor: 3
     free_dofs: 3
     id: 6
-    mass: null
-    orientation: null
-    storey: 1
-    x: 6.0
-    y: 4.4
-    zerolen: null
-  - bay: 3
-    column: 4
+    mass: 73.39449541284404
+    storey: 2
+    x: 0.0
+    y: 7.7
+  - bay: 1
+    column: 2
     fixed: false
-    floor: 2
+    floor: 3
     free_dofs: 3
     id: 7
     mass: null
-    orientation: null
-    storey: 1
-    x: 9.0
-    y: 4.4
-    zerolen: null
-  - bay: 0
-    column: 1
+    storey: 2
+    x: 6.0
+    y: 7.7
+  - bay: 2
+    column: 3
     fixed: false
     floor: 3
     free_dofs: 3
     id: 8
-    mass: 41.28440366972477
-    orientation: null
+    mass: null
     storey: 2
+    x: 12.0
+    y: 7.7
+  - bay: 0
+    column: 1
+    fixed: false
+    floor: 4
+    free_dofs: 3
+    id: 9
+    mass: 73.39449541284404
+    storey: 3
     x: 0.0
-    y: 7.6000000000000005
-    zerolen: null
+    y: 10.9
   - bay: 1
     column: 2
     fixed: false
-    floor: 3
-    free_dofs: 3
-    id: 9
-    mass: null
-    orientation: null
-    storey: 2
-    x: 3.0
-    y: 7.6000000000000005
-    zerolen: null
-  - bay: 2
-    column: 3
-    fixed: false
-    floor: 3
+    floor: 4
     free_dofs: 3
     id: 10
     mass: null
-    orientation: null
-    storey: 2
+    storey: 3
     x: 6.0
-    y: 7.6000000000000005
-    zerolen: null
-  - bay: 3
-    column: 4
+    y: 10.9
+  - bay: 2
+    column: 3
     fixed: false
-    floor: 3
+    floor: 4
     free_dofs: 3
     id: 11
     mass: null
-    orientation: null
-    storey: 2
-    x: 9.0
-    y: 7.6000000000000005
-    zerolen: null
-  - bay: 0
-    column: 1
-    fixed: false
-    floor: 4
-    free_dofs: 3
-    id: 12
-    mass: 41.28440366972477
-    orientation: null
     storey: 3
-    x: 0.0
-    y: 10.8
-    zerolen: null
-  - bay: 1
-    column: 2
-    fixed: false
-    floor: 4
-    free_dofs: 3
-    id: 13
-    mass: null
-    orientation: null
-    storey: 3
-    x: 3.0
-    y: 10.8
-    zerolen: null
-  - bay: 2
-    column: 3
-    fixed: false
-    floor: 4
-    free_dofs: 3
-    id: 14
-    mass: null
-    orientation: null
-    storey: 3
-    x: 6.0
-    y: 10.8
-    zerolen: null
-  - bay: 3
-    column: 4
-    fixed: false
-    floor: 4
-    free_dofs: 3
-    id: 15
-    mass: null
-    orientation: null
-    storey: 3
-    x: 9.0
-    y: 10.8
-    zerolen: null
-  - bay: 0
-    column: 1
-    fixed: false
-    floor: 5
-    free_dofs: 3
-    id: 16
-    mass: 41.28440366972477
-    orientation: null
-    storey: 4
-    x: 0.0
-    y: 14.0
-    zerolen: null
-  - bay: 1
-    column: 2
-    fixed: false
-    floor: 5
-    free_dofs: 3
-    id: 17
-    mass: null
-    orientation: null
-    storey: 4
-    x: 3.0
-    y: 14.0
-    zerolen: null
-  - bay: 2
-    column: 3
-    fixed: false
-    floor: 5
-    free_dofs: 3
-    id: 18
-    mass: null
-    orientation: null
-    storey: 4
-    x: 6.0
-    y: 14.0
-    zerolen: null
-  - bay: 3
-    column: 4
-    fixed: false
-    floor: 5
-    free_dofs: 3
-    id: 19
-    mass: null
-    orientation: null
-    storey: 4
-    x: 9.0
-    y: 14.0
-    zerolen: null
-  nonstructural_elements:
+    x: 12.0
+    y: 10.9
+nonstructural_elements:
   - category: nonstructural
     edp: pfa
     floor: 1
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 2.3333333333333335
@@ -4166,7 +2770,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 2.45
@@ -4177,7 +2781,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 2.566666666666667
@@ -4188,7 +2792,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 2.6833333333333336
@@ -4199,7 +2803,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 2.8
@@ -4210,7 +2814,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericSecurity
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 2.9166666666666665
@@ -4221,7 +2825,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericElectric
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 4.316666666666666
@@ -4232,7 +2836,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 4.433333333333334
@@ -4243,7 +2847,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 4.55
@@ -4254,7 +2858,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 5.833333333333333
@@ -4265,7 +2869,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericElectric
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 5.95
@@ -4276,7 +2880,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 6.066666666666666
@@ -4287,7 +2891,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 6.183333333333334
@@ -4298,7 +2902,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 6.65
@@ -4309,7 +2913,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 6.766666666666667
@@ -4320,7 +2924,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 6.883333333333334
@@ -4331,7 +2935,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericPlumbing
-    net_worth: 0.7
+    net_worth: 1.4
     node: null
     rugged: true
     x: 7.0
@@ -4342,7 +2946,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 1.4595959595959596
@@ -4353,7 +2957,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 1.5454545454545454
@@ -4364,7 +2968,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericPlumbing
-    net_worth: 0.7
+    net_worth: 1.4
     node: null
     rugged: true
     x: 1.6313131313131313
@@ -4375,7 +2979,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 1.7171717171717171
@@ -4386,7 +2990,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericElectric
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 2.7474747474747474
@@ -4397,7 +3001,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 2.833333333333333
@@ -4408,7 +3012,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 2.919191919191919
@@ -4419,7 +3023,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 4.292929292929292
@@ -4430,7 +3034,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 4.378787878787879
@@ -4441,7 +3045,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 4.4646464646464645
@@ -4452,7 +3056,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 4.55050505050505
@@ -4463,7 +3067,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 4.636363636363637
@@ -4474,7 +3078,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 4.722222222222222
@@ -4485,7 +3089,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 7.555555555555555
@@ -4496,7 +3100,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 7.641414141414141
@@ -4507,7 +3111,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 7.727272727272727
@@ -4518,7 +3122,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 7.813131313131313
@@ -4529,7 +3133,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 7.898989898989899
@@ -4540,7 +3144,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericSecurity
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 7.984848484848484
@@ -4551,7 +3155,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 8.242424242424242
@@ -4562,7 +3166,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 8.328282828282829
@@ -4573,7 +3177,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 8.414141414141413
@@ -4584,7 +3188,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericPlumbing
-    net_worth: 0.7
+    net_worth: 1.4
     node: null
     rugged: true
     x: 8.5
@@ -4595,7 +3199,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 1.4595959595959596
@@ -4606,7 +3210,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 1.5454545454545454
@@ -4617,7 +3221,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericPlumbing
-    net_worth: 0.7
+    net_worth: 1.4
     node: null
     rugged: true
     x: 1.6313131313131313
@@ -4628,7 +3232,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 1.7171717171717171
@@ -4639,7 +3243,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericElectric
-    net_worth: 0.9
+    net_worth: 1.8
     node: null
     rugged: true
     x: 2.7474747474747474
@@ -4650,7 +3254,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 2.833333333333333
@@ -4661,7 +3265,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 2.919191919191919
@@ -4672,7 +3276,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 4.292929292929292
@@ -4683,7 +3287,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 4.378787878787879
@@ -4694,7 +3298,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 4.4646464646464645
@@ -4705,7 +3309,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 4.55050505050505
@@ -4716,7 +3320,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 4.636363636363637
@@ -4727,7 +3331,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 4.722222222222222
@@ -4738,7 +3342,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 7.555555555555555
@@ -4749,7 +3353,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 7.641414141414141
@@ -4760,7 +3364,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 7.727272727272727
@@ -4771,7 +3375,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 7.813131313131313
@@ -4782,7 +3386,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 7.898989898989899
@@ -4793,7 +3397,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericSecurity
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 7.984848484848484
@@ -4804,7 +3408,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
+    net_worth: 1.0
     node: null
     rugged: false
     x: 8.242424242424242
@@ -4815,7 +3419,7 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
+    net_worth: 2.8
     node: null
     rugged: true
     x: 8.328282828282829
@@ -4826,7 +3430,7 @@ fems:
     hidden: true
     icon: marble-tiles.jpg
     name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
+    net_worth: 1.3
     node: null
     rugged: false
     x: 8.414141414141413
@@ -4837,331 +3441,35 @@ fems:
     hidden: true
     icon: null
     name: NonStructuralGenericPlumbing
-    net_worth: 0.7
+    net_worth: 1.4
     node: null
     rugged: true
     x: 8.5
     y: null
-  - category: nonstructural
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
-    node: null
-    rugged: false
-    x: 1.4595959595959596
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
-    node: null
-    rugged: true
-    x: 1.5454545454545454
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericPlumbing
-    net_worth: 0.7
-    node: null
-    rugged: true
-    x: 1.6313131313131313
-    y: null
-  - category: nonstructural
-    edp: peak_drifts
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
-    node: null
-    rugged: false
-    x: 1.7171717171717171
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericElectric
-    net_worth: 0.9
-    node: null
-    rugged: true
-    x: 2.7474747474747474
-    y: null
-  - category: nonstructural
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
-    node: null
-    rugged: false
-    x: 2.833333333333333
-    y: null
-  - category: nonstructural
-    edp: peak_drifts
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
-    node: null
-    rugged: false
-    x: 2.919191919191919
-    y: null
-  - category: nonstructural
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
-    node: null
-    rugged: false
-    x: 4.292929292929292
-    y: null
-  - category: nonstructural
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
-    node: null
-    rugged: false
-    x: 4.378787878787879
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
-    node: null
-    rugged: true
-    x: 4.4646464646464645
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
-    node: null
-    rugged: true
-    x: 4.55050505050505
-    y: null
-  - category: nonstructural
-    edp: peak_drifts
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
-    node: null
-    rugged: false
-    x: 4.636363636363637
-    y: null
-  - category: nonstructural
-    edp: peak_drifts
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
-    node: null
-    rugged: false
-    x: 4.722222222222222
-    y: null
-  - category: nonstructural
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
-    node: null
-    rugged: false
-    x: 7.555555555555555
-    y: null
-  - category: nonstructural
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
-    node: null
-    rugged: false
-    x: 7.641414141414141
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
-    node: null
-    rugged: true
-    x: 7.727272727272727
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
-    node: null
-    rugged: true
-    x: 7.813131313131313
-    y: null
-  - category: nonstructural
-    edp: peak_drifts
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
-    node: null
-    rugged: false
-    x: 7.898989898989899
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericSecurity
-    net_worth: 1.4
-    node: null
-    rugged: true
-    x: 7.984848484848484
-    y: null
-  - category: nonstructural
-    edp: pfa
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericRoofTilings
-    net_worth: 0.5
-    node: null
-    rugged: false
-    x: 8.242424242424242
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericFloorFinishes
-    net_worth: 1.4
-    node: null
-    rugged: true
-    x: 8.328282828282829
-    y: null
-  - category: nonstructural
-    edp: peak_drifts
-    floor: 4
-    hidden: true
-    icon: marble-tiles.jpg
-    name: NonStructuralGenericWallFinishes
-    net_worth: 0.65
-    node: null
-    rugged: false
-    x: 8.414141414141413
-    y: null
-  - category: nonstructural
-    edp: null
-    floor: 4
-    hidden: true
-    icon: null
-    name: NonStructuralGenericPlumbing
-    net_worth: 0.7
-    node: null
-    rugged: true
-    x: 8.5
-    y: null
-  num_bays: 3
-  num_cols: 4
-  num_floors: 5
-  num_frames: 1
-  num_storeys: 4
-  occupancy: MidRisePrivateOffice.yml
-  omegas:
-  - 14.050911002493754
-  - 28.9545074211253
-  - 54.33923076378612
-  - 94.61601344381404
-  periods:
-  - 0.4471728065222566
-  - 0.21700197540212182
-  - 0.11562889681844664
-  - 0.0664072082355355
-  pushover_abs_path: null
-  values:
-  - 197.4281
-  - 838.3635
-  - 2952.752
-  - 8952.19
-  vectors:
-  - - 0.0220245893231863
-    - -0.0569302353679969
-    - -0.0880946343338959
-    - 0.1128513426724519
-  - - 0.0364510022497844
-    - -0.0828613893330622
-    - -0.0713267629852078
-    - -0.1045946071752326
-  - - 0.0635222547346987
-    - -0.0923105320902498
-    - 0.1054536796351811
-    - 0.0233545422850431
-  - - 0.1355484763059326
-    - 0.0747925698132009
-    - -0.0159240104979241
-    - -0.0011542689669256
-floors:
-- 0.0
-- 4.4
-- 3.2
-- 3.2
-- 3.2
-fy: 420000.0
-height: 14.0
-masses:
-- 41.28440366972477
-- 41.28440366972477
-- 41.28440366972477
-- 41.28440366972477
-name: kaushik-designed
-num_bays: 3
-num_cols: 4
-num_floors: 5
-num_frames: 1
-num_storeys: 4
+num_frames: 2
 occupancy: MidRisePrivateOffice.yml
-storeys:
-- 4.4
-- 3.2
-- 3.2
-- 3.2
-uniform_beam_loads_by_mass:
-- 45.0
-- 45.0
-- 45.0
-- 45.0
-width: 9
+omegas:
+  - 20.89823676772756
+  - 45.608124276273415
+  - 95.4268148897363
+periods:
+  - 0.30065624085963544
+  - 0.13776460678625782
+  - 0.0658429741623429
+pushover_abs_path: /Users/carlo/vulkan/models/design/pushover
+values:
+  - 436.7363
+  - 2080.101
+  - 9106.277
+vectors:
+  - - 0.028105749672425
+    - -0.0649402776356776
+    - 0.0928322528863309
+  - - 0.048996906199804
+    - -0.0792711395444238
+    - -0.0702879052054856
+  - - 0.1021487641540437
+    - 0.0558913837360374
+    - 0.0081720992328852
+num_cols: 3
+num_storeys: 3

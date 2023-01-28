@@ -6,7 +6,7 @@ import json
 import os
 import base64
 import io
-
+from typing import Any
 from dataclasses import asdict
 import pandas as pd
 import numpy as np
@@ -97,6 +97,7 @@ class EDP(Enum):
     overturning_moments = "overturning_moments"
     rotations = "rotations"
     rotations_env = "rotations_env"
+    spring_moment_rotation_th = "spring_moment_rotation_th"
 
     @classmethod
     def list(cls):
@@ -140,8 +141,25 @@ class YamlMixin:
          !python/object/apply:numpy.core.multiarray.scalar
     """
 
-    def read_only_dict_factory(self, data):
-        return dict([x for x in data if not x[0].startswith("_")])
+    def read_only_dict_factory(self, data: list[tuple[str, Any]]):
+        result = {}
+        for k, v in data:
+            if k.startswith("_"):
+                continue
+            elif isinstance(v, (np.ndarray)):
+                v = v.tolist()
+                print(f"field {k} is numpy.ndarray {v} {type(v)}, should be list")
+            elif isinstance(v, (np.integer)):
+                v = int(v)
+                print(f"field {k} is {type(v)}, should be native int !")
+            elif isinstance(v, (np.floating,)):
+                v = v.item()
+                print(f"field {k} is {type(v)}, should be native float !")
+            elif isinstance(v, (np.generic)):
+                v = v.item()
+                print(f"field {k} is {type(v)}, generic should be python native !")
+            result[k] = v
+        return result
 
     @classmethod
     def from_file(cls, filepath):
@@ -175,12 +193,16 @@ class YamlMixin:
 
 
 class NamedYamlMixin(YamlMixin):
+    @property
+    def name_yml(self) -> str:
+        return f"{self.name}.yml"
+
     def to_file(self, folder: Path) -> None:
-        filepath = folder / f"{self.name}.yml"
+        filepath = folder / self.name_yml
         return super().to_file(filepath)
 
     def delete(self, folder: Path) -> None:
-        filepath = folder / f"{self.name}.yml"
+        filepath = folder / self.name_yml
         # folder = DESIGN_DIR / name
         try:
             Path.unlink(filepath)
@@ -229,7 +251,7 @@ def UploadComponent(id, msg: str = "Upload design criterion."):
 
 
 def eigenvectors_similar(a: np.ndarray, b: np.ndarray, rtol=1e-3) -> bool:
-    """a-b are similar in an eigenvector sense
+    """A, B are similar in an eigenvector sense
     if their columns are similar when multiplied by -1 or +1"""
     a = np.array(a)
     b = np.array(b)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+import inspect
 
 from app.assets import (
     AssetFactory,
@@ -7,19 +8,26 @@ from app.assets import (
     RiskModelFactory,
     Asset,
 )
+from app.utils import (
+    OPENSEES_ELEMENT_EDPs,
+    OPENSEES_EDPs,
+    OPENSEES_REACTION_EDPs,
+)
 from dataclasses import dataclass, field
 import numpy as np
+import pandas as pd
 from pathlib import Path
 from app.utils import GRAVITY, SummaryEDP, YamlMixin, ASSETS_PATH
 from enum import Enum
-import pandas as pd
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line, Pie
-from typing import Optional
+from app.concrete import RectangularConcreteColumn
 
 
 class ElementTypes(Enum):
     BEAM = "beam"
     COLUMN = "column"
+    SPRING_BEAM = "spring_beam"
+    SPRING_COLUMN = "spring_column"
 
 
 class FEMValidationException(Exception):
@@ -36,8 +44,8 @@ class FEMValidationException(Exception):
 
 
 @dataclass
-class FE(YamlMixin):
-    id: Optional[str] = None  # opensees tag
+class FE(ABC):
+    id: str | None = None  # opensees tag
 
     @staticmethod
     def string_ids_for_list(fems: list["FE"]) -> str:
@@ -45,16 +53,19 @@ class FE(YamlMixin):
 
 
 @dataclass
-class Node(FE):
-    x: float = None
-    y: float = None
-    mass: float = None
+class Node(FE, YamlMixin):
+    x: float | None = None
+    y: float | None = None
+    mass: float | None = None
     fixed: bool = False
-    column: int = None
-    bay: int = None  # 0 for first column
-    floor: int = None
-    storey: int = None
-    free_dofs: int = 3
+    column: int | None = None  # 1 for first column
+    bay: int | None = None  # 0 for first column
+    floor: int | None = None  # 1 for y=0
+    storey: int | None = None  # 0 for y=0
+    free_dofs: int | None = 3
+    zerolen: int | None = None  # wrt which id it is fixed to
+    orientation: str | None = None
+    base: bool | None = False  # where base shear is recorded
 
     def __post_init__(self):
         if self.mass is not None and self.mass <= 0:
@@ -65,10 +76,14 @@ class Node(FE):
     def __str__(self) -> str:
         s = f"node {self.id} {self.x} {self.y}"
         if self.mass:
-            s += f" -mass {self.mass} 1e-9 1e-9"
+            s += f" -mass {self.mass:.4f} 1e-9 1e-9"
         s += "\n"
         if self.fixed:
             s += f"fix {self.id} 1 1 1\n"
+
+        if self.zerolen is not None:
+            s += f"equalDOF {self.zerolen} {self.id} 1 2\n"
+
         return s
 
 
@@ -95,7 +110,31 @@ class DiaphragmNode(Node):
 
 
 @dataclass
-class ElasticBeamColumn(FE, RiskAsset):
+class BeamColumn(FE, YamlMixin):
+    type: str = ElementTypes.BEAM.value
+    model: str = "BeamColumn"
+    i: int | None = None
+    j: int | None = None
+    E: float = 1.0
+    Ix: float = 1.0
+    A: float = 100_000
+    radius: float | None = None
+    storey: int | None = None
+    floor: int | None = None
+    bay: str | None = None  # 0 for first column
+    transf: int = 1
+    length: float = 1.0
+    category: str = "structural"
+
+    def __post_init__(self):
+        self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
+
+    def __str__(self) -> str:
+        return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A:.5g} {self.E:.6g} {self.Ix:.6g} {self.transf}\n"
+
+
+@dataclass
+class ElasticBeamColumn(RiskAsset, BeamColumn):
     """
     circular & axially rigid.
     natural coordinates bay:ix storey:iy
@@ -105,22 +144,10 @@ class ElasticBeamColumn(FE, RiskAsset):
     I can transition from elastic -> plastic
     """
 
-    i: int = None
-    j: int = None
-    E: float = 1.0
-    Ix: float = 1.0
-    radius: float = None
-    storey: int = None
-    floor: int = None
-    bay: str = None  # 0 for first column
-    name: str = None
-    type: str = ElementTypes.BEAM.value
-    A: str = "1e6"
-    k: float = None
-    length: float = 1.0
-    My: float = None
-    Vy: float = None
-    alpha: float = "0.0055"
+    model: str = "ElasticBeamColumn"
+    k: float | None = None
+    My: float | None = None
+    alpha: str = "0.0055"
     EA: float = 1e9
     integration_points: int = 5
     _DOLLARS_PER_UNIT_VOLUME: float = 1.500
@@ -128,19 +155,18 @@ class ElasticBeamColumn(FE, RiskAsset):
     Q: float = 1.0
 
     def __post_init__(self):
-        self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
         if self.E <= 0 or self.Ix <= 0:
             raise FEMValidationException(
                 "Properties must be positive! " + f"{str(self)}"
             )
-        if self.type == ElementTypes.COLUMN.value:
-            if self.Q == 1:
-                self.name = "FragileConcreteColumnAsset"
+        if self.name is None:
+            if self.type == ElementTypes.COLUMN.value:
+                if self.Q == 1:
+                    self.name = "FragileConcreteColumnAsset"
+                else:
+                    self.name = "ConcreteColumnAsset"
             else:
-                self.name = "ConcreteColumnAsset"
-        else:
-            self.name = "ConcreteBeamAsset"
-
+                self.name = "ConcreteBeamAsset"
         self._risk = RiskModelFactory(self.name)
         self.k = self.get_k()
         super().__post_init__()
@@ -185,7 +211,6 @@ class ElasticBeamColumn(FE, RiskAsset):
     def get_and_set_net_worth(self) -> float:
         """
         this is where size, steel % matters
-
         regression: prices per m2 of slab as function of thickness
         price_m2 = 7623 * thickness
         """
@@ -201,9 +226,6 @@ class ElasticBeamColumn(FE, RiskAsset):
 
     def get_k(self) -> float:
         return 12 * self.E * self.Ix / self.length**3
-
-    def __str__(self) -> str:
-        return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A} {self.E} {self.Ix} {self.transf}\n"
 
     @staticmethod
     def from_adjacency(
@@ -229,8 +251,12 @@ class ElasticBeamColumn(FE, RiskAsset):
 
 @dataclass
 class BilinBeamColumn(ElasticBeamColumn):
+    model: str = "BilinBeamColumn"
+    Vy: float | None = None
+
     def __post_init__(self):
-        super().__post_init__()
+        self.model = self.__class__.__name__
+        return super().__post_init__()
 
     @property
     def EI(self) -> float:
@@ -247,32 +273,123 @@ class BilinBeamColumn(ElasticBeamColumn):
         s += f"element forceBeamColumn {self.id} {self.i} {self.j} {self.integration_points} %(agg{self.id})d {self.transf}\n"
         return s
 
-    def get_and_set_net_worth(self) -> float:
-        return super().get_and_set_net_worth()
+
+@dataclass
+class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
+    recorder_ix: int = 0
+    model: str = "IMKSpring"
+    ASPECT_RATIO_B_TO_H: float = 0.5  # b = kappa * h, h = (12 Ix / kappa )**(1/4)
+    left: bool = False
+    right: bool = False
+    up: bool = False
+    down: bool = False
+    Ks: float | None = None
+    Ke: float | None = None
+    Kb: float | None = None
+    Ic: float | None = None
+    secColTag: int | None = None
+    imkMatTag: int | None = None
+    elasticMatTag: int | None = None
+    Vy: float | None = None
+
+    def __str__(self) -> str:
+        s = f"uniaxialMaterial Elastic {self.elasticMatTag} 1e9\n"
+        s += f"uniaxialMaterial ModIMKPeakOriented {self.imkMatTag} {self.Ks:.2f} {self.alpha_postyield} {self.alpha_postyield} {self.My:.2f} {-self.My:.2f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} 1. 1. 1. 1. {self.theta_cap_cyclic:.8f} {self.theta_cap_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.theta_pc_cyclic:.8f} 1e-6 1e-6 {self.theta_u_cyclic:.8f} {self.theta_u_cyclic:.8f} 1. 1.\n"
+        s += f"section Aggregator {self.secColTag} {self.elasticMatTag} P {self.imkMatTag} Mz\n"
+        s += f"element zeroLengthSection  {self.id}  {self.i} {self.j} {self.secColTag}\n"
+        return s
+
+    @classmethod
+    def from_bilin(cls, **data):
+        Ix = data["Ix"]
+        h = (12 * Ix / cls.ASPECT_RATIO_B_TO_H) ** 0.25
+        b = h * cls.ASPECT_RATIO_B_TO_H
+        return cls(**{"h": h, "b": b, "EFFECTIVE_INERTIA_COEFF": 1, **data})
+
+    def __post_init__(self):
+        from app.strana import EDP
+
+        super().__post_init__()
+        self.model = self.__class__.__name__
+        self.radius = self.h
+        self.Ks = self.My / self.theta_y
+        self.Ke = 6 * self.E * self.Ix / self.length
+        self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
+        self.Ic = self.Kb * self.length / 6 / self.E
+        self.secColTag = self.id + 100000
+        self.imkMatTag = self.id + 200000
+        self.elasticMatTag = self.id + 300000
+        self.net_worth = self.cost
+        self._risk.edp = EDP.spring_moment_rotation_th.value
+        self._risk.losses = self.losses
+
+    def losses(self, xs: list[pd.DataFrame]) -> list[float]:
+        costs = [self.park_ang_kunnath(df) for df in xs]
+        print(costs)
+        return costs
+
+    def dollars(self, *, strana_results_df):
+        print(f"Structural element {self.name=} {self.node=} {self.rugged=}")
+        strana_results_df["collapse_losses"] = (
+            strana_results_df["collapse"]
+            .apply(lambda r: self.net_worth if r else 0)
+            .values
+        )
+        # treat columns differently regarding shear collapse
+        # if self.type == ElementTypes.COLUMN.value:
+        #     strana_results_df = self.dollars_for_storey(
+        #         strana_results_df=strana_results_df
+        #     )
+        # elif self.type == ElementTypes.BEAM.value:
+        dollars = self.dollars_for_node(
+            strana_results_df=strana_results_df,
+            ix=self.recorder_ix,
+            ele_type=self.type,
+        )["losses"].values
+        strana_results_df["losses"] = dollars
+        losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
+        return losses
 
 
 @dataclass
 class FiniteElementModel(ABC, YamlMixin):
     nodes: list[Node]
-    elements: list[ElasticBeamColumn]
+    elements: list[BeamColumn]
     damping: float
     model: str = "ABC"
     num_frames: int = 1
-    occupancy: Optional[str] = None
+    num_storeys: float | None = None
+    num_floors: float | None = None
+    num_bays: float | None = None
+    num_cols: float | None = None
+    occupancy: str | None = None
     periods: list = field(default_factory=list)
     frequencies: list = field(default_factory=list)
     omegas: list = field(default_factory=list)
     values: list = field(default_factory=list)
     vectors: list = field(default_factory=list)
-    a0: Optional[float] = None
-    a1: Optional[float] = None
+    a0: float | None = None
+    a1: float | None = None
     extras: dict = field(default_factory=dict)
     _transf_beam: int = 1
     _transf_col: int = 2
     nonstructural_elements: list[Asset] = field(default_factory=list)
     contents: list[Asset] = field(default_factory=list)
-    pushover_abs_path: Optional[str] = None
+    pushover_abs_path: str | None = None
     _pushover_view = None
+
+    def __str__(self) -> str:
+        h = "#!/usr/local/bin/opensees\n"
+        h += f"# {self.model}, storeys {self.num_storeys}, bays {self.num_bays}\n"
+        h += "wipe\n"
+        h += "model BasicBuilder -ndm 2 -ndf 3\n"
+        t = f"geomTransf Linear {self._transf_beam}\n"
+        t += f"geomTransf PDelta {self._transf_col}\n"
+        return h + t + self.nodes_str + self.elements_str
+
+    @property
+    def rayleigh_damping_string(self) -> str:
+        return f"rayleigh {self.a0} 0 {self.a1} 0\n"
 
     def __post_init__(self):
         from app.occupancy import BuildingOccupancy
@@ -282,7 +399,7 @@ class FiniteElementModel(ABC, YamlMixin):
         if isinstance(self.nodes[0], dict):
             self.nodes = [Node(**data) for data in self.nodes]
         if isinstance(self.elements[0], dict):
-            self.elements = [ElasticBeamColumn(**data) for data in self.elements]
+            self.elements = [ElementFactory(**data) for data in self.elements]
         if len(self.nonstructural_elements) > 0 and isinstance(
             self.nonstructural_elements[0], dict
         ):
@@ -317,12 +434,21 @@ class FiniteElementModel(ABC, YamlMixin):
             damping=spec.damping,
             occupancy=spec.occupancy,
             num_frames=spec.num_frames,
+            num_cols=spec.num_cols,
+            num_bays=spec.num_bays,
+            num_floors=spec.num_floors,
+            num_storeys=spec.num_storeys,
         )
         return fem
 
     @property
+    def elements_assets(self) -> list["Asset"]:
+        eles = [ele for ele in self.elements if Asset in inspect.getmro(ele.__class__)]
+        return eles
+
+    @property
     def assets(self):
-        return self.elements + self.nonstructural_elements + self.contents
+        return self.elements_assets + self.nonstructural_elements + self.contents
 
     # @abstractmethod
     # def build_and_place_slabs(self) -> list[Asset]:
@@ -372,7 +498,7 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @property
     def elements_net_worth(self) -> float:
-        return sum([a.net_worth for a in self.elements])
+        return sum([a.net_worth for a in self.elements_assets])
 
     @property
     def nonstructural_net_worth(self) -> float:
@@ -455,14 +581,6 @@ class FiniteElementModel(ABC, YamlMixin):
         summaries.append(elements_summary)
         return summaries
 
-    def __str__(self) -> str:
-        h = "#!/usr/local/bin/opensees\n"
-        h += "wipe\n"
-        h += "model BasicBuilder -ndm 2 -ndf 3\n"
-        t = f"geomTransf Linear {self._transf_beam}\n"
-        t += f"geomTransf PDelta {self._transf_col}\n"
-        return h + t + self.nodes_str + self.elements_str
-
     @property
     def elements_str(self) -> str:
         return self.columns_str + self.beams_str
@@ -482,7 +600,6 @@ class FiniteElementModel(ABC, YamlMixin):
                 break
         return collapse
 
-    @abstractmethod
     def validate(self, *args, **kwargs):
         # TODO:
         # no dangling nodes, at least one element has that ID in i or j,
@@ -549,16 +666,15 @@ class FiniteElementModel(ABC, YamlMixin):
         self._pushover_view = view
         return view
 
+    @property
     def pushover_figs(
         self,
-        results_path: Path,
-        drift: float = 0.05,
-        force=False,
+        # results_path: Path,
+        # drift: float = 0.05,
+        # force=False,
     ):
-        from app.strana import StructuralResultView
-
-        if force or not self._pushover_view:
-            self.pushover(results_path=results_path, drift=drift)
+        # if force or not self._pushover_view:
+        #     self.pushover(results_path=results_path, drift=drift)
 
         df, ndf = self.pushover_dfs
         cols = df[df.columns.difference(["u"])].columns
@@ -576,8 +692,8 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @property
     def pushover_dfs(self) -> pd.DataFrame:
-        if not self._pushover_view:
-            raise Exception("You must run a pushover first!")
+        # if not self._pushover_view:
+        #     raise Exception("You must run a pushover first!")
         view = self._pushover_view
         Vb = view.base_shear()
         Vb = -Vb
@@ -921,10 +1037,71 @@ class FiniteElementModel(ABC, YamlMixin):
     def beam_radii(self) -> list[float]:
         return [c.radius for c in self.beams]
 
+    @property
+    def node_recorders(self) -> str:
+        """TODO; add -time to .envelope to see the pseudotime that the min/max happened in"""
+        s = ""
+        # nodeIDs = ""  # per OpenSees docs, it defaults to all nodes in model.
+        for edp in OPENSEES_EDPs:
+            s += f"recorder Node            -file $abspath/node-{edp}.csv -time -dof 1 2 3 {edp}\n"
+            s += f"recorder Node            -file $abspath/mass-{edp}.csv -time -node {self.massIDs_str} -dof 1 {edp}\n"
+            s += f"recorder NodeEnvelope    -file $abspath/node-{edp}-envelope.csv -dof 1 2 3 {edp}\n"
+            s += f"recorder NodeEnvelope    -file $abspath/mass-{edp}-envelope.csv -node {self.massIDs_str} -dof 1 {edp}\n"
+            # -time will prepend a column with the step that node_i achieved envelope at dof_j
+
+        fixed_nodes = self.fixedIDs_str
+        for reaction, dof in OPENSEES_REACTION_EDPs:
+            s += f"recorder Node            -file $abspath/{reaction}.csv -time -node {fixed_nodes} -dof {dof} reaction\n"
+            s += f"recorder NodeEnvelope    -file $abspath/{reaction}-envelope.csv -node {fixed_nodes} -dof {dof} reaction\n"
+
+        s += f"recorder Node            -file $abspath/roof-displacements.csv -time -node {self.roofID} -dof 1 disp\n"
+        s += f"recorder NodeEnvelope            -file $abspath/roof-displacements-env.csv -time -node {self.roofID} -dof 1 disp\n"
+        s += f"recorder Node            -file $abspath/roof-accels.csv -time -node {self.roofID} -dof 1 accel\n"
+        s += f"recorder NodeEnvelope            -file $abspath/roof-accels-env.csv -time -node {self.roofID} -dof 1 accel\n"
+
+        storey_node_ids = self.mass_nodes
+        iNodes = "0 " + Node.string_ids_for_list(
+            storey_node_ids[:-1]
+        )  # 1st and next to last storeys
+        jNodes = Node.string_ids_for_list(storey_node_ids)
+        s += f"recorder Drift           -file $abspath/drifts.csv -time -iNode {iNodes} -jNode {jNodes} -dof 1 -perpDirn 2\n"
+        roofID = self.roofID
+        s += f"recorder Drift           -file $abspath/roof-drift.csv -time -iNode {fixed_nodes[0]} -jNode {roofID} -dof 1 -perpDirn 2\n"
+
+        return s
+
+    @property
+    def element_recorders(self) -> str:
+        # elementIDs = ""  # per OpenSees docs, it defaults to all elements in model.
+        # WARNING; when runnning without IDS
+        # we get a segfault [1]    39319 segmentation fault  opensees model.tcl
+        # IDK why. so bad :(.. I really need to program my own in python numba.
+        s = ""
+        for edp in OPENSEES_ELEMENT_EDPs:
+            for ele_type, ids in [
+                ("columns", self.columnIDs_str),
+                ("beams", self.beamIDs_str),
+            ]:
+                s += f"recorder Element         -file $abspath/{ele_type}.csv -ele {ids} -time {edp} \n"
+                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope.csv -ele {ids} {edp} \n"
+        for edp in OPENSEES_ELEMENT_EDPs:
+            for ele_type, elems_by_st in [
+                ("columns", self.columnIDs_by_storey),
+                ("beams", self.beamIDs_by_storey),
+            ]:
+                for st, elems in enumerate(elems_by_st, 1):
+                    ids = " ".join([str(id) for id in elems])
+                    s += f"recorder Element         -file $abspath/{ele_type}-{st}.csv -ele {ids} -time {edp} \n"
+                    s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope.csv -ele {ids} {edp} \n"
+
+        return s
+
 
 @dataclass
 class PlainFEM(FiniteElementModel):
-    """a direct implementation of the interface"""
+    """the simplest implementation of the interface"""
+
+    model: str = "PlainFEM"
 
     def build_and_place_slabs(self) -> list[Asset]:
         from app.assets import RiskModelFactory
@@ -958,6 +1135,7 @@ class ShearModel(FiniteElementModel):
 
     def __post_init__(self):
         super().__post_init__()
+        self.model = self.__class__.__name__
         self.nodes = [self.fixed_nodes[0]] + [
             DiaphragmNode(**n.to_dict) for n in self.mass_nodes
         ]
@@ -995,8 +1173,8 @@ class ShearModel(FiniteElementModel):
     def storey_radii(self) -> list[float]:
         return self.column_radii
 
-    def get_and_set_eigen_results(self, path: Path):
-        view = super().get_and_set_eigen_results(path)
+    def get_and_set_eigen_results(self, results_path: Path):
+        view = super().get_and_set_eigen_results(results_path)
         Phi = np.array(view.vectors)
         values = view.values
         N = len(values)
@@ -1062,40 +1240,20 @@ class RigidBeamFEM(FiniteElementModel):
 
     def __post_init__(self):
         super().__post_init__()
+        self.model = self.__class__.__name__
         for beam in self.beams:
             beam.Ix = "1e9"
 
 
 @dataclass
 class BilinFrame(FiniteElementModel):
-    def validate(self, *args, **kwargs):
-        return super().validate(*args, **kwargs)
-
     def __post_init__(self):
-        from app.occupancy import BuildingOccupancy
-
-        if self.occupancy is None:
-            self.occupancy = BuildingOccupancy.DEFAULT
-        if isinstance(self.nodes[0], dict):
-            self.nodes = [Node(**data) for data in self.nodes]
+        super().__post_init__()
+        self.model = self.__class__.__name__
         if isinstance(self.elements[0], dict):
             self.elements = [BilinBeamColumn(**data) for data in self.elements]
-        if len(self.nonstructural_elements) > 0 and isinstance(
-            self.nonstructural_elements[0], dict
-        ):
-            self.nonstructural_elements = [
-                AssetFactory(**data) for data in self.nonstructural_elements
-            ]
         else:
-            self.build_and_place_assets()
-        if len(self.contents) > 0 and isinstance(self.contents[0], dict):
-            self.contents = [AssetFactory(**data) for data in self.contents]
-        else:
-            self.build_and_place_assets()
-
-        self.model = self.__class__.__name__
-        self.validate()
-        return super().__post_init__()
+            self.elements = [BilinBeamColumn(**elem.to_dict) for elem in self.elements]
 
     @classmethod
     def from_elastic(
@@ -1112,10 +1270,10 @@ class BilinFrame(FiniteElementModel):
             col_moments, fem.columns_by_storey, beam_moments, fem.beams_by_storey
         ):
             for c in cols:
-                c.My = float(cm)
+                c.My = cm
                 c.Q = Q
             for b in beams:
-                b.My = float(bm)
+                b.My = bm
                 b.Q = Q
 
         instance = cls(**fem.to_dict)
@@ -1146,14 +1304,234 @@ class BilinFrame(FiniteElementModel):
         formatted = string % matcher
         return formatted
 
+    @property
+    def element_recorders(self) -> str:
+        s = super().element_recorders
+        for ele_type, ids in [
+            ("columns", self.columnIDs_str),
+            ("beams", self.beamIDs_str),
+        ]:
+            s += f"recorder Element         -file $abspath/{ele_type}-a.csv -ele {ids} -time section 1 force \n"
+            s += f"recorder Element         -file $abspath/{ele_type}-b.csv -ele {ids} -time section 5 force \n"
+            s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope-a.csv -ele {ids} section 1 force \n"
+            s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope-b.csv -ele {ids} section 5 force \n"
+
+        for ele_type, elems_by_st in [
+            ("columns", self.columnIDs_by_storey),
+            ("beams", self.beamIDs_by_storey),
+        ]:
+            for st, elems in enumerate(elems_by_st, 1):
+                ids = " ".join([str(id) for id in elems])
+                s += f"recorder Element         -file $abspath/{ele_type}-{st}-a.csv -ele {ids} -time section 1 force \n"
+                s += f"recorder Element         -file $abspath/{ele_type}-{st}-b.csv -ele {ids} -time section 5 force \n"
+                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope-a.csv -ele {ids} section 1 force \n"
+                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope-b.csv -ele {ids} section 5 force \n"
+        return s
+
 
 @dataclass
 class IMKFrame(FiniteElementModel):
-    def validate(self, *args, **kwargs):
-        return super().validate(*args, **kwargs)
+    done: bool = False
+
+    @property
+    def rayleigh_damping_string(self) -> str:
+        s = f"region 4 -eleRange {self.elementIDS_as_str} -rayleigh 0. 0. {self.a1} 0.\n"
+        s += f"region 5 -node {self.massIDs_str} -rayleigh {self.a0} 0. 0. 0.\n"
+        return s
+
+    @property
+    def fixedIDs(self):
+        return [n.id for n in self.nodes if n.base]
+
+    @property
+    def nodes_str(self) -> str:
+        s = super().nodes_str
+        for mass_node in self.mass_nodes:
+            st = mass_node.storey
+            st_nodes = [
+                n for n in self.nodes if n.storey == st and not n.zerolen and not n.mass
+            ]
+            for st_node in st_nodes:
+                s += f"equalDOF {mass_node.id} {st_node.id} 1\n"
+        return s
+
+    @property
+    def springs(self):
+        return [
+            e
+            for e in self.elements
+            if e.type == ElementTypes.SPRING_BEAM.value
+            or e.type == ElementTypes.SPRING_COLUMN.value
+        ]
+
+    @property
+    def springs_beams(self):
+        return [e for e in self.elements if e.type == ElementTypes.SPRING_BEAM.value]
+
+    @property
+    def spring_beams_ids(self):
+        return [c.id for c in self.springs_beams]
+
+    @property
+    def spring_beams_ids_str(self):
+        return " ".join([str(i) for i in self.spring_beams_ids])
+
+    @property
+    def springs_columns(self):
+        return [e for e in self.elements if e.type == ElementTypes.SPRING_COLUMN.value]
+
+    @property
+    def spring_columns_ids(self):
+        return [c.id for c in self.springs_columns]
+
+    @property
+    def spring_columns_ids_str(self):
+        return " ".join([str(i) for i in self.spring_columns_ids])
+
+    @property
+    def spring_ids_str(self):
+        return self.spring_columns_ids_str + " " + self.spring_beams_ids_str
+
+    @property
+    def springs_str(self) -> str:
+        return " ".join([str(c) for c in self.springs])
+
+    @property
+    def elements_str(self) -> str:
+        s = super().elements_str
+        s += self.springs_str
+        return s
 
     def __post_init__(self):
-        return super().__post_init__()
+        self.model = self.__class__.__name__
+        super().__post_init__()
+        if not self.done:
+            nodes = []
+            next_id = self.nodes[-1].id + 1
+            # create nodes in counterclockwise manner
+            nodes_by_id = {}
+            for node in self.nodes:
+                if node.fixed:
+                    orientations = ["col_down"]
+                elif node.storey == self.num_storeys:
+                    if node.column == 1:
+                        orientations = ["col_up", "beam_left"]
+                    elif node.column == self.num_cols:
+                        orientations = ["col_up", "beam_right"]
+                    else:
+                        orientations = ["col_up", "beam_left", "beam_right"]
+                elif node.column == 1:
+                    orientations = ["col_up", "beam_left", "col_down"]
+                elif node.column == self.num_cols:
+                    orientations = ["col_up", "col_down", "beam_right"]
+                else:
+                    orientations = ["col_up", "beam_left", "col_down", "beam_right"]
+                nodes_by_id[node.id] = {}
+                for o in orientations:
+                    n = Node(
+                        id=next_id,
+                        x=node.x,
+                        y=node.y,
+                        column=node.column,
+                        bay=node.bay,
+                        free_dofs=1,
+                        storey=node.storey,
+                        floor=node.floor,
+                        zerolen=node.id,
+                        orientation=o,
+                        base=node.fixed,
+                    )
+                    nodes_by_id[node.id][o] = next_id
+                    next_id += 1
+                    nodes.append(n)
+
+            self.nodes += nodes
+            elements = []
+            elem_id = 1
+            recorder_ixs = {
+                ElementTypes.SPRING_COLUMN.value: 1,
+                ElementTypes.SPRING_BEAM.value: 1,
+            }
+            for elem in self.elements:
+                i, j, bay, st, fl = elem.i, elem.j, elem.bay, elem.storey, elem.floor
+                if elem.type == ElementTypes.BEAM.value:
+                    imk_i, imk_j = (
+                        nodes_by_id[i].pop("beam_left"),
+                        nodes_by_id[j].pop("beam_right"),
+                    )
+                    type = ElementTypes.SPRING_BEAM.value
+                else:
+                    imk_i, imk_j = (
+                        nodes_by_id[i].pop("col_down"),
+                        nodes_by_id[j].pop("col_up"),
+                    )
+                    type = ElementTypes.SPRING_COLUMN.value
+
+                data_imk1 = dict(
+                    i=i,
+                    j=imk_i,
+                    type=type,
+                    id=elem_id,
+                    recorder_ix=recorder_ixs[type],
+                )
+                recorder_ixs[type] = recorder_ixs[type] + 1
+                d1 = {**elem.to_dict, **data_imk1}
+                imk1 = IMKSpring.from_bilin(**d1)
+                elem_id += 1
+                elements.append(imk1)
+                Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1000
+                bc = BeamColumn(
+                    id=elem_id,
+                    radius=imk1.radius,
+                    i=imk_i,
+                    j=imk_j,
+                    Ix=Ic,
+                    E=elem.E,
+                    type=elem.type,
+                    storey=st,
+                    bay=bay,
+                    floor=fl,
+                )
+                elem_id += 1
+                elements.append(bc)
+                data_imk2 = dict(
+                    i=imk_j,
+                    j=j,
+                    type=type,
+                    id=elem_id,
+                    recorder_ix=recorder_ixs[type],
+                )
+                recorder_ixs[type] = recorder_ixs[type] + 1
+                d2 = {**elem.to_dict, **data_imk2}
+                imk2 = IMKSpring.from_bilin(**d2)
+                elements.append(imk2)
+                elem_id += 1
+            self.elements = elements
+            self.done = True
+
+    @property
+    def element_recorders(self) -> str:
+        s = f"region 1 -ele {self.spring_columns_ids_str}\n"
+        s += f"recorder Element         -file $abspath/columns-M.csv -time      -region 1 -dof 3 force\n"
+        s += f"recorder EnvelopeElement -file $abspath/columns-M-envelope.csv   -region 1 -dof 3 force\n"
+        s += f"recorder Element         -file $abspath/columns-rot.csv -time    -region 1 -dof 2 deformation\n"
+        s += f"recorder EnvelopeElement -file $abspath/columns-rot-envelope.csv -region 1 -dof 2 deformation\n"
+        s += f"region 2 -ele {self.spring_beams_ids_str}\n"
+        s += f"recorder Element         -file $abspath/beams-M.csv -time      -region 2 -dof 3 force\n"
+        s += f"recorder EnvelopeElement -file $abspath/beams-M-envelope.csv   -region 2 -dof 3 force\n"
+        s += f"recorder Element         -file $abspath/beams-rot.csv -time    -region 2 -dof 2 deformation\n"
+        s += f"recorder EnvelopeElement -file $abspath/beams-rot-envelope.csv -region 2 -dof 2 deformation\n"
+        return s
+
+    def determine_collapse_from_results(self, results: dict):
+        """
+        uses the following criteria
+        - residual drifts
+        - dynamical instability
+        - shear failure (Elwood drift)
+        - too much damage everywhere, impossible to restore without demolishing
+        """
+        return False
 
 
 class FEMFactory:
@@ -1164,6 +1542,28 @@ class FEMFactory:
         ShearModel.__name__: ShearModel,
         BilinFrame.__name__: BilinFrame,
         IMKFrame.__name__: IMKFrame,
+    }
+
+    def __new__(cls, **data) -> FiniteElementModel:
+        model = data.get("model", cls.DEFAULT)
+        return cls.options[model](**data)
+
+    @classmethod
+    def add(cls, name, seed):
+        cls.options[name] = seed
+
+    @classmethod
+    def models(cls) -> list[dict[str, str]]:
+        return [{"label": name, "value": name} for name, _ in cls.options.items()]
+
+
+class ElementFactory:
+    DEFAULT = BilinBeamColumn.__name__
+    options = {
+        BeamColumn.__name__: BeamColumn,
+        ElasticBeamColumn.__name__: ElasticBeamColumn,
+        BilinBeamColumn.__name__: BilinBeamColumn,
+        IMKSpring.__name__: IMKSpring,
     }
 
     def __new__(cls, **data) -> FiniteElementModel:

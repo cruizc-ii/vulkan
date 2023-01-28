@@ -260,7 +260,7 @@ class Hazard(NamedYamlMixin):
 class HazardCurve(ABC, YamlMixin):
     """
     describes annual rates of exceedance of intensity 'a'
-    x = intensity (usually Sa)
+    x = intensity (usually Sa in g)
     y = 1/unit_of_time usually 1/yr
     ALWAYS call super().__post_init__() to build the _df
     """
@@ -299,7 +299,7 @@ class HazardCurve(ABC, YamlMixin):
         trace = Scattergl(x=self.x, y=self.y, marker=dict(color="LightSkyBlue"))
         fig.add_trace(trace)
         fig.update_layout(
-            xaxis_title="Sa",
+            xaxis_title="Sa (g)",
             yaxis_title="1/yr",
             title_text="annual rate of exceedance.",
             # xaxis_type="log",

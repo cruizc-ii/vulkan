@@ -1,10 +1,10 @@
+from __future__ import annotations
 from .utils import NamedYamlMixin
 from dataclasses import dataclass, field
 from abc import ABC
 from app.utils import GRAVITY, DESIGN_DIR
 from app.criteria import DesignCriterionFactory
 from app.fem import FiniteElementModel, PlainFEM, FEMFactory
-from typing import Optional
 from pathlib import Path
 from app.hazard import Spectra
 from app.criteria import DesignCriterion
@@ -20,39 +20,35 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     """
 
     name: str
-    storeys: list[float] = field(default_factory=lambda: [1.0])
-    bays: list[float] = field(default_factory=lambda: [1.0])
-    masses: list[float] = field(default_factory=lambda: [1.0])
+    storeys: list[float] = field(default_factory=lambda: [4.0])
+    bays: list[float] = field(default_factory=lambda: [8.0])
+    masses: list[float] = field(default_factory=lambda: [10.0])
     damping: float = 0.05
     num_frames: int = 1
 
-    Ecols: Optional[list[float]] = None
-    Icols: Optional[list[float]] = None
-    Ebeams: Optional[list[float]] = None
-    Ibeams: Optional[list[float]] = None
-    uniform_beam_loads_by_mass: Optional[list[float]] = None
+    uniform_beam_loads_by_mass: list[float] | None = None
     design_criteria: list[str] = field(
         default_factory=DesignCriterionFactory.default_criteria
     )
 
     design_spectra: dict[dict[str, str], str] = field(default_factory=dict)
 
-    _design_criteria: Optional[list["DesignCriterion"]] = None
-    _design_spectra: Optional[list["Spectra"]] = None
-    _adjacency: Optional[list[tuple[float, int, dict[str, object]]]] = None
+    _design_criteria: list["DesignCriterion"] | None = None
+    _design_spectra: list["Spectra"] | None = None
+    _adjacency: list[tuple[float, int, dict[str, object]]] | None = None
 
     _DEFAULT_RESULTS_PATH: Path = DESIGN_DIR
-    columns: Optional[list[float]] = None
-    floors: Optional[list[float]] = None
-    height: Optional[float] = None
-    width: Optional[float] = None
+    columns: list[float] | None = None
+    floors: list[float] | None = None
+    height: float | None = None
+    width: float | None = None
 
-    num_storeys: Optional[float] = None
-    num_floors: Optional[float] = None
-    num_bays: Optional[float] = None
-    num_cols: Optional[float] = None
+    num_storeys: float | None = None
+    num_floors: float | None = None
+    num_bays: float | None = None
+    num_cols: float | None = None
 
-    occupancy: Optional[str] = None
+    occupancy: str | None = None
     fems: list[FiniteElementModel] = field(default_factory=list)
 
     def __pre_init__(self) -> None:
@@ -88,6 +84,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     def __post_init__(self):
         self.__pre_init__()
         if all([isinstance(f, dict) for f in self.fems]):
+            print([f["model"] for f in self.fems])
             self.fems = [FEMFactory(**data) for data in self.fems]
 
     def __set_up__(self):
@@ -185,41 +182,37 @@ class BuildingSpecification(ABC, NamedYamlMixin):
 
     def force_design(
         self,
-        results_dir: Path = None,
+        results_path: Path,
         seed_class: FiniteElementModel = PlainFEM,
-        pushover: bool = False,
-    ) -> None:
+    ) -> list[FiniteElementModel]:
         fem = seed_class.from_spec(self)
         self.fems = self.design(
-            results_dir=results_dir, criteria=self._design_criteria, fem=fem
+            results_path=results_path, criteria=self._design_criteria, fem=fem
         )
-        if pushover:
-            self.fem.pushover(results_path=results_dir)
+        return self.fems
 
     def design(
         self,
-        results_dir,
-        criteria: list[DesignCriterion] = None,
-        fem: FiniteElementModel = None,
+        results_path: Path,
+        criteria: list[DesignCriterion],
+        fem: FiniteElementModel | None = None,
         *args,
         **kwargs,
     ) -> list[FiniteElementModel]:
-        if results_dir is None:
-            results_dir = self._DEFAULT_RESULTS_PATH / f"{self.name}"
+        if results_path is None:
+            results_path = self._DEFAULT_RESULTS_PATH / self.name
         else:
-            results_dir = results_dir / f"{self.name}"
-
-        if criteria is None:
-            criteria = self._design_criteria
+            results_path = results_path / self.name
 
         if fem is None:
             fem = self.fem
 
         fems = []
-        for index, criterion in enumerate(criteria):
-            criterion: DesignCriterion = criterion(specification=self, fem=fem)
-            filepath = results_dir / str(index)
-            fem = criterion.run(results_dir=filepath, *args, **kwargs)
+        for ix, _class in enumerate(criteria):
+            instance: DesignCriterion = _class(specification=self, fem=fem)
+            filepath = results_path / instance.__class__.__name__
+            # filepath = results_path / str(ix)
+            fem = instance.run(results_path=filepath, *args, **kwargs)
             fems.append(fem)
 
         return fems
@@ -231,10 +224,10 @@ class ReinforcedConcreteFrame(BuildingSpecification):
     Ec: float = 30e6
     fy: float = 420e3
     Es: float = 200e6
-    Ecols: Optional[float] = 30e6
-    Ebeams: Optional[float] = 30e6
-    Icols: Optional[float] = 0.0015
-    Ibeams: Optional[float] = 0.0015
+    Ecols: float = 30e6
+    Ebeams: float = 30e6
+    Icols: float = 0.0015
+    Ibeams: float = 0.0015
 
     def __post_init__(self):
         # WARNING: this is an inconsistency with out design procedures

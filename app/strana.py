@@ -1,16 +1,15 @@
 from __future__ import annotations
-from app.fem import Node, ElasticBeamColumn, FiniteElementModel
+from app.fem import Node, ElasticBeamColumn, FiniteElementModel, FE
 from app.hazard import Hazard, Record
 from abc import ABC, abstractmethod
 from pandas import DataFrame, set_option, read_csv
-from typing import Union, Optional
+from typing import Union
 from app.utils import (
     EDP,
     GRAVITY,
     AnalysisTypes,
     NamedYamlMixin,
     OPENSEES_EDPs,
-    OPENSEES_ELEMENT_EDPs,
     OPENSEES_REACTION_EDPs,
     IDAResultsDataFrame,
     SummaryEDP,
@@ -19,20 +18,27 @@ from app.utils import (
 from dataclasses import dataclass, field
 from plotly.graph_objects import Figure
 import numpy as np
-from numpy import flip, cumsum
 from pathlib import Path
 import os
 import subprocess
 from shortuuid import uuid
 from app.codes import BuildingCode
 from app.utils import ROOT_DIR
-from subprocess import Popen, PIPE
-from iteration_utilities import grouper
+from subprocess import Popen
+from iteration_utilities import grouper as itertools_grouper
 
 MODELS_DIR = ROOT_DIR / "models"
 STRANA_DIR = MODELS_DIR / "strana"
 
 set_option("plotting.backend", "plotly")
+
+
+class HazardNotFoundException(FileNotFoundError):
+    pass
+
+
+class SpecNotFoundException(FileNotFoundError):
+    pass
 
 
 @dataclass
@@ -52,6 +58,10 @@ class StructuralResultView(YamlMixin):
     _K_STATIC_NAME = "K-static.csv"
     _cache_modal_results: dict | None = None
     _init: bool = False
+    _beams_moments: DataFrame | None = None
+    _beams_rotations: DataFrame | None = None
+    _columns_moments: DataFrame | None = None
+    _columns_rotations: DataFrame | None = None
 
     def __post_init__(self) -> None:
         if isinstance(self.abs_folder, Path):
@@ -78,12 +88,12 @@ class StructuralResultView(YamlMixin):
         filepath = path / cls._DEFAULT_NAME
         return super().from_file(filepath)
 
-    def view_result_by_edp_and_node(self, edp: EDP, node: int) -> DataFrame:
+    def view_result_by_edp_and_node(self, edp: str, node: int, **kwargs) -> DataFrame:
         fns = {
             EDP.rotations_env.value: self.view_rotations_envelope,
-            # EDP.disp_env.value: self.view_displacements_envelope
+            EDP.spring_moment_rotation_th.value: self.view_spring_moment_rotation_th,
         }
-        result = fns[edp](node=node)
+        result = fns[edp](node=node, **kwargs)
         return result
 
     def _read_eigen_values(self) -> DataFrame:
@@ -329,6 +339,54 @@ class StructuralResultView(YamlMixin):
         moments = env.iloc[:, [c for c in env.columns if (c + 1) % 3 == 0]]
         return moments
 
+    def view_beam_springs_moments(self) -> DataFrame:
+        if not self._beams_moments:
+            self._beams_moments = self._read_timehistory("beams-M.csv")
+        return self._beams_moments
+
+    def view_column_springs_moments(self) -> DataFrame:
+        if not self._columns_moments:
+            self._columns_moments = self._read_timehistory("columns-M.csv")
+        return self._columns_moments
+
+    def view_springs_moments(self) -> dict[str, DataFrame]:
+        from app.fem import ElementTypes
+
+        moments = {}
+        moments[ElementTypes.SPRING_COLUMN.value] = self.view_column_springs_moments()
+        moments[ElementTypes.SPRING_BEAM.value] = self.view_beam_springs_moments()
+        return moments
+
+    def view_beam_springs_rotations(self) -> DataFrame:
+        if not self._beams_rotations:
+            self._beams_rotations = self._read_timehistory("beams-rot.csv")
+        return self._beams_rotations
+
+    def view_column_springs_rotations(self) -> DataFrame:
+        if not self._columns_rotations:
+            self._columns_rotations = self._read_timehistory("columns-rot.csv")
+        return self._columns_rotations
+
+    def view_springs_rotations(self) -> dict[str, DataFrame]:
+        from app.fem import ElementTypes
+
+        rotations = {}
+        rotations[
+            ElementTypes.SPRING_COLUMN.value
+        ] = self.view_column_springs_rotations()
+        rotations[ElementTypes.SPRING_BEAM.value] = self.view_beam_springs_rotations()
+        return rotations
+
+    def view_spring_moment_rotation_th(
+        self, *, ele_type: str, node: int, ix: int
+    ) -> DataFrame:
+        moments = self.view_springs_moments()[ele_type]
+        rotations = self.view_springs_rotations()[ele_type]
+        M = moments[ix].values.flatten()
+        r = rotations[ix].values.flatten()
+        df = DataFrame(dict(M=M, r=r), index=moments.index)
+        return df
+
     def view_drifts(self) -> DataFrame:
         filename = "drifts.csv"
         return self._read_timehistory(filename)
@@ -342,7 +400,8 @@ class StructuralResultView(YamlMixin):
         accels = storey_accels.merge(
             ground_accel, how="outer", left_index=True, right_index=True
         )
-        accels = accels.interpolate("cubic").fillna(0)
+        print(accels)
+        # accels = accels.interpolate("cubic").fillna(0)
         return accels
 
     def view_floor_accels_envelope(self) -> DataFrame:
@@ -450,8 +509,18 @@ class StructuralResultView(YamlMixin):
 class Recorder:
     path: Path
     fem: "FiniteElementModel"
-    model_str: Optional[str] = None
-    view: Optional[StructuralResultView] = None
+    model_str: str | None = None
+    view: StructuralResultView | None = None
+
+    """
+    TODO@improvements:
+    it might be better to register a recorder for every string appended
+    so when I load strana again... I have access to what it supposedly saved to db
+    and don't have to write paths manually
+    """
+
+    def __str__(self) -> str:
+        return str(self.fem) + self.recorders
 
     def __post_init__(self) -> None:
         os.makedirs(self.abspath, exist_ok=True)
@@ -465,95 +534,25 @@ class Recorder:
     def tcl_string(self) -> str:
         return str(self)
 
-    def __str__(self) -> str:
-        return str(self.fem) + self.recorders
-
-    """
-    TODO@improvements:
-    it might be better to register a recorder for every string appended
-    so when I load strana again... I have access to what it supposedly saved to db
-    and don't have to write paths manually
-    """
-
-    @property
-    def node_recorders(self) -> str:
-        """TODO; add -time to .envelope to see the pseudotime that the min/max happened in"""
-        # nodeIDs = ""  # per OpenSees docs, it defaults to all nodes in model.
-        s = f"set abspath {self.abspath}\n"
-        for edp in OPENSEES_EDPs:
-            s += f"recorder Node            -file $abspath/node-{edp}.csv -time -dof 1 2 3 {edp}\n"
-            s += f"recorder Node            -file $abspath/mass-{edp}.csv -time -node {self.fem.massIDs_str} -dof 1 {edp}\n"
-            s += f"recorder NodeEnvelope    -file $abspath/node-{edp}-envelope.csv -dof 1 2 3 {edp}\n"
-            s += f"recorder NodeEnvelope    -file $abspath/mass-{edp}-envelope.csv -node {self.fem.massIDs_str} -dof 1 {edp}\n"
-            # -time will prepend a column with the step that node_i achieved envelope at dof_j
-
-        fixed_nodes = self.fem.fixedIDs_str
-        for reaction, dof in OPENSEES_REACTION_EDPs:
-            s += f"recorder Node            -file $abspath/{reaction}.csv -time -node {fixed_nodes} -dof {dof} reaction\n"
-            s += f"recorder NodeEnvelope    -file $abspath/{reaction}-envelope.csv -node {fixed_nodes} -dof {dof} reaction\n"
-
-        s += f"recorder Node            -file $abspath/roof-displacements.csv -time -node {self.fem.roofID} -dof 1 disp\n"
-        s += f"recorder NodeEnvelope            -file $abspath/roof-displacements-env.csv -time -node {self.fem.roofID} -dof 1 disp\n"
-        s += f"recorder Node            -file $abspath/roof-accels.csv -time -node {self.fem.roofID} -dof 1 accel\n"
-        s += f"recorder NodeEnvelope            -file $abspath/roof-accels-env.csv -time -node {self.fem.roofID} -dof 1 accel\n"
-
-        storey_node_ids = self.fem.mass_nodes
-        iNodes = "0 " + Node.string_ids_for_list(
-            storey_node_ids[:-1]
-        )  # 1st and next to last storeys
-        jNodes = Node.string_ids_for_list(storey_node_ids)
-        s += f"recorder Drift           -file $abspath/drifts.csv -time -iNode {iNodes} -jNode {jNodes} -dof 1 -perpDirn 2\n"
-        roofID = self.fem.roofID
-        s += f"recorder Drift           -file $abspath/roof-drift.csv -time -iNode {fixed_nodes[0]} -jNode {roofID} -dof 1 -perpDirn 2\n"
-
-        return s
-
-    @property
-    def element_recorders(self) -> str:
-        # elementIDs = ""  # per OpenSees docs, it defaults to all elements in model.
-        # WARNING; when runnning without IDS
-        # we get a segfault [1]    39319 segmentation fault  opensees model.tcl
-        # IDK why. so bad :(.. I really need to program my own in python numba.
-        s = ""
-        for edp in OPENSEES_ELEMENT_EDPs:
-            for ele_type, ids in [
-                ("columns", self.fem.columnIDs_str),
-                ("beams", self.fem.beamIDs_str),
-            ]:
-                s += f"recorder Element         -file $abspath/{ele_type}.csv -ele {ids} -time {edp} \n"
-                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope.csv -ele {ids} {edp} \n"
-        for edp in OPENSEES_ELEMENT_EDPs:
-            for ele_type, elems_by_st in [
-                ("columns", self.fem.columnIDs_by_storey),
-                ("beams", self.fem.beamIDs_by_storey),
-            ]:
-                for st, elems in enumerate(elems_by_st, 1):
-                    ids = " ".join([str(id) for id in elems])
-                    s += f"recorder Element         -file $abspath/{ele_type}-{st}.csv -ele {ids} -time {edp} \n"
-                    s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope.csv -ele {ids} {edp} \n"
-
-        return s
-
     @property
     def recorders(self) -> str:
-        s = self.node_recorders
-        s += self.element_recorders
-        return s
+        s = f"set abspath {self.abspath}\n"
+        return s + self.fem.node_recorders + self.fem.element_recorders
 
     @property
     def elastic_static_solvers(self) -> str:
-        string = "constraints Transformation \n"
-        string += "numberer RCM \n"
-        string += "system BandGeneral \n"
-        string += "test NormDispIncr 1.0e-05 25 5 \n"
-        string += "algorithm Newton \n"
-        string += "integrator LoadControl 0.1 1 \n"
-        string += "analysis Static \n"
-        string += "initialize \n"
-        string += "analyze 10 \n"
-        string += "remove recorders \n"
-        string += "loadConst -time 0.0 \n"
-        return string
+        s = "constraints Transformation \n"
+        s += "numberer RCM \n"
+        s += "system BandGeneral \n"
+        s += "test NormDispIncr 1.0e-05 25 5 \n"
+        s += "algorithm Newton \n"
+        s += "integrator LoadControl 0.1 1 \n"
+        s += "analysis Static \n"
+        s += "initialize \n"
+        s += "analyze 10 \n"
+        s += "remove recorders \n"
+        s += "loadConst -time 0.0 \n"
+        return s
 
 
 @dataclass
@@ -569,7 +568,7 @@ class GravityRecorderMixin(Recorder):
         for beams, beam_load in zip(
             self.fem.beams_by_storey, self.fem.uniform_beam_loads
         ):
-            beam_ids = ElasticBeamColumn.string_ids_for_list(beams)
+            beam_ids = FE.string_ids_for_list(beams)
             analysis_str += (
                 f"eleLoad -ele {beam_ids} -type beamUniform {-beam_load:.1f} \n"
             )
@@ -580,10 +579,9 @@ class GravityRecorderMixin(Recorder):
 
 @dataclass
 class StaticRecorder(GravityRecorderMixin):
-    forces_per_storey: list[float] = None
+    forces_per_storey: list[float] | None = None
 
-    # deformation.. is this curvature?
-    # recorder Element -file ${gravity_results}/col_moments_th.out -time -ele 11 plasticDeformation
+    # recorder Element -file ${gravity_results}/col_moments_th.out -time -ele 11 plasticDeformation; is this curvature?
 
     def __str__(self) -> str:
         s = str(self.fem) + self.gravity_str
@@ -615,33 +613,10 @@ class PushoverRecorder(GravityRecorderMixin):
     def __str__(self) -> str:
         s = str(self.fem)
         s += self.gravity_str
-        s += self.pushover_str + self.recorders
-        s += self.extra_recorders
+        s += self.pushover_str
+        s += self.recorders
+        s += self.base_shear_recorders
         s += self.pushover_solvers
-        return s
-
-    @property
-    def element_recorders(self) -> str:
-        s = super().element_recorders
-        for ele_type, ids in [
-            ("columns", self.fem.columnIDs_str),
-            ("beams", self.fem.beamIDs_str),
-        ]:
-            s += f"recorder Element         -file $abspath/{ele_type}-a.csv -ele {ids} -time section 1 force \n"
-            s += f"recorder Element         -file $abspath/{ele_type}-b.csv -ele {ids} -time section 5 force \n"
-            s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope-a.csv -ele {ids} section 1 force \n"
-            s += f"recorder EnvelopeElement -file $abspath/{ele_type}-envelope-b.csv -ele {ids} section 5 force \n"
-        for ele_type, elems_by_st in [
-            ("columns", self.fem.columnIDs_by_storey),
-            ("beams", self.fem.beamIDs_by_storey),
-        ]:
-            for st, elems in enumerate(elems_by_st, 1):
-                ids = " ".join([str(id) for id in elems])
-                s += f"recorder Element         -file $abspath/{ele_type}-{st}-a.csv -ele {ids} -time section 1 force \n"
-                s += f"recorder Element         -file $abspath/{ele_type}-{st}-b.csv -ele {ids} -time section 5 force \n"
-                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope-a.csv -ele {ids} section 1 force \n"
-                s += f"recorder EnvelopeElement -file $abspath/{ele_type}-{st}-envelope-b.csv -ele {ids} section 5 force \n"
-
         return s
 
     @property
@@ -653,7 +628,7 @@ class PushoverRecorder(GravityRecorderMixin):
         return analysis_str
 
     @property
-    def extra_recorders(self) -> str:
+    def base_shear_recorders(self) -> str:
         fixed_nodes = self.fem.fixedIDs_str
         s = ""
         s += f"recorder NodeEnvelope -file $abspath/base-shear-env.csv -node {fixed_nodes} -dof 1 reaction\n"
@@ -713,26 +688,26 @@ class KRecorder(Recorder):
 
     @property
     def stiffness_matrix_solvers(self) -> str:
-        string = "constraints Transformation \n"
-        string += "numberer Plain \n"
-        string += "system FullGeneral \n"
-        string += "test NormDispIncr 1.0e-05 25 5 \n"
-        string += "algorithm Newton \n"
-        string += "integrator LoadControl 0.1 1 \n"
-        string += "analysis Static \n"
-        string += "initialize \n"
-        string += "analyze 1 \n"
-        string += f"printA -file {self.path / self.view._K_STATIC_NAME}\n"
-        string += "analyze 9 \n"
-        string += "remove recorders \n"
-        string += "loadConst -time 0.0 \n"
+        s = "constraints Transformation \n"
+        s += "numberer Plain \n"
+        s += "system FullGeneral \n"
+        s += "test NormDispIncr 1.0e-05 25 5 \n"
+        s += "algorithm Newton \n"
+        s += "integrator LoadControl 0.1 1 \n"
+        s += "analysis Static \n"
+        s += "initialize \n"
+        s += "analyze 1 \n"
+        s += f"printA -file {self.path / self.view._K_STATIC_NAME}\n"
+        s += "analyze 9 \n"
+        s += "remove recorders \n"
+        s += "loadConst -time 0.0 \n"
         # string += "wipeAnalysis \n"
-        return string
+        return s
 
 
 @dataclass
 class EigenRecorder(Recorder):
-    _cache: dict = None
+    _cache: dict | None = None
 
     def __str__(self) -> str:
         """add -time to envelope to get"""
@@ -771,6 +746,8 @@ class TimehistoryRecorder(GravityRecorderMixin):
     scale: float | None = None
     gravity_loads: bool = True
     EXTRA_FREE_VIBRATION_SECONDS: float = 10.0
+    dt_subdivision: int = 10
+    max_retries: int = 3
 
     def __post_init__(self):
         os.makedirs(self.abspath, exist_ok=True)
@@ -781,45 +758,12 @@ class TimehistoryRecorder(GravityRecorderMixin):
     def __str__(self) -> str:
         """https://portwooddigital.com/2021/02/28/norms-and-tolerance/"""
         s = str(self.fem)
-        num_nodes = len(self.fem.nodes)
-        tol = 1e-5 * num_nodes
         if self.gravity_loads:
             s += self.gravity_str
         s += self.recorders
         s += f'set timeSeries "Series -dt {self.record.dt} -filePath {self.record.abspath} -factor {self.scale}"\n'
         s += "pattern UniformExcitation 2 1 -accel $timeSeries\n"
-        # todo figure out correct a0, a1 placement for NONLIN analyses. where Ke changes.
-        # s += f"rayleigh {self.a0} {self.a1} 0 0\n"
-        s += f"rayleigh {self.a0} 0 {self.a1} 0\n"
-        # s += f"rayleigh {self.a0} 0 0 {self.a1}\n"
-        s += self.elastic_dynamic_solvers
-        # s += f"analyze {self.record.steps} {self.record.dt}\n"
-        s += """
-set converged 0
-set time [getTime]
-set duration %s
-while {$converged == 0 && $time <= $duration} {
-    set tol %s
-    test NormUnbalance $tol 100
-    set time [getTime]
-    set converged [analyze 1 0.01]
-    set loops 0
-    while {$converged !=0} {
-        incr loops
-        set tol %s
-        test NormUnbalance $tol 100
-        set converged [analyze 10 0.001]
-        if {$loops > 10} {
-            puts "Analysis did not converge"
-            break
-        }
-    }
-}
-        """ % (
-            self.record.duration + self.EXTRA_FREE_VIBRATION_SECONDS,
-            tol,
-            tol,
-        )
+        s += self.inelastic_dynamic_direct_solver
         return s
 
     @property
@@ -836,6 +780,73 @@ while {$converged == 0 && $time <= $duration} {
         s += "analysis Transient\n"
         return s
 
+    @property
+    def inelastic_dynamic_direct_solver(
+        self,
+    ) -> str:
+        self.dt_subdivision = 1
+        self.max_retries = 1
+        s = self.inelastic_subdivision_solver
+        return s
+
+    @property
+    def inelastic_subdivision_solver(self) -> str:
+        num_nodes = len(self.fem.nodes)
+        tol = 1e-8 * num_nodes
+        s = self.fem.rayleigh_damping_string
+        s += """
+set duration %s
+set record_dt %s
+set tol %s
+
+set converged 0
+set subdivision %s
+set max_retries %s
+set time [getTime]
+
+set analysis_dt [expr $record_dt]
+
+constraints Transformation
+numberer RCM
+test NormDispIncr $tol 100 0
+algorithm KrylovNewton
+integrator Newmark 0.5 0.25
+system BandGeneral
+analysis Transient
+set break_outer 0
+
+while {!$break_outer && $converged == 0 && $time <= $duration} {
+    puts $time
+    set tol $tol
+    test NormDispIncr $tol 100
+    set time [getTime]
+    set converged [analyze 1 $analysis_dt]
+    set retries 0
+    set sub $subdivision
+    while {$converged != 0} {
+        puts "retrying"
+        incr retries
+        set sub [expr {$subdivision ** $retries}]
+        test NormDispIncr [expr {$tol*$sub}] 100 0
+        set reduced_dt [expr {$analysis_dt/$sub}]
+        puts $sub
+        set converged [analyze $sub $reduced_dt]
+        if {$retries > $max_retries} {
+            puts "Analysis did not converge"
+            set break_outer 1
+            break
+        }
+    }
+}
+        """ % (
+            self.record.duration + self.EXTRA_FREE_VIBRATION_SECONDS,
+            self.record.dt,
+            tol,
+            self.dt_subdivision,
+            self.max_retries,
+        )
+        return s
+
 
 @dataclass
 class StructuralAnalysis:
@@ -849,7 +860,6 @@ class StructuralAnalysis:
         self.static_path = self.results_path / AnalysisTypes.STATIC.value
         self.pushover_path = self.results_path / AnalysisTypes.PUSHOVER.value
         self.timehistory_path = self.results_path / AnalysisTypes.TIMEHISTORY.value
-
         self.K_recorder = KRecorder(self.K_path, fem=self.fem)
         self.modal_recorder = EigenRecorder(self.modal_path, fem=self.fem)
 
@@ -985,19 +995,11 @@ class StructuralAnalysis:
         return self.async_run(recorder=recorder)
 
 
-class HazardNotFoundException(FileNotFoundError):
-    pass
-
-
-class SpecNotFoundException(FileNotFoundError):
-    pass
-
-
 @dataclass
 class IDA(NamedYamlMixin):
     name: str
-    hazard_abspath: str
-    design_abspath: str
+    hazard_abspath: str | None = None
+    design_abspath: str | None = None
     start: float = 0.1
     stop: float = 1.0
     step: float = 0.1
@@ -1007,6 +1009,7 @@ class IDA(NamedYamlMixin):
     _design = None
     _intensities: np.ndarray | None = None
     _COLLAPSE_DRIFT: float = 0.2
+    _NUM_PARALLEL_RECORDS: int = 10
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
@@ -1036,7 +1039,7 @@ class IDA(NamedYamlMixin):
         self,
         *,
         run_id: str,
-        results_dir: Path = None,
+        results_path: Path = None,
         fem_ix: int = -1,
         period_ix: int = -1,
     ) -> list[str]:
@@ -1044,7 +1047,7 @@ class IDA(NamedYamlMixin):
         does the standard record, intensity run for the default fem design
         """
         fem = self._design.fems[fem_ix]
-        modal_view = fem.get_and_set_eigen_results(results_dir)
+        modal_view = fem.get_and_set_eigen_results(results_path)
         period = modal_view.periods[period_ix]
         inputs = []
         for rix, record in enumerate(self._hazard.records, start=1):
@@ -1052,7 +1055,7 @@ class IDA(NamedYamlMixin):
                 zip(*self._intensities), start=1
             ):
                 intensity_str_precision = f"{intensity:.6f}"
-                outdir = results_dir / run_id / record.name / intensity_str_precision
+                outdir = results_path / run_id / record.name / intensity_str_precision
                 results_to_meters = 1.0 / 100
                 scale_factor = results_to_meters * record.get_scale_factor(
                     period=period, intensity=intensity
@@ -1091,12 +1094,12 @@ class IDA(NamedYamlMixin):
             run_id = str(uuid())
 
         inputs = self.generate_input_strings(
-            run_id=run_id, results_dir=results_dir, fem_ix=fem_ix, period_ix=period_ix
+            run_id=run_id, results_path=results_dir, fem_ix=fem_ix, period_ix=period_ix
         )
         dataframe_records = []
         views = []
 
-        for group in grouper(inputs, 10):
+        for group in itertools_grouper(inputs, self._NUM_PARALLEL_RECORDS):
             cmds = []
             for g in group:
                 record: Record = g["record"]
@@ -1108,7 +1111,8 @@ class IDA(NamedYamlMixin):
                 cmds.append(cmd)
             procs = [Popen(cmd, shell=True) for cmd in cmds]
             for proc in procs:
-                proc.wait()
+                code = proc.wait(timeout=600)
+                print(f"{code=}")
 
         for input, view in zip(inputs, views):
             results = view.get_and_set_timehistory_summary()
@@ -1133,7 +1137,7 @@ class IDA(NamedYamlMixin):
 
     def run(
         self,
-        results_dir: Path = None,
+        results_path: Path = None,
         run_id: str = None,
         fem_ix: int = -1,
         period_ix: int = 0,
@@ -1142,7 +1146,7 @@ class IDA(NamedYamlMixin):
             run_id = str(uuid())
 
         fem = self._design.fems[fem_ix]
-        modal_view = fem.get_and_set_eigen_results(results_dir)
+        modal_view = fem.get_and_set_eigen_results(results_path)
         period = modal_view.periods[period_ix]
 
         dataframe_records = []
@@ -1160,7 +1164,7 @@ class IDA(NamedYamlMixin):
                     f"record {rix} of {num_records} at intensity {iix} of {num_intensities} ({intensity:.2f}g) -- {complete_pct:.0f} % done."
                 )
                 intensity_str_precision = f"{intensity:.8f}"
-                outdir = results_dir / run_id / record.name / intensity_str_precision
+                outdir = results_path / run_id / record.name / intensity_str_precision
                 results_to_meters = 1.0 / 100
                 scale_factor = results_to_meters * record.get_scale_factor(
                     period=period, intensity=intensity
@@ -1232,6 +1236,7 @@ class IDA(NamedYamlMixin):
             title="IDA curves",
             # marginal_x="histogram", marginal_y="rug",
             # yaxis_range=[0.0, 0.3],
+            # xaxis_range=[0, 20],
             # width=1100,
             # height=600,
             # autosize=True,

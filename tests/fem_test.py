@@ -1,10 +1,10 @@
 from app.strana import Recorder, StructuralResultView
 from pathlib import Path
-from app.fem import BilinFrame, ShearModel, PlainFEM
+from app.fem import BilinFrame, ShearModel, PlainFEM, IMKFrame
 from unittest.case import TestCase
 from app.criteria import CodeMassesPre, DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
-from app.fem import FiniteElementModel
+from app.fem import FiniteElementModel, IMKSpring
 from .test import DESIGN_FIXTURES_PATH, DESIGN_MODELS_PATH, FEM_FIXTURES_PATH
 import numpy as np
 
@@ -216,3 +216,58 @@ class ElastoplasticFrameTest(TestCase):
         self.assertIsNotNone(fig)
         fig = frame.pushover_figs(self.path, drift=0.10)
         self.assertIsNotNone(fig)
+
+
+class IMKFrameTest(TestCase):
+    maxDiff = None
+    path = None
+    file = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.path = FEM_FIXTURES_PATH / "imk-frame"
+        cls.file = cls.path / "3storey-imk.yml"
+        with open(cls.path / "expected-nodes-imk.tcl", "r") as file:
+            cls.expected_nodes_str = file.read()
+
+    # def test_node_strings(self) -> None:
+    #     # bilin = BilinFrame.from_file(self.file)
+    #     # with open(self.path / "bilin-output.tcl", "w") as f:
+    #     #     f.write(str(bilin))
+    #     frame = IMKFrame.from_file(self.file)
+    #     with open(self.path / "nodes-output.tcl", "w") as f:
+    #         f.write(frame.nodes_str)
+    #     with open(self.path / "elements-output.tcl", "w") as f:
+    #         f.write(frame.elements_str)
+    #     with open(self.path / "frame-string-output.tcl", "w") as f:
+    #         f.write(str(frame))
+    #     self.assertEqual(frame.nodes_str, self.expected_nodes_str)
+
+    def test_gravity(self) -> None:
+        imk = IMKFrame.from_file(self.file)
+        view: StructuralResultView = imk.gravity(self.path)
+        reactions = view.reactions_env()
+        V = reactions["V"].values.flatten()
+        P = reactions["P"].values.flatten()
+        M = reactions["M"].values.flatten()
+        self.assertEqual(len(P), 3)
+        self.assertAlmostEqual(sum(P), 2160, delta=5.0)
+        self.assertEqual(len(V), 3)
+        self.assertEqual(len(M), 3)
+
+    def test_modal(self) -> None:
+        pass
+
+    def test_pushover_elastic(self) -> None:
+        imk = IMKFrame.from_file(self.file)
+        view = imk.pushover(self.path, drift=0.01)
+        reactions = view.reactions_env()
+        # moments = view.view_springs_moments()
+        roof_disp = view.peak_roof_disp()
+        expected_roof_disp = imk.height * 0.01
+        self.assertAlmostEqual(roof_disp, expected_roof_disp, 2)
+        V = reactions["V"].values.flatten()
+        self.assertEqual(len(V), 3)
+
+    def test_dynamic(self) -> None:
+        pass
