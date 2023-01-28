@@ -25,6 +25,7 @@ __**/
 models/loss_csvs/**
 models/rate_csvs/**
 models/design/**
+models/compare/**
 models/hazard/**
 models/strana/**
 models/loss/**

@@ -11,8 +11,9 @@ from app.strana import (
     StructuralResultView,
 )
 from app.loss import LossAggregator, IDANotFoundException, LossModel
-from app.utils import DESIGN_DIR, HAZARD_DIR, RESULTS_DIR, find_files
+from app.utils import DESIGN_DIR, HAZARD_DIR, RESULTS_DIR, find_files, COMPARE_DIR
 from app.occupancy import BuildingOccupancy
+from app.compare import IDACompare
 import pandas as pd
 import numpy as np
 import time
@@ -49,6 +50,7 @@ if "module" not in state:
     state.hazard_abspath = ""
     state.ida_abspath = ""
     state.loss_abspath = ""
+    state.compare_abspath = ""
 
 if "first_render" not in state:
     state.first_render = True
@@ -63,14 +65,16 @@ title = (
     "hazard",
     "structural analysis",
     "loss",
+    "compare",
 )
 
 left, right = st.columns(2)
 if state.module != 1:
     prev = left.button("back", on_click=switch_module, args=[-1])
-if state.module != 4:
+if state.module != 5:
     next = right.button("next", on_click=switch_module, args=[1])
 
+num_designs = 0
 with st.sidebar:
     st.header(title[state.module - 1])
     if state.module == 1:
@@ -219,8 +223,8 @@ with st.sidebar:
             hazard.add_record(record)
             hazard.to_file(HAZARD_DIR)
         left, middle, right = st.columns(3)
-        sample = left.button("sample 5", help="grab 5 at random")
-        if sample:
+        go = left.button("sample 5", help="grab 5 at random")
+        if go:
             with st.spinner("sampling..."):
                 time.sleep(1)
                 untouched = [r for r in record_files if r not in hazard.record_names]
@@ -402,8 +406,8 @@ with st.sidebar:
             ida_missing = True
 
         left, right = st.columns(2)
-        sample = left.button("run", help="perform loss computation")
-        if sample:
+        go = left.button("run", help="perform loss computation")
+        if go:
             with st.spinner("running..."):
                 loss_dict = {**loss.to_dict} if loss else {}
                 loss = LossAggregator(
@@ -461,6 +465,60 @@ with st.sidebar:
                 view_asset = c2.button("view", key=f"asset{ix}")
                 if view_asset:
                     selected_ix = ix
+
+    if state.module == 5:
+        state.hazard_abspath
+        state.compare_abspath
+        compares = find_files(COMPARE_DIR)
+        compares
+        compare_file = st.selectbox("select a compare file", options=compares)
+        name = st.text_input(
+            "give it a name",
+            value=compare_file.split(".")[0] if compare_file else "default compare",
+            help="to save just run",
+        )
+        compare = None
+        hazard_missing = False
+        hazard_abspath = state.hazard_abspath
+        try:
+            if compare_file:
+                compare = IDACompare.from_file(COMPARE_DIR / compare_file)
+                compare.hazard_abspath = hazard_abspath
+            #         state.loss_abspath = LOSS_MODELS_DIR / file
+            #         loss.ida_model_path = state.ida_abspath
+            else:
+                compare = IDACompare(name=name, hazard_abspath=hazard_abspath)
+                compare.name = name
+        except HazardNotFoundException as e:
+            e
+            print(e)
+            #     # loss = LossAggregator(name=name)
+            hazard_missing = True
+
+        num_designs = 3
+        left, right = st.columns(2)
+        # go = left.button("run", help="perform loss computation")
+        # if go:
+        #     with st.spinner("running..."):
+
+        hazards = find_files(HAZARD_DIR)
+        hazard = Hazard(
+            name="sample_hazard",
+        )
+        file = st.selectbox("select a hazard", options=hazards)
+        if file:
+            state.hazard_abspath = HAZARD_DIR / file
+            hazard = Hazard.from_file(HAZARD_DIR / file)
+
+        "num records:", len(hazard.records)
+        left, right = st.columns(2)
+        logx = left.checkbox("log x", value=True)
+        logy = right.checkbox("log y", value=True)
+        if hazard:
+            fig = hazard.rate_figure(logx=logx, logy=logy)
+        fig.update_layout(width=350, height=300)
+        fig
+
 
 if state.module == 1:
     if design and design.fems:
@@ -647,3 +705,8 @@ if state.module == 4:
                 df2 = df2 * 1.0 / normalization
                 fig = px.imshow(df2)
                 st.plotly_chart(fig)
+
+if state.module == 5:
+    for ix in range(num_designs):
+        with st.expander(label=str(ix), expanded=True):
+            ix
