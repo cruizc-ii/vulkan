@@ -33,9 +33,9 @@ class CompareInterface(ABC, NamedYamlMixin):
     name: str
     hazard_abspath: str | None = None
     design_abspaths: list[str] = field(default_factory=list)
-    strana_abspaths: list[str | None] = field(default_factory=list)
-    _design_models: list[ReinforcedConcreteFrame] = field(default_factory=list)
-    _strana_models: list[IDA] = field(default_factory=list)
+    # strana_abspaths: list[str | None] = field(default_factory=list)
+    _design_models: list[ReinforcedConcreteFrame | None] = field(default_factory=list)
+    # _strana_models: list[IDA] = field(default_factory=list)
     _hazard: Hazard | None = None
 
     @abstractmethod
@@ -44,6 +44,7 @@ class CompareInterface(ABC, NamedYamlMixin):
         pass
 
 
+@dataclass
 class IDACompare(CompareInterface):
     def __post_init__(self):
         try:
@@ -51,21 +52,17 @@ class IDACompare(CompareInterface):
                 self._hazard: Hazard = Hazard.from_file(self.hazard_abspath)
         except FileNotFoundError:
             raise HazardNotFoundException
-        # try:
-        #     if self.design_abspath is not None and not self._design:
-        #         self._design = ReinforcedConcreteFrame.from_file(self.design_abspath)
-        # except FileNotFoundError:
-        #     raise SpecNotFoundException
-        # if len(self.records) > 0 and isinstance(self.records[0], dict):
-        #     self.records = [Record(**data) for data in self.records]
-        # if isinstance(self.curve, dict):
-        #     self._curve = HazardCurveFactory(**self.curve)
-        # if isinstance(self.curve, str):
-        #     self._curve = HazardCurveFactory(name=self.curve)
+
+        for path in self.design_abspaths:
+            try:
+                design = ReinforcedConcreteFrame.from_file(path)
+                self._design_models.append(design)
+            except FileNotFoundError as e:
+                print(path, e)
+                self._design_models.append(None)
+                continue
 
     def add_design(self, design_abspath: str) -> bool:
-        from app.design import ReinforcedConcreteFrame
-
         if design_abspath in self.design_abspaths:
             return False
         try:
@@ -74,12 +71,17 @@ class IDACompare(CompareInterface):
             print(e)
             raise e
         self._design_models.append(design)
+        self.design_abspaths.append(design_abspath)
         return True
 
     def remove_design(self, design_abspath: str) -> bool:
         if design_abspath not in self.design_abspaths:
             return False
-        # self.records = [r for r in self.records if r.path != record_path]
+        dix = self.design_abspaths.index(design_abspath)
+        self.design_abspaths = [p for p in self.design_abspaths if p != design_abspath]
+        self._design_models = [
+            d for ix, d in enumerate(self._design_models) if ix != dix
+        ]
         return True
 
     def run(self):
