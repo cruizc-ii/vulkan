@@ -467,67 +467,100 @@ with st.sidebar:
                     selected_ix = ix
 
     if state.module == 5:
-        state.hazard_abspath, type(state.hazard_abspath)
+        state.hazard_abspath
         state.compare_abspath
         compares = find_files(COMPARE_DIR)
-        compares
         compare_file = st.selectbox("select a compare file", options=compares)
         name = st.text_input(
             "give it a name",
             value=compare_file.split(".")[0] if compare_file else "default compare",
             help="to save just run",
         )
-        compare = None
-        hazard_missing = False
         hazard_abspath = str(state.hazard_abspath)
+        compare = IDACompare(name=name, hazard_abspath=hazard_abspath)
+        compare.name = name
+        hazard_missing = False
         try:
             if compare_file:
                 compare = IDACompare.from_file(COMPARE_DIR / compare_file)
                 compare.hazard_abspath = hazard_abspath
-            else:
-                compare = IDACompare(name=name, hazard_abspath=hazard_abspath)
-                compare.name = name
         except HazardNotFoundException as e:
             e
             print(e)
-            #     # loss = LossAggregator(name=name)
             hazard_missing = True
 
-        num_designs = 3
+        num_designs = len(compare.design_abspaths) if compare else 0
         left, right = st.columns(2)
         hazards = find_files(HAZARD_DIR)
         hazard = Hazard(
             name="sample_hazard",
         )
-        file = st.selectbox("select a hazard", options=hazards)
-        if file:
-            state.hazard_abspath = HAZARD_DIR / file
-            hazard = Hazard.from_file(HAZARD_DIR / file)
+        hazard_file = st.selectbox("select a hazard", options=hazards)
+        if hazard_file:
+            state.hazard_abspath = HAZARD_DIR / hazard_file
+            hazard = Hazard.from_file(HAZARD_DIR / hazard_file)
 
         "num records:", len(hazard.records)
-        left, right = st.columns(2)
-        logx = left.checkbox("log x", value=True)
-        logy = right.checkbox("log y", value=True)
-        if hazard:
-            hazard_fig = hazard.rate_figure(logx=logx, logy=logy)
-        hazard_fig.update_layout(width=350, height=300)
-        st.plotly_chart(hazard_fig)
+        # logx = left.checkbox("log x", value=True)
+        # logy = right.checkbox("log y", value=True)
+        # if hazard:
+        #     hazard_fig = hazard.rate_figure(logx=logx, logy=logy)
+        # st.plotly_chart(hazard_fig, use_container_width=True)
 
-        go = left.button("go", help="perform ida comparison")
-        if go and hazard and compare:
-            with st.spinner("running..."):
-                compare_dict = compare.to_dict
-                compare = IDACompare(
-                    **{
-                        **compare_dict,
-                        "name": name,
-                        "hazard_abspath": hazard_abspath,
-                    }
-                )
+        design_files = find_files(DESIGN_DIR, only_yml=True)
+        design_name = st.selectbox("add a design", options=design_files)
+        if design_name and not state.first_render:
+            design_path = str((DESIGN_DIR / design_name).resolve())
+            compare.add_design(design_path)
+            compare.to_file(COMPARE_DIR)
+
+        selected_ix = None
+        for ix, r in enumerate(compare.design_abspaths):
+            with st.container():
+                ix, r
+            c1, c2 = st.columns([3, 1])
+            c1.write(r.name)
+            rm = c2.button("🗑️", key=f"record{ix}")
+            # if rm:
+            #     rec = hazard.records[ix]
+            #     record_path = str((RECORDS_DIR / rec.name).resolve())
+            #     hazard.remove_record(record_path)
+            #     hazard.to_file(HAZARD_DIR)
+            #     st.success("record removed")
+
+        left, center, right = st.columns(3)
+        go = left.button("run ida", help="perform ida comparison")
+        std = center.button("run std", help="perform standard ida comparison")
+        rm = right.button("🗑️", help="delete")
+        if rm:
+            with st.spinner("deleting..."):
+                time.sleep(1)
+                compare.delete(COMPARE_DIR)
+                compare = None
+            st.success("delete successful")
+
+        if compare and hazard and not hazard_missing:
+            if any(
+                [
+                    go,
+                    std,
+                ]
+            ):
+                with st.spinner("running..."):
+                    compare_dict = compare.to_dict
+                    compare = IDACompare(
+                        **{
+                            **compare_dict,
+                            "name": name,
+                            "hazard_abspath": hazard_abspath,
+                        }
+                    )
+            if go:
                 compare.run()
-                compare.to_file(COMPARE_DIR)
-            st.success("success")
+                st.success("success")
+            compare.to_file(COMPARE_DIR)
 
+        state.first_render = False
 
 if state.module == 1:
     if design and design.fems:
@@ -716,6 +749,8 @@ if state.module == 4:
                 st.plotly_chart(fig)
 
 if state.module == 5:
+    if hazard_missing:
+        st.warning("Please select a hazard")
     for ix in range(num_designs):
         with st.expander(label=str(ix), expanded=True):
             ix
