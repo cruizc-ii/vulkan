@@ -412,7 +412,6 @@ with st.sidebar:
         except IDANotFoundException as e:
             e
             print(e)
-            # loss = LossAggregator(name=name)
             ida_missing = True
 
         left, right = st.columns(2)
@@ -521,22 +520,37 @@ with st.sidebar:
             compare.add_design(design_path)
             compare.to_file(COMPARE_DIR)
 
-        for ix, (des, path) in enumerate(
-            zip(compare._design_models, compare.design_abspaths)
-        ):
-            l1, r1 = st.columns([2, 1])
+        for ix, comp in enumerate(compare.comparisons):
+            _c1, _c2, _c3, _c4, _c5 = st.columns([2, 1, 1, 1, 1])
             with st.container():
-                l1.write(path.split("/")[-1])
-                rm = r1.button("🗑️", key=f"compare-design-{ix}")
+                _c1.write(comp.design_abspath.split("/")[-1])
+                go_strana = _c2.button(
+                    "ida", help="perform ida", key=f"compare-design-{ix}"
+                )
+                go_loss = _c3.button(
+                    "loss", help="perform loss computation", key=f"compare-design-{ix}"
+                )
+                go_complete = _c4.button(
+                    "all", help="perform ida then loss", key=f"compare-design-{ix}"
+                )
+                rm = _c5.button("🗑️", key=f"compare-design-{ix}")
+                if go_strana:
+                    comp.run(strana=True)
+                if go_loss:
+                    comp.run(loss=True)
+                if go_complete:
+                    comp.run(strana=True, loss=True)
                 if rm:
-                    compare.remove_design(path)
+                    compare.remove_design(comp.design_abspath)
+                if any([go_strana, go_loss, go_complete, rm]):
                     compare.to_file(COMPARE_DIR)
-                    st.success("design removed")
+                    st.success("success")
 
-        c1, c2, c3 = st.columns(3)
+        c1, c2, c3, c4 = st.columns(4)
         go = c1.button("run ida", help="perform ida comparison")
-        std = c2.button("run std", help="perform standard ida comparison")
-        rm = c3.button("🗑️", help="delete")
+        loss = c2.button("run loss", help="perform loss computation ")
+        complete = c3.button("run all", help="run ida then loss on all models")
+        rm = c4.button("🗑️", help="delete")
         if rm:
             with st.spinner("deleting..."):
                 time.sleep(1)
@@ -547,22 +561,28 @@ with st.sidebar:
             if any(
                 [
                     go,
-                    std,
+                    loss,
+                    complete,
                 ]
             ):
+                compare_dict = compare.to_dict
+                compare = IDACompare(
+                    **{
+                        **compare_dict,
+                        "name": name,
+                        "hazard_abspath": hazard_abspath,
+                    }
+                )
                 with st.spinner("running..."):
-                    compare_dict = compare.to_dict
-                    compare = IDACompare(
-                        **{
-                            **compare_dict,
-                            "name": name,
-                            "hazard_abspath": hazard_abspath,
-                        }
-                    )
-            if go:
-                compare.run()
-                st.success("success")
+                    if go:
+                        compare.run(strana=True)
+                    if loss:
+                        compare.run(loss=True)
+                    if complete:
+                        compare.run(strana=True, loss=True)
+
                 compare.to_file(COMPARE_DIR)
+                st.success("success")
 
         state.first_render = False
 
@@ -597,6 +617,9 @@ if state.module == 1:
             fig = design.fem.assets_pie_fig
             st.plotly_chart(fig)
 
+        with st.expander("summary"):
+            st.dataframe(pd.DataFrame([design.summary]))
+
         with st.expander("assets"):
             pass
 
@@ -630,7 +653,6 @@ if state.module == 2:
             st.plotly_chart(record.figure)
             st.plotly_chart(record.spectra)
 
-
 if state.module == 3:
     if design_missing:
         st.warning("Please select a design")
@@ -639,8 +661,11 @@ if state.module == 3:
     if not (design_missing or hazard_missing) and ida and ida.results:
         fig = ida.view_ida_curves()
         # todo@carlo width 85% parent container
-        fig.update_layout(width=1000)
-        st.plotly_chart(fig)
+        fig.update_layout(width=640 * 3, height=640)
+        st.plotly_chart(
+            fig,
+        )
+        st.dataframe(pd.DataFrame.from_records(ida.stats))
         if selected_ix is not None:
             filepath = ida.results[selected_ix]["path"]
             view = StructuralResultView.from_file(filepath)
@@ -755,16 +780,43 @@ if state.module == 4:
 if state.module == 5:
     if hazard_missing:
         st.warning("Please select a hazard")
-    for ix, design in enumerate(compare._design_models):
-        print("design", design)
-        name = design.name if design else None
+
+    units = st.button("use units")
+    if not units:
+        norm_pushover_figs = compare.normalized_pushover_figs
+        st.plotly_chart(norm_pushover_figs)
+
+        norm_ida_figs = compare.normalized_ida_figs
+        st.plotly_chart(norm_ida_figs)
+
+        df = compare.summary_df
+        st.dataframe(df)
+    else:
+        pushover_fig = compare.pushover_figs
+        st.plotly_chart(pushover_fig)
+
+        ida_fig = compare.ida_figs
+        st.plotly_chart(ida_fig)
+
+        df = compare.summary_df
+        st.dataframe(df)
+
+    stat = st.selectbox("select", options=df.columns)
+    if stat:
+        fig = df[stat].plot()
+        st.plotly_chart(fig)
+
+    for ix, comp in enumerate(compare.comparisons):
+        design = comp._design_model
         with st.expander(label=str(ix), expanded=True):
-            if not name:
+            if not comp.summary.get("design name"):
                 st.warning("Could not find design.")
-            else:
-                st.header(name)
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("Net worth", f"$ {design.fem.total_net_worth:.0f} k USD")
-                col2.metric("fundamental period", f"{design.fem.periods[0]:.2f} s")
-                col3.metric("height", f"{design.height:.1f} m")
-                col4.metric("width", f"{design.width:.1f} m")
+            if not comp.strana_abspath:
+                st.warning("No IDA")
+            if not comp.loss_abspath:
+                st.warning("No loss")
+            st.header(comp.summary.get("design name"))
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Net worth $", comp.summary.get("net worth $"))
+            col2.metric("period s", comp.summary.get("period [s]"))
+            st.dataframe(comp.summary_df)

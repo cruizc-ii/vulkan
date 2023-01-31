@@ -442,6 +442,32 @@ class FiniteElementModel(ABC, YamlMixin):
         return fem
 
     @property
+    def summary(self) -> dict:
+        df, ndf = self.pushover_dfs
+        Vy = df["sum"].max()
+        ix = df["sum"].idxmax()
+        cs = ndf["sum"].max()
+        uy = df.loc[ix]["u"]
+        drift_y = ndf.loc[ix]["u"]
+        stats = {
+            "net worth [$]": self.total_net_worth,
+            "elements net worth [$]": self.elements_net_worth,
+            "nonstructural net worth [$]": self.nonstructural_net_worth,
+            "contents net worth [$]": self.contents_net_worth,
+            "Vy [kN]": Vy,
+            "uy [m]": uy,
+            "cs [1]": cs,
+            "drift_y [%]": 100 * drift_y,
+            "c_design [1]": self.extras.get("c_design"),
+            "period [s]": self.periods[0] if len(self.periods) > 0 else None,
+            "_pushover_x": df["u"].to_list(),
+            "_pushover_y": df["sum"].to_list(),
+            "_norm_pushover_x": ndf["u"].to_list(),
+            "_norm_pushover_y": ndf["sum"].to_list(),
+        }
+        return stats
+
+    @property
     def elements_assets(self) -> list["Asset"]:
         eles = [ele for ele in self.elements if Asset in inspect.getmro(ele.__class__)]
         return eles
@@ -590,6 +616,9 @@ class FiniteElementModel(ABC, YamlMixin):
             f.write(self.model_str)
 
     def determine_collapse_from_results(self, results: dict) -> bool:
+        """
+        upper bound on collapse, if any column is in DS==Collapse
+        """
         collapse = False
         for st, columns in enumerate(self.columns_by_storey):
             column = columns[0]
@@ -691,7 +720,7 @@ class FiniteElementModel(ABC, YamlMixin):
         return fig, normalized_fig
 
     @property
-    def pushover_dfs(self) -> pd.DataFrame:
+    def pushover_dfs(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         # if not self._pushover_view:
         #     raise Exception("You must run a pushover first!")
         view = self._pushover_view
