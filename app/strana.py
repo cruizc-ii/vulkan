@@ -26,6 +26,7 @@ from app.codes import BuildingCode
 from app.utils import ROOT_DIR
 from subprocess import Popen
 from iteration_utilities import grouper as itertools_grouper
+import plotly.express as px
 
 MODELS_DIR = ROOT_DIR / "models"
 STRANA_DIR = MODELS_DIR / "strana"
@@ -493,15 +494,18 @@ class StructuralResultView(YamlMixin):
             SummaryEDP.peak_drifts.value: self.view_peak_drifts().to_list(),
             SummaryEDP.peak_floor_accels.value: accels,
             SummaryEDP.peak_floor_vels.value: self.view_peak_floor_vels().to_list(),
-            "accel": accels,
+            # "accel": accels,
         }
         return results
 
     def get_and_set_timehistory_summary(self) -> dict:
         results = self.view_timehistory_summary()
-        self.peak_floor_accels = results[SummaryEDP.peak_floor_accels.value]
-        self.peak_drifts = results[SummaryEDP.peak_drifts.value]
-        self.peak_floor_vels = results[SummaryEDP.peak_floor_vels.value]
+        self.pfa = max(results[SummaryEDP.peak_floor_accels.value])
+        self.peak_drift = max(results[SummaryEDP.peak_drifts.value])
+        self.pfv = max(results[SummaryEDP.peak_floor_vels.value])
+        results["pfa"] = self.pfa
+        results["peak_drift"] = self.peak_drift
+        results["pfv"] = self.pfv
         return results
 
 
@@ -747,7 +751,7 @@ class TimehistoryRecorder(GravityRecorderMixin):
     gravity_loads: bool = True
     EXTRA_FREE_VIBRATION_SECONDS: float = 10.0
     dt_subdivision: int = 10
-    max_retries: int = 3
+    max_retries: int = 5
 
     def __post_init__(self):
         os.makedirs(self.abspath, exist_ok=True)
@@ -804,19 +808,18 @@ set subdivision %s
 set max_retries %s
 set time [getTime]
 
-set analysis_dt [expr $record_dt]
+set analysis_dt [expr {$record_dt/2}]
 
 constraints Transformation
 numberer RCM
 test NormDispIncr $tol 100 0
-algorithm KrylovNewton
+algorithm NewtonLineSearch
 integrator Newmark 0.5 0.25
 system BandGeneral
 analysis Transient
 set break_outer 0
 
 while {!$break_outer && $converged == 0 && $time <= $duration} {
-    puts $time
     set tol $tol
     test NormDispIncr $tol 100
     set time [getTime]
@@ -824,12 +827,11 @@ while {!$break_outer && $converged == 0 && $time <= $duration} {
     set retries 0
     set sub $subdivision
     while {$converged != 0} {
-        puts "retrying"
         incr retries
         set sub [expr {$subdivision ** $retries}]
         test NormDispIncr [expr {$tol*$sub}] 100 0
         set reduced_dt [expr {$analysis_dt/$sub}]
-        puts $sub
+        puts "retrying subdivision: $sub dt: $reduced_dt"
         set converged [analyze $sub $reduced_dt]
         if {$retries > $max_retries} {
             puts "Analysis did not converge"
@@ -1008,8 +1010,8 @@ class IDA(NamedYamlMixin):
     _hazard: Hazard | None = None
     _design = None
     _intensities: np.ndarray | None = None
-    _COLLAPSE_DRIFT: float = 0.2
-    _NUM_PARALLEL_RECORDS: int = 10
+    _COLLAPSE_DRIFT: float = 0.2  # dont change this unless you know what you're doing
+    _NUM_PARALLEL_RECORDS: int = 20
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
@@ -1117,6 +1119,7 @@ class IDA(NamedYamlMixin):
         for input, view in zip(inputs, views):
             results = view.get_and_set_timehistory_summary()
             collapse = self._design.fem.determine_collapse_from_results(results)
+
             row = {
                 "record": view.record.name,
                 "intensity_str": input["intensity_str_precision"],
@@ -1172,14 +1175,10 @@ class IDA(NamedYamlMixin):
                 rate_inf, rate_sup = self._hazard._curve.interpolate_rate_for_values(
                     [inf, sup]
                 )
-                freq = rate_inf - rate_sup
-                # if collapse:
-                #     dataframe_records.append(row)
-                #     continue
+                freq = rate_inf - rate_sup  # frequency of exceedance of bin i.
                 strana = StructuralAnalysis(outdir, fem=fem)
                 th_view = strana.timehistory(record=record, scale=scale_factor)
                 results = th_view.get_and_set_timehistory_summary()
-                # frequency of exceedance of bin i.
                 collapse = self._design.fem.determine_collapse_from_results(results)
                 row = {
                     "record": record.name,
@@ -1199,37 +1198,51 @@ class IDA(NamedYamlMixin):
         self.results = results_df.to_dict(orient="records")
         return results_df
 
+    @property
+    def summary(self) -> dict:
+        # TODO double check Sa_g and normalization
+        # precompute collapse capacity, collapse intensity
+        df = DataFrame.from_records(self.results)
+        df2 = df.pivot(index="intensity", columns="record", values="peak_drift")
+        df2["median"] = df2.median(axis=1)
+        Sa_g = (
+            self._design.fem.summary.get("cs", 1)
+            if self._design and self._design.fem
+            else 1
+        )
+        _ida_x = df2["median"].values.tolist()
+        _ida_y = df2.index.values.tolist()
+        _norm_ida_x = _ida_x
+        _norm_ida_y = (df2.index / Sa_g).values.tolist()
+        return {
+            "_ida_x": _ida_x,
+            "_ida_y": _ida_y,
+            "_norm_ida_x": _norm_ida_x,
+            "_norm_ida_y": _norm_ida_y,
+        }
+
+    @property
+    def stats(self) -> list[dict]:
+        return self.results
+
     def view_ida_curves(self) -> Figure:
         """
         classic Vamvatsikos ida curves
         peak_drift in any storey vs Sa(g)(T_1, z_n%)
         """
-        import plotly.express as px
-
         df = DataFrame.from_records(self.results)
-        # df2 = df.pivot(
-        #     index="intensity", columns="record", values=SummaryEDP.peak_drifts.value
-        # )
-
-        def select_peak_drift(drifts_by_storey):
-            if np.any(np.isnan(drifts_by_storey)):
-                return np.nan
-            return max(drifts_by_storey)
-
-        df["peak_drifts"] = 100 * df[SummaryEDP.peak_drifts.value].apply(
-            select_peak_drift
-        )
         df["symbol"] = df["collapse"].apply(lambda c: "x" if c else "circle")
         fig = px.line(
             df,
             y="intensity",
-            x="peak_drifts",
+            x="peak_drift",
             color="record",
             symbol="symbol",
             symbol_sequence=["circle", "x"],
             markers=True,
         )
         # seems like figures are 100% of parent container
+        # can use_container_width=True
         fig.update_layout(
             yaxis_title="accel (g)",
             xaxis_title="peak drift any storey (%)",

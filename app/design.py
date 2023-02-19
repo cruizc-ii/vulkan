@@ -84,7 +84,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     def __post_init__(self):
         self.__pre_init__()
         if all([isinstance(f, dict) for f in self.fems]):
-            print([f["model"] for f in self.fems])
+            # print([f["model"] for f in self.fems])
             self.fems = [FEMFactory(**data) for data in self.fems]
 
     def __set_up__(self):
@@ -167,6 +167,21 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         self._adjacency = _adjacency
         self.nodes = nodes
         self.fixed_nodes = fixed_nodes
+
+    @property
+    def summary(self) -> dict:
+        return {
+            "design name": self.name,
+            "damping": self.damping,
+            "storeys": self.num_storeys,
+            "weight": self.weight,
+            "bays": self.num_bays,
+            "occupancy": self.occupancy,
+            "num frames": self.num_frames,
+            "criteria": self.design_criteria[-1]
+            if len(self.design_criteria) > 0
+            else None,
+        }
 
     @property
     def fem(self):

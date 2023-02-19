@@ -107,7 +107,7 @@ class LoeraPre(DesignCriterion):
     """
 
     WORKING_STRESS_PCT = 0.1  # measure of flexibility, higher -> slender
-    BEAM_TO_COLUMN_RATIO = 0.5
+    BEAM_TO_COLUMN_RATIO = 0.8
     _COLUMN_CRACKED_INERTIAS = 1.0
     _BEAM_CRACKED_INERTIAS = 1.0
 
@@ -123,17 +123,14 @@ class LoeraPre(DesignCriterion):
                 self.WORKING_STRESS_PCT * self.specification.fc
             )
             radius = np.sqrt(area_needed / np.pi)
-            Ix = (np.pi * radius**4) / 4
+            Ix = np.pi * radius**4 / 4
             for col in columns:
                 col.Ix = float(Ix) * self._COLUMN_CRACKED_INERTIAS
                 col.radius = float(radius)
 
             for beam in beams:
-                beam.Ix = (
-                    float(Ix / self.BEAM_TO_COLUMN_RATIO**4)
-                    * self._BEAM_CRACKED_INERTIAS
-                )
                 beam.radius = float(radius * self.BEAM_TO_COLUMN_RATIO)
+                beam.Ix = np.pi * beam.radius**4 / 4
 
         fem.get_and_set_eigen_results(results_path)
         return fem
@@ -265,6 +262,14 @@ class CDMX2017Q1IMK(CDMX2017Q1):
         return fem
 
 
+@dataclass
+class CDMX2017Q4IMK(CDMX2017Q4):
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
+        fem = super().run(results_path=results_path, *args, **kwargs)
+        fem = IMKFrame(**fem.to_dict)
+        return fem
+
+
 class DesignCriterionFactory:
     seeds = {
         # EulerShearPre.__name__: EulerShearPre,
@@ -275,6 +280,7 @@ class DesignCriterionFactory:
         CDMX2017Q1.__name__: CDMX2017Q1,
         CDMX2017Q4.__name__: CDMX2017Q4,
         CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
+        CDMX2017Q4IMK.__name__: CDMX2017Q4IMK,
     }
 
     default_seeds = {

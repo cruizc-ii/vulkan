@@ -307,7 +307,6 @@ class LossAggregator(NamedYamlMixin, Loss):
             self._loss_df, LOSS_CSV_RESULTS_DIR, name=self._csv_name
         )
         self._compute_rate_losses()
-        print(self._loss_df)
         return self._loss_df
 
     def _get_and_set_scatter_df(self) -> pd.DataFrame:
@@ -369,6 +368,18 @@ class LossAggregator(NamedYamlMixin, Loss):
             & (df["floor"].isin(storey_filter))
         ]
         return df
+
+    @property
+    def summary(self) -> dict:
+        return {
+            "AAL $": self.average_annual_loss,
+            "EL $": self.expected_loss,
+            "std L $": self.std_loss,
+            # self.sum_losses,
+            "EL %": self.expected_loss_pct,
+            "aal %": self.average_annual_loss_pct,
+            "net worth $": self.net_worth,
+        }
 
     @property
     def asset_records(self) -> list[dict]:

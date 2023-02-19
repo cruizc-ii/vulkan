@@ -15,6 +15,7 @@ ROOT_DIR = Path(__file__).parent.parent
 MODELS_DIR = ROOT_DIR / "models"
 DESIGN_DIR = MODELS_DIR / "design"
 HAZARD_DIR = MODELS_DIR / "hazard"
+COMPARE_DIR = MODELS_DIR / "compare"
 RESULTS_DIR = ROOT_DIR / "results"
 ASSETS_PATH = "https://vulkan1.s3.amazonaws.com/"
 GRAVITY = 9.81
@@ -140,6 +141,21 @@ class YamlMixin:
          numpy array tolist()
          !python/object/apply:numpy.core.multiarray.scalar
     """
+
+    @classmethod
+    def numpy_dict_factory(cls, data: dict) -> dict:
+        res = {}
+        for k, v in data.items():
+            if isinstance(v, (np.ndarray)):
+                v = v.tolist()
+            elif isinstance(v, (np.integer)):
+                v = int(v)
+            elif isinstance(v, (np.floating,)):
+                v = v.item()
+            elif isinstance(v, (np.generic)):
+                v = v.item()
+            res[k] = v
+        return res
 
     def read_only_dict_factory(self, data: list[tuple[str, Any]]):
         result = {}

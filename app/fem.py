@@ -20,7 +20,7 @@ from pathlib import Path
 from app.utils import GRAVITY, SummaryEDP, YamlMixin, ASSETS_PATH
 from enum import Enum
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line, Pie
-from app.concrete import RectangularConcreteColumn
+from app.concrete import DesignException, RectangularConcreteColumn
 
 
 class ElementTypes(Enum):
@@ -278,7 +278,7 @@ class BilinBeamColumn(ElasticBeamColumn):
 class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     recorder_ix: int = 0
     model: str = "IMKSpring"
-    ASPECT_RATIO_B_TO_H: float = 0.5  # b = kappa * h, h = (12 Ix / kappa )**(1/4)
+    ASPECT_RATIO_B_TO_H: float = 0.4  # b = kappa * h, h = (12 Ix / kappa )**(1/4)
     left: bool = False
     right: bool = False
     up: bool = False
@@ -304,14 +304,29 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         Ix = data["Ix"]
         h = (12 * Ix / cls.ASPECT_RATIO_B_TO_H) ** 0.25
         b = h * cls.ASPECT_RATIO_B_TO_H
-        return cls(**{"h": h, "b": b, "EFFECTIVE_INERTIA_COEFF": 1, **data})
+        print(f'{b=:.2f}, {h=:.2f} {Ix=:.3f}, {data["My"]}')
+        designed = False
+        maxIter = 5
+        i = 0
+        while not designed:
+            if i >= maxIter:
+                raise DesignException("Could not design even while making bigger")
+            try:
+                instance = cls(**{"h": h, "b": b, "EFFECTIVE_INERTIA_COEFF": 1, **data})
+                designed = True
+            except DesignException as e:
+                print(e)
+                h = h * 1.1
+                b = b * 1.1
+                i += 1
+        return instance
 
     def __post_init__(self):
         from app.strana import EDP
 
         super().__post_init__()
         self.model = self.__class__.__name__
-        self.radius = self.h
+        self.radius = self.h / 2
         self.Ks = self.My / self.theta_y
         self.Ke = 6 * self.E * self.Ix / self.length
         self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
@@ -440,6 +455,32 @@ class FiniteElementModel(ABC, YamlMixin):
             num_storeys=spec.num_storeys,
         )
         return fem
+
+    @property
+    def summary(self) -> dict:
+        df, ndf = self.pushover_dfs
+        Vy = df["sum"].max()
+        ix = df["sum"].idxmax()
+        cs = ndf["sum"].max()
+        uy = df.loc[ix]["u"]
+        drift_y = ndf.loc[ix]["u"]
+        stats = {
+            "net worth [$]": self.total_net_worth,
+            "elements net worth [$]": self.elements_net_worth,
+            "nonstructural net worth [$]": self.nonstructural_net_worth,
+            "contents net worth [$]": self.contents_net_worth,
+            "Vy [kN]": Vy,
+            "uy [m]": uy,
+            "cs [1]": cs,
+            "drift_y [%]": 100 * drift_y,
+            "c_design [1]": self.extras.get("c_design"),
+            "period [s]": self.periods[0] if len(self.periods) > 0 else None,
+            "_pushover_x": df["u"].to_list(),
+            "_pushover_y": df["sum"].to_list(),
+            "_norm_pushover_x": ndf["u"].to_list(),
+            "_norm_pushover_y": ndf["sum"].to_list(),
+        }
+        return stats
 
     @property
     def elements_assets(self) -> list["Asset"]:
@@ -590,6 +631,9 @@ class FiniteElementModel(ABC, YamlMixin):
             f.write(self.model_str)
 
     def determine_collapse_from_results(self, results: dict) -> bool:
+        """
+        upper bound on collapse, if any column is in DS==Collapse
+        """
         collapse = False
         for st, columns in enumerate(self.columns_by_storey):
             column = columns[0]
@@ -691,7 +735,7 @@ class FiniteElementModel(ABC, YamlMixin):
         return fig, normalized_fig
 
     @property
-    def pushover_dfs(self) -> pd.DataFrame:
+    def pushover_dfs(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         # if not self._pushover_view:
         #     raise Exception("You must run a pushover first!")
         view = self._pushover_view
@@ -918,7 +962,7 @@ class FiniteElementModel(ABC, YamlMixin):
         return st
 
     @property
-    def beams_by_storey(self):
+    def beams_by_storey(self) -> list[list[ElasticBeamColumn]]:
         st = []
         for iy in range(1, self.num_modes + 1):
             beams = [b for b in self.beams if b.storey == iy]
@@ -1476,10 +1520,15 @@ class IMKFrame(FiniteElementModel):
                 )
                 recorder_ixs[type] = recorder_ixs[type] + 1
                 d1 = {**elem.to_dict, **data_imk1}
+                print("trying to design", elem.type)
                 imk1 = IMKSpring.from_bilin(**d1)
+
                 elem_id += 1
                 elements.append(imk1)
-                Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1000
+                Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1e5
+                print(
+                    "imk radius", elem.type, imk1.radius, elem.radius, imk1.Ic, elem.Ix
+                )
                 bc = BeamColumn(
                     id=elem_id,
                     radius=imk1.radius,

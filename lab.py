@@ -11,8 +11,9 @@ from app.strana import (
     StructuralResultView,
 )
 from app.loss import LossAggregator, IDANotFoundException, LossModel
-from app.utils import DESIGN_DIR, HAZARD_DIR, RESULTS_DIR, find_files
+from app.utils import DESIGN_DIR, HAZARD_DIR, RESULTS_DIR, find_files, COMPARE_DIR
 from app.occupancy import BuildingOccupancy
+from app.compare import IDACompare
 import pandas as pd
 import numpy as np
 import time
@@ -20,6 +21,7 @@ from st_cytoscape import cytoscape
 import plotly.express as px
 import random
 from streamlit import session_state as state
+from functools import partial
 
 
 st.set_page_config(
@@ -30,8 +32,8 @@ st.set_page_config(
 )
 
 
+DEFAULT_MODULE = 5
 padding_top = 2
-DEFAULT_MODULE = 1
 
 st.markdown(
     f"""
@@ -49,6 +51,7 @@ if "module" not in state:
     state.hazard_abspath = ""
     state.ida_abspath = ""
     state.loss_abspath = ""
+    state.compare_abspath = ""
 
 if "first_render" not in state:
     state.first_render = True
@@ -58,20 +61,31 @@ def switch_module(delta: int):
     state.module = state.module + delta
 
 
+def goto_module(mod: int):
+    state.module = mod
+
+
 title = (
     "design",
     "hazard",
     "structural analysis",
     "loss",
+    "compare",
 )
 
 left, right = st.columns(2)
 if state.module != 1:
     prev = left.button("back", on_click=switch_module, args=[-1])
-if state.module != 4:
+if state.module != 5:
     next = right.button("next", on_click=switch_module, args=[1])
 
 with st.sidebar:
+    b1, b2, b3, b4, b5 = st.columns(5)
+    b1.button("des", on_click=partial(goto_module, 1))
+    b2.button("haz", on_click=partial(goto_module, 2))
+    b3.button("str", on_click=partial(goto_module, 3))
+    b4.button("loss", on_click=partial(goto_module, 4))
+    b5.button("com", on_click=partial(goto_module, 5))
     st.header(title[state.module - 1])
     if state.module == 1:
         state.design_abspath
@@ -219,8 +233,8 @@ with st.sidebar:
             hazard.add_record(record)
             hazard.to_file(HAZARD_DIR)
         left, middle, right = st.columns(3)
-        sample = left.button("sample 5", help="grab 5 at random")
-        if sample:
+        go = left.button("sample 5", help="grab 5 at random")
+        if go:
             with st.spinner("sampling..."):
                 time.sleep(1)
                 untouched = [r for r in record_files if r not in hazard.record_names]
@@ -398,12 +412,11 @@ with st.sidebar:
         except IDANotFoundException as e:
             e
             print(e)
-            # loss = LossAggregator(name=name)
             ida_missing = True
 
         left, right = st.columns(2)
-        sample = left.button("run", help="perform loss computation")
-        if sample:
+        go = left.button("run", help="perform loss computation")
+        if go:
             with st.spinner("running..."):
                 loss_dict = {**loss.to_dict} if loss else {}
                 loss = LossAggregator(
@@ -462,6 +475,117 @@ with st.sidebar:
                 if view_asset:
                     selected_ix = ix
 
+    if state.module == 5:
+        "hazard abspath: ", state.hazard_abspath
+        compares = find_files(COMPARE_DIR)
+        compare_file = st.selectbox("select a compare file", options=compares)
+        name = st.text_input(
+            "give it a name",
+            value=compare_file.split(".")[0] if compare_file else "default compare",
+            help="to save just run",
+        )
+        hazard_abspath = str(state.hazard_abspath)
+        hazard_missing = False
+        try:
+            if compare_file:
+                compare = IDACompare.from_file(COMPARE_DIR / compare_file)
+            else:
+                compare = IDACompare(name=name, hazard_abspath=hazard_abspath)
+        except HazardNotFoundException as e:
+            print(e)
+            hazard_missing = True
+
+        compare.name = name
+        compare.hazard_abspath = hazard_abspath
+        hazard = None
+        hazards = find_files(HAZARD_DIR)
+        hazard_file = st.selectbox("select a hazard", options=hazards)
+        if hazard_file:
+            state.hazard_abspath = HAZARD_DIR / hazard_file
+            hazard = Hazard.from_file(HAZARD_DIR / hazard_file)
+
+        "num records:", len(hazard.records)
+        # not sure why this floats like crazy below every element
+        # left, right = st.columns(2)
+        # logx = left.checkbox("log x", value=True)
+        # logy = right.checkbox("log y", value=True)
+        # if hazard:
+        #     hazard_fig = hazard.rate_figure(logx=logx, logy=logy)
+        # st.plotly_chart(hazard_fig, use_container_width=True)
+
+        design_files = find_files(DESIGN_DIR, only_yml=True)
+        design_name = st.selectbox("add a design", options=design_files)
+        if design_name and not state.first_render:
+            design_path = str((DESIGN_DIR / design_name).resolve())
+            compare.add_design(design_path)
+            compare.to_file(COMPARE_DIR)
+
+        for ix, comp in enumerate(compare.comparisons):
+            _c1, _c2, _c3, _c4, _c5 = st.columns([2, 1, 1, 1, 1])
+            with st.container():
+                _c1.write(comp.design_abspath.split("/")[-1])
+                go_strana = _c2.button(
+                    "ida", help="perform ida", key=f"compare-design-{ix}"
+                )
+                go_loss = _c3.button(
+                    "loss", help="perform loss computation", key=f"compare-design-{ix}"
+                )
+                go_complete = _c4.button(
+                    "all", help="perform ida then loss", key=f"compare-design-{ix}"
+                )
+                rm = _c5.button("🗑️", key=f"compare-design-{ix}")
+                if go_strana:
+                    comp.run(strana=True)
+                if go_loss:
+                    comp.run(loss=True)
+                if go_complete:
+                    comp.run(strana=True, loss=True)
+                if rm:
+                    compare.remove_design(comp.design_abspath)
+                if any([go_strana, go_loss, go_complete, rm]):
+                    compare.to_file(COMPARE_DIR)
+                    st.success("success")
+
+        c1, c2, c3, c4 = st.columns(4)
+        go = c1.button("run ida", help="perform ida comparison")
+        loss = c2.button("run loss", help="perform loss computation ")
+        complete = c3.button("run all", help="run ida then loss on all models")
+        rm = c4.button("🗑️", help="delete")
+        if rm:
+            with st.spinner("deleting..."):
+                time.sleep(1)
+                compare.delete(COMPARE_DIR)
+            st.success("delete successful")
+
+        if compare and hazard and not hazard_missing:
+            if any(
+                [
+                    go,
+                    loss,
+                    complete,
+                ]
+            ):
+                compare_dict = compare.to_dict
+                compare = IDACompare(
+                    **{
+                        **compare_dict,
+                        "name": name,
+                        "hazard_abspath": hazard_abspath,
+                    }
+                )
+                with st.spinner("running..."):
+                    if go:
+                        compare.run(strana=True)
+                    if loss:
+                        compare.run(loss=True)
+                    if complete:
+                        compare.run(strana=True, loss=True)
+
+                compare.to_file(COMPARE_DIR)
+                st.success("success")
+
+        state.first_render = False
+
 if state.module == 1:
     if design and design.fems:
         selected = cytoscape(
@@ -493,6 +617,9 @@ if state.module == 1:
             fig = design.fem.assets_pie_fig
             st.plotly_chart(fig)
 
+        with st.expander("summary"):
+            st.dataframe(pd.DataFrame([design.summary]))
+
         with st.expander("assets"):
             pass
 
@@ -508,6 +635,7 @@ if state.module == 1:
             col2.plotly_chart(nfig)
             df = pd.DataFrame(design.fem.pushover_stats, index=[0])
             st.table(df)
+            design.fem.extras
 
 
 if state.module == 2:
@@ -526,7 +654,6 @@ if state.module == 2:
             st.plotly_chart(record.figure)
             st.plotly_chart(record.spectra)
 
-
 if state.module == 3:
     if design_missing:
         st.warning("Please select a design")
@@ -535,8 +662,11 @@ if state.module == 3:
     if not (design_missing or hazard_missing) and ida and ida.results:
         fig = ida.view_ida_curves()
         # todo@carlo width 85% parent container
-        fig.update_layout(width=1000)
-        st.plotly_chart(fig)
+        fig.update_layout(width=640 * 3, height=640)
+        st.plotly_chart(
+            fig,
+        )
+        st.dataframe(pd.DataFrame.from_records(ida.stats))
         if selected_ix is not None:
             filepath = ida.results[selected_ix]["path"]
             view = StructuralResultView.from_file(filepath)
@@ -647,3 +777,47 @@ if state.module == 4:
                 df2 = df2 * 1.0 / normalization
                 fig = px.imshow(df2)
                 st.plotly_chart(fig)
+
+if state.module == 5:
+    if hazard_missing:
+        st.warning("Please select a hazard")
+
+    units = st.button("use units")
+    if not units:
+        norm_pushover_figs = compare.normalized_pushover_figs
+        st.plotly_chart(norm_pushover_figs)
+
+        norm_ida_figs = compare.normalized_ida_figs
+        st.plotly_chart(norm_ida_figs)
+
+        df = compare.summary_df
+        st.dataframe(df)
+    else:
+        pushover_fig = compare.pushover_figs
+        st.plotly_chart(pushover_fig)
+
+        ida_fig = compare.ida_figs
+        st.plotly_chart(ida_fig)
+
+        df = compare.summary_df
+        st.dataframe(df)
+
+    stat = st.selectbox("select", options=df.columns)
+    if stat:
+        fig = df[stat].plot()
+        st.plotly_chart(fig)
+
+    for ix, comp in enumerate(compare.comparisons):
+        design = comp._design_model
+        with st.expander(label=str(ix), expanded=True):
+            if not comp.summary.get("design name"):
+                st.warning("Could not find design.")
+            if not comp.strana_abspath:
+                st.warning("No IDA")
+            if not comp.loss_abspath:
+                st.warning("No loss")
+            st.header(comp.summary.get("design name"))
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Net worth $", comp.summary.get("net worth $"))
+            col2.metric("period s", comp.summary.get("period [s]"))
+            st.dataframe(comp.summary_df)
