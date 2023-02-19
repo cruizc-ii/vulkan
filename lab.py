@@ -635,6 +635,7 @@ if state.module == 1:
             col2.plotly_chart(nfig)
             df = pd.DataFrame(design.fem.pushover_stats, index=[0])
             st.table(df)
+            design.fem.extras
 
 
 if state.module == 2:

@@ -84,7 +84,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     def __post_init__(self):
         self.__pre_init__()
         if all([isinstance(f, dict) for f in self.fems]):
-            print([f["model"] for f in self.fems])
+            # print([f["model"] for f in self.fems])
             self.fems = [FEMFactory(**data) for data in self.fems]
 
     def __set_up__(self):

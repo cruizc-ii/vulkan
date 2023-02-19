@@ -751,7 +751,7 @@ class TimehistoryRecorder(GravityRecorderMixin):
     gravity_loads: bool = True
     EXTRA_FREE_VIBRATION_SECONDS: float = 10.0
     dt_subdivision: int = 10
-    max_retries: int = 3
+    max_retries: int = 5
 
     def __post_init__(self):
         os.makedirs(self.abspath, exist_ok=True)
@@ -808,19 +808,18 @@ set subdivision %s
 set max_retries %s
 set time [getTime]
 
-set analysis_dt [expr $record_dt]
+set analysis_dt [expr {$record_dt/2}]
 
 constraints Transformation
 numberer RCM
 test NormDispIncr $tol 100 0
-algorithm KrylovNewton
+algorithm NewtonLineSearch
 integrator Newmark 0.5 0.25
 system BandGeneral
 analysis Transient
 set break_outer 0
 
 while {!$break_outer && $converged == 0 && $time <= $duration} {
-    puts $time
     set tol $tol
     test NormDispIncr $tol 100
     set time [getTime]
@@ -828,12 +827,11 @@ while {!$break_outer && $converged == 0 && $time <= $duration} {
     set retries 0
     set sub $subdivision
     while {$converged != 0} {
-        puts "retrying"
         incr retries
         set sub [expr {$subdivision ** $retries}]
         test NormDispIncr [expr {$tol*$sub}] 100 0
         set reduced_dt [expr {$analysis_dt/$sub}]
-        puts $sub
+        puts "retrying subdivision: $sub dt: $reduced_dt"
         set converged [analyze $sub $reduced_dt]
         if {$retries > $max_retries} {
             puts "Analysis did not converge"
@@ -1013,7 +1011,7 @@ class IDA(NamedYamlMixin):
     _design = None
     _intensities: np.ndarray | None = None
     _COLLAPSE_DRIFT: float = 0.2  # dont change this unless you know what you're doing
-    _NUM_PARALLEL_RECORDS: int = 10
+    _NUM_PARALLEL_RECORDS: int = 20
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame

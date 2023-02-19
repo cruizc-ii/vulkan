@@ -26,7 +26,7 @@ from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line, Pie
 from app.concrete import RectangularConcreteColumn
 from app.design import ReinforcedConcreteFrame, FiniteElementModel
 from app.strana import IDA, STRANA_DIR
-from uuid import uuid4 as uuid
+from shortuuid import uuid
 
 
 @dataclass
