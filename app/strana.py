@@ -401,7 +401,6 @@ class StructuralResultView(YamlMixin):
         accels = storey_accels.merge(
             ground_accel, how="outer", left_index=True, right_index=True
         )
-        print(accels)
         # accels = accels.interpolate("cubic").fillna(0)
         return accels
 
@@ -1245,11 +1244,11 @@ class IDA(NamedYamlMixin):
         # can use_container_width=True
         fig.update_layout(
             yaxis_title="accel (g)",
-            xaxis_title="peak drift any storey (%)",
+            xaxis_title="peak drift any storey [1]",
             title="IDA curves",
             # marginal_x="histogram", marginal_y="rug",
             # yaxis_range=[0.0, 0.3],
-            # xaxis_range=[0, 20],
+            # xaxis_range=[0, 0.20],
             # width=1100,
             # height=600,
             # autosize=True,

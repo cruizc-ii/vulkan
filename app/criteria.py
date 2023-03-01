@@ -77,7 +77,7 @@ class CodeMassesPre(DesignCriterion):
     """
 
     CODE_UNIFORM_LOADS_kPA = 10.0  # 1 t/m2
-    SLAB_AREA_PERCENTAGE = 0.5  # part of the slab mass goes to this frame's beams
+    SLAB_AREA_PERCENTAGE = 1  # part of the slab mass goes to this frame's beams
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = PlainFEM.from_spec(self.specification)

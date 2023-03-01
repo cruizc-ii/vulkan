@@ -624,7 +624,11 @@ if state.module == 1:
             pass
 
         with st.expander("eigen"):
-            st.dataframe(design.fem.eigen_df)
+            eigen, storeys = design.fem.eigen_df
+            "modes"
+            st.dataframe(eigen)
+            "storeys"
+            st.dataframe(storeys)
 
         with st.expander("capacity"):
             # path = DESIGN_DIR / design.name
@@ -662,11 +666,9 @@ if state.module == 3:
     if not (design_missing or hazard_missing) and ida and ida.results:
         fig = ida.view_ida_curves()
         # todo@carlo width 85% parent container
-        fig.update_layout(width=640 * 3, height=640)
-        st.plotly_chart(
-            fig,
-        )
-        st.dataframe(pd.DataFrame.from_records(ida.stats))
+        # fig.update_layout(width=640 * 3, height=640,)
+        st.plotly_chart(fig, container_width=True)
+        st.dataframe(pd.DataFrame.from_records(ida.stats), height=800)
         if selected_ix is not None:
             filepath = ida.results[selected_ix]["path"]
             view = StructuralResultView.from_file(filepath)

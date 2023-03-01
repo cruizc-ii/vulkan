@@ -523,19 +523,25 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @property
     def eigen_df(self) -> pd.DataFrame:
-        return pd.DataFrame(
+        eigen_table = pd.DataFrame(
             dict(
                 periods=self.periods,
                 freqs=self.frequencies,
                 values=self.values,
                 omegas=self.omegas,
+            ),
+            index=range(1, len(self.periods) + 1),
+        )
+        storey_table = pd.DataFrame(
+            dict(
                 mass=self.masses,
                 weights=self.weights,
-                loads=self.uniform_beam_loads,
+                loads_kN_per_m=self.uniform_beam_loads,
                 loads_kPa=self.uniform_area_loads_kPa,
             ),
             index=range(1, len(self.periods) + 1),
         )
+        return eigen_table, storey_table
 
     @property
     def elements_net_worth(self) -> float:
@@ -769,9 +775,9 @@ class FiniteElementModel(ABC, YamlMixin):
     @property
     def uniform_area_loads_kPa(self) -> list[float]:
         area = self.length**2
-        masses_per_storey = np.array(self.masses)
-        loads_per_storey = GRAVITY * masses_per_storey / area
-        return loads_per_storey
+        masses_per_storey = np.array(self.weights)
+        pressures_per_storey = masses_per_storey / area
+        return pressures_per_storey.tolist()
 
     @property
     def uniform_beam_loads(self) -> list[float]:
