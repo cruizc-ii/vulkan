@@ -14,7 +14,7 @@ repos:
       - id: forbid-new-submodules
       - id: detect-private-key
       - id: no-commit-to-branch
-        args: [--branch, staging, --branch, production, --branch, master]
+        args: [--branch, staging, --branch, production, --branch, main]
 
   - repo: https://github.com/psf/black
     rev: "22.3.0"
@@ -48,7 +48,8 @@ repos:
   #   hooks:
   #     - id: unittest
   #       name: run unit tests
-  #       entry: python3 -m pytest
   #       language: system
   #       pass_filenames: false
   #       stages: [commit]
+  #       verbose: true
+  #       entry: bash -c 'python3 -m pytest "$@" || true' --

@@ -19,8 +19,8 @@ design_criteria:
 design_spectra: {}
 fc: 30000.0
 fems:
-- a0: 0.3202441048070715
-  a1: 0.0065377675174385
+- a0: 0.45289359441173205
+  a1: 0.004622899579872212
   contents:
   - category: contents
     edp: pfa
@@ -3052,8 +3052,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0014502994189248962
-    My: 850.6094944955646
+    Ix: 0.0058011976756995876
+    My: 1312.0782778009093
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3067,13 +3067,13 @@ fems:
     id: 0
     integration_points: 5
     j: 4
-    k: 6129.17673287193
+    k: 24516.70693148773
     length: 4.4
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.8910020835455822
+    net_worth: 1.7820041670911646
     node: 0
-    radius: 0.2072964896828013
+    radius: 0.293161507141752
     rugged: false
     storey: 1
     transf: 1
@@ -3083,8 +3083,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0014502994189248962
-    My: 850.6094944955646
+    Ix: 0.0058011976756995876
+    My: 1312.0782778009093
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3098,13 +3098,13 @@ fems:
     id: 1
     integration_points: 5
     j: 5
-    k: 6129.17673287193
+    k: 24516.70693148773
     length: 4.4
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.8910020835455822
+    net_worth: 1.7820041670911646
     node: 1
-    radius: 0.2072964896828013
+    radius: 0.293161507141752
     rugged: false
     storey: 1
     transf: 1
@@ -3114,8 +3114,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0005940426419916375
-    My: 637.9571208716734
+    Ix: 0.0023761705679665518
+    My: 984.058708350682
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3129,13 +3129,13 @@ fems:
     id: 2
     integration_points: 5
     j: 5
-    k: 7920.5685598885
+    k: 31682.274239554023
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 1.9440045459176338
+    net_worth: 3.8880090918352685
     node: 4
-    radius: 0.16583719174624104
+    radius: 0.2345292057134016
     rugged: false
     storey: 1
     transf: 1
@@ -3145,8 +3145,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0014502994189248962
-    My: 850.6094944955646
+    Ix: 0.0058011976756995876
+    My: 1312.0782778009093
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3160,13 +3160,13 @@ fems:
     id: 3
     integration_points: 5
     j: 6
-    k: 6129.17673287193
+    k: 24516.70693148773
     length: 4.4
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.8910020835455822
+    net_worth: 1.7820041670911646
     node: 2
-    radius: 0.2072964896828013
+    radius: 0.293161507141752
     rugged: false
     storey: 1
     transf: 1
@@ -3176,8 +3176,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0005940426419916375
-    My: 637.9571208716734
+    Ix: 0.0023761705679665518
+    My: 984.058708350682
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3191,13 +3191,13 @@ fems:
     id: 4
     integration_points: 5
     j: 6
-    k: 7920.5685598885
+    k: 31682.274239554023
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 1.9440045459176338
+    net_worth: 3.8880090918352685
     node: 5
-    radius: 0.16583719174624104
+    radius: 0.2345292057134016
     rugged: false
     storey: 1
     transf: 1
@@ -3207,8 +3207,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0014502994189248962
-    My: 850.6094944955646
+    Ix: 0.0058011976756995876
+    My: 1312.0782778009093
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3222,13 +3222,13 @@ fems:
     id: 5
     integration_points: 5
     j: 7
-    k: 6129.17673287193
+    k: 24516.70693148773
     length: 4.4
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.8910020835455822
+    net_worth: 1.7820041670911646
     node: 3
-    radius: 0.2072964896828013
+    radius: 0.293161507141752
     rugged: false
     storey: 1
     transf: 1
@@ -3238,8 +3238,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0005940426419916375
-    My: 637.9571208716734
+    Ix: 0.0023761705679665518
+    My: 984.058708350682
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3253,13 +3253,13 @@ fems:
     id: 6
     integration_points: 5
     j: 7
-    k: 7920.5685598885
+    k: 31682.274239554023
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 1.9440045459176338
+    net_worth: 3.8880090918352685
     node: 6
-    radius: 0.16583719174624104
+    radius: 0.2345292057134016
     rugged: false
     storey: 1
     transf: 1
@@ -3269,8 +3269,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0008157934231452545
-    My: 234.32860020878798
+    Ix: 0.0032631736925810167
+    My: 375.0820791800109
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3284,13 +3284,13 @@ fems:
     id: 7
     integration_points: 5
     j: 8
-    k: 8962.574228890733
+    k: 35850.29691556292
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.4860011364794087
+    net_worth: 0.972002272958817
     node: 4
-    radius: 0.17952402618064472
+    radius: 0.25388531259649033
     rugged: false
     storey: 2
     transf: 1
@@ -3300,8 +3300,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0008157934231452545
-    My: 234.32860020878798
+    Ix: 0.0032631736925810167
+    My: 375.0820791800109
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3315,13 +3315,13 @@ fems:
     id: 8
     integration_points: 5
     j: 9
-    k: 8962.574228890733
+    k: 35850.29691556292
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.4860011364794087
+    net_worth: 0.972002272958817
     node: 5
-    radius: 0.17952402618064472
+    radius: 0.25388531259649033
     rugged: false
     storey: 2
     transf: 1
@@ -3331,8 +3331,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0003341489861202963
-    My: 175.74645015659098
+    Ix: 0.0013365959444811843
+    My: 281.3115593850082
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3346,13 +3346,13 @@ fems:
     id: 9
     integration_points: 5
     j: 9
-    k: 4455.319814937284
+    k: 17821.279259749124
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 1.4580034094382262
+    net_worth: 2.916006818876451
     node: 8
-    radius: 0.1436192209445158
+    radius: 0.20310825007719227
     rugged: false
     storey: 2
     transf: 1
@@ -3362,8 +3362,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0008157934231452545
-    My: 234.32860020878798
+    Ix: 0.0032631736925810167
+    My: 375.0820791800109
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3377,13 +3377,13 @@ fems:
     id: 10
     integration_points: 5
     j: 10
-    k: 8962.574228890733
+    k: 35850.29691556292
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.4860011364794087
+    net_worth: 0.972002272958817
     node: 6
-    radius: 0.17952402618064472
+    radius: 0.25388531259649033
     rugged: false
     storey: 2
     transf: 1
@@ -3393,8 +3393,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0003341489861202963
-    My: 175.74645015659098
+    Ix: 0.0013365959444811843
+    My: 281.3115593850082
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3408,13 +3408,13 @@ fems:
     id: 11
     integration_points: 5
     j: 10
-    k: 4455.319814937284
+    k: 17821.279259749124
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 1.4580034094382262
+    net_worth: 2.916006818876451
     node: 9
-    radius: 0.1436192209445158
+    radius: 0.20310825007719227
     rugged: false
     storey: 2
     transf: 1
@@ -3424,8 +3424,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0008157934231452545
-    My: 234.32860020878798
+    Ix: 0.0032631736925810167
+    My: 375.0820791800109
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3439,13 +3439,13 @@ fems:
     id: 12
     integration_points: 5
     j: 11
-    k: 8962.574228890733
+    k: 35850.29691556292
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.4860011364794087
+    net_worth: 0.972002272958817
     node: 7
-    radius: 0.17952402618064472
+    radius: 0.25388531259649033
     rugged: false
     storey: 2
     transf: 1
@@ -3455,8 +3455,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0003341489861202963
-    My: 175.74645015659098
+    Ix: 0.0013365959444811843
+    My: 281.3115593850082
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3470,13 +3470,13 @@ fems:
     id: 13
     integration_points: 5
     j: 11
-    k: 4455.319814937284
+    k: 17821.279259749124
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 1.4580034094382262
+    net_worth: 2.916006818876451
     node: 10
-    radius: 0.1436192209445158
+    radius: 0.20310825007719227
     rugged: false
     storey: 2
     transf: 1
@@ -3486,8 +3486,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0003625748547312242
-    My: 75.0612383981646
+    Ix: 0.0014502994189248962
+    My: 124.61349971479815
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3501,13 +3501,13 @@ fems:
     id: 14
     integration_points: 5
     j: 12
-    k: 3983.3663239514367
+    k: 15933.465295805741
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.324000757652939
+    net_worth: 0.6480015153058779
     node: 8
-    radius: 0.146580753570876
+    radius: 0.2072964896828013
     rugged: false
     storey: 3
     transf: 1
@@ -3517,8 +3517,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0003625748547312242
-    My: 75.0612383981646
+    Ix: 0.0014502994189248962
+    My: 124.61349971479815
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3532,13 +3532,13 @@ fems:
     id: 15
     integration_points: 5
     j: 13
-    k: 3983.3663239514367
+    k: 15933.465295805741
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.324000757652939
+    net_worth: 0.6480015153058779
     node: 9
-    radius: 0.146580753570876
+    radius: 0.2072964896828013
     rugged: false
     storey: 3
     transf: 1
@@ -3548,8 +3548,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.00014851066049790948
-    My: 56.29592879862345
+    Ix: 0.0005940426419916375
+    My: 93.46012478609862
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3563,13 +3563,13 @@ fems:
     id: 16
     integration_points: 5
     j: 13
-    k: 1980.1421399721264
+    k: 7920.5685598885
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 0.9720022729588171
+    net_worth: 1.9440045459176338
     node: 12
-    radius: 0.1172646028567008
+    radius: 0.16583719174624104
     rugged: false
     storey: 3
     transf: 1
@@ -3579,8 +3579,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0003625748547312242
-    My: 75.0612383981646
+    Ix: 0.0014502994189248962
+    My: 124.61349971479815
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3594,13 +3594,13 @@ fems:
     id: 17
     integration_points: 5
     j: 14
-    k: 3983.3663239514367
+    k: 15933.465295805741
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.324000757652939
+    net_worth: 0.6480015153058779
     node: 10
-    radius: 0.146580753570876
+    radius: 0.2072964896828013
     rugged: false
     storey: 3
     transf: 1
@@ -3610,8 +3610,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.00014851066049790948
-    My: 56.29592879862345
+    Ix: 0.0005940426419916375
+    My: 93.46012478609862
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3625,13 +3625,13 @@ fems:
     id: 18
     integration_points: 5
     j: 14
-    k: 1980.1421399721264
+    k: 7920.5685598885
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 0.9720022729588171
+    net_worth: 1.9440045459176338
     node: 13
-    radius: 0.1172646028567008
+    radius: 0.16583719174624104
     rugged: false
     storey: 3
     transf: 1
@@ -3641,8 +3641,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.0003625748547312242
-    My: 75.0612383981646
+    Ix: 0.0014502994189248962
+    My: 124.61349971479815
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3656,13 +3656,13 @@ fems:
     id: 19
     integration_points: 5
     j: 15
-    k: 3983.3663239514367
+    k: 15933.465295805741
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.324000757652939
+    net_worth: 0.6480015153058779
     node: 11
-    radius: 0.146580753570876
+    radius: 0.2072964896828013
     rugged: false
     storey: 3
     transf: 1
@@ -3672,8 +3672,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 0.00014851066049790948
-    My: 56.29592879862345
+    Ix: 0.0005940426419916375
+    My: 93.46012478609862
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3687,13 +3687,13 @@ fems:
     id: 20
     integration_points: 5
     j: 15
-    k: 1980.1421399721264
+    k: 7920.5685598885
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 0.9720022729588171
+    net_worth: 1.9440045459176338
     node: 14
-    radius: 0.1172646028567008
+    radius: 0.16583719174624104
     rugged: false
     storey: 3
     transf: 1
@@ -3703,8 +3703,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 9.064371368280601e-05
-    My: 24.89340041495022
+    Ix: 0.0003625748547312242
+    My: 44.457902331421224
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3718,13 +3718,13 @@ fems:
     id: 21
     integration_points: 5
     j: 16
-    k: 995.8415809878588
+    k: 3983.3663239514367
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.16200037882646948
+    net_worth: 0.324000757652939
     node: 12
-    radius: 0.10364824484140064
+    radius: 0.146580753570876
     rugged: false
     storey: 4
     transf: 1
@@ -3734,8 +3734,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 9.064371368280601e-05
-    My: 24.89340041495022
+    Ix: 0.0003625748547312242
+    My: 44.457902331421224
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3749,13 +3749,13 @@ fems:
     id: 22
     integration_points: 5
     j: 17
-    k: 995.8415809878588
+    k: 3983.3663239514367
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.16200037882646948
+    net_worth: 0.324000757652939
     node: 13
-    radius: 0.10364824484140064
+    radius: 0.146580753570876
     rugged: false
     storey: 4
     transf: 1
@@ -3765,8 +3765,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 3.7127665124477344e-05
-    My: 18.670050311212666
+    Ix: 0.00014851066049790948
+    My: 33.34342674856592
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3780,13 +3780,13 @@ fems:
     id: 23
     integration_points: 5
     j: 17
-    k: 495.03553499303126
+    k: 1980.1421399721264
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 0.48600113647940846
+    net_worth: 0.9720022729588171
     node: 16
-    radius: 0.08291859587312052
+    radius: 0.1172646028567008
     rugged: false
     storey: 4
     transf: 1
@@ -3796,8 +3796,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 9.064371368280601e-05
-    My: 24.89340041495022
+    Ix: 0.0003625748547312242
+    My: 44.457902331421224
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3811,13 +3811,13 @@ fems:
     id: 24
     integration_points: 5
     j: 18
-    k: 995.8415809878588
+    k: 3983.3663239514367
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.16200037882646948
+    net_worth: 0.324000757652939
     node: 14
-    radius: 0.10364824484140064
+    radius: 0.146580753570876
     rugged: false
     storey: 4
     transf: 1
@@ -3827,8 +3827,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 3.7127665124477344e-05
-    My: 18.670050311212666
+    Ix: 0.00014851066049790948
+    My: 33.34342674856592
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3842,13 +3842,13 @@ fems:
     id: 25
     integration_points: 5
     j: 18
-    k: 495.03553499303126
+    k: 1980.1421399721264
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 0.48600113647940846
+    net_worth: 0.9720022729588171
     node: 17
-    radius: 0.08291859587312052
+    radius: 0.1172646028567008
     rugged: false
     storey: 4
     transf: 1
@@ -3858,8 +3858,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 9.064371368280601e-05
-    My: 24.89340041495022
+    Ix: 0.0003625748547312242
+    My: 44.457902331421224
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3873,13 +3873,13 @@ fems:
     id: 26
     integration_points: 5
     j: 19
-    k: 995.8415809878588
+    k: 3983.3663239514367
     length: 3.2
     model: BilinBeamColumn
     name: FragileConcreteColumnAsset
-    net_worth: 0.16200037882646948
+    net_worth: 0.324000757652939
     node: 15
-    radius: 0.10364824484140064
+    radius: 0.146580753570876
     rugged: false
     storey: 4
     transf: 1
@@ -3889,8 +3889,8 @@ fems:
   - A: 100000
     E: 30000000.0
     EA: 1000000000.0
-    Ix: 3.7127665124477344e-05
-    My: 18.670050311212666
+    Ix: 0.00014851066049790948
+    My: 33.34342674856592
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -3904,13 +3904,13 @@ fems:
     id: 27
     integration_points: 5
     j: 19
-    k: 495.03553499303126
+    k: 1980.1421399721264
     length: 3
     model: BilinBeamColumn
     name: ConcreteBeamAsset
-    net_worth: 0.48600113647940846
+    net_worth: 0.9720022729588171
     node: 18
-    radius: 0.08291859587312052
+    radius: 0.1172646028567008
     rugged: false
     storey: 4
     transf: 1
@@ -3918,22 +3918,22 @@ fems:
     x: null
     y: null
   extras:
-    c_design: 0.5338430173292559
+    c_design: 0.40907237512742095
     column_design_moments:
-    - 850.6094944955646
-    - 234.32860020878798
-    - 75.0612383981646
-    - 24.89340041495022
+    - 1312.0782778009093
+    - 375.0820791800109
+    - 124.61349971479815
+    - 44.457902331421224
     design_shears:
-    - 121.07890259949785
-    - 106.82351607152907
-    - 88.03791594701337
-    - 62.90065521178437
+    - 242.15779414470438
+    - 213.6470099140443
+    - 176.07582038913225
+    - 125.80131146838015
   frequencies:
-  - 0.7264874892361262
-  - 1.70790533166755
-  - 3.4868832204263445
-  - 6.757339165153628
+  - 1.027408583444863
+  - 2.4153428832935684
+  - 4.931197797575269
+  - 9.556318042282102
   model: BilinFrame
   nodes:
   - base: false
@@ -3995,7 +3995,7 @@ fems:
     floor: 2
     free_dofs: 3
     id: 4
-    mass: 41.28440366972477
+    mass: 82.56880733944953
     orientation: null
     storey: 1
     x: 0.0
@@ -4047,7 +4047,7 @@ fems:
     floor: 3
     free_dofs: 3
     id: 8
-    mass: 41.28440366972477
+    mass: 82.56880733944953
     orientation: null
     storey: 2
     x: 0.0
@@ -4099,7 +4099,7 @@ fems:
     floor: 4
     free_dofs: 3
     id: 12
-    mass: 41.28440366972477
+    mass: 82.56880733944953
     orientation: null
     storey: 3
     x: 0.0
@@ -4151,7 +4151,7 @@ fems:
     floor: 5
     free_dofs: 3
     id: 16
-    mass: 41.28440366972477
+    mass: 82.56880733944953
     orientation: null
     storey: 4
     x: 0.0
@@ -5150,38 +5150,38 @@ fems:
   num_storeys: 4
   occupancy: MidRisePrivateOffice.yml
   omegas:
-  - 4.564655518218215
-  - 10.73108568598723
-  - 21.908733418433847
-  - 42.457614158122446
+  - 6.455398515970955
+  - 15.176046916110927
+  - 30.983629548521264
+  - 60.0441171140021
   periods:
-  - 1.3764861953114456
-  - 0.5855125465435654
-  - 0.28678907115155094
-  - 0.14798724402599453
+  - 0.9733226061310847
+  - 0.4140198921307592
+  - 0.20279048641928588
+  - 0.10464281280462641
   pushover_abs_path: null
   values:
-  - 20.83608
-  - 115.1562
-  - 479.9926
-  - 1802.649
+  - 41.67217
+  - 230.3124
+  - 959.9853
+  - 3605.296
   vectors:
-  - - 0.0168390768179787
-    - -0.0495675543893374
-    - -0.0891955991209562
-    - 0.1163007846770671
-  - - 0.0366286482433393
-    - -0.0881667973912375
-    - -0.0730119008597308
-    - -0.0988759054255338
-  - - 0.0695508517763998
-    - -0.0895803721466381
-    - 0.1022299287995189
-    - 0.0301546344049928
-  - - 0.1332654907028091
-    - 0.077248007682739
-    - -0.0220153006601637
-    - -0.0032565639699659
+  - - 0.0119070313745124
+    - -0.0350495720385054
+    - -0.0630707874629097
+    - 0.0822370844583941
+  - - 0.0259003689752102
+    - -0.062343356262607
+    - -0.051627201488467
+    - -0.0699158141693714
+  - - 0.0491798866547674
+    - -0.0633428591310026
+    - 0.0722875002301909
+    - 0.0213225337104465
+  - - 0.0942329264486177
+    - 0.0546225943596692
+    - -0.0155671877157514
+    - -0.0023027402401089
 floors:
 - 0.0
 - 4.4
@@ -5191,10 +5191,10 @@ floors:
 fy: 420000.0
 height: 14.0
 masses:
-- 41.28440366972477
-- 41.28440366972477
-- 41.28440366972477
-- 41.28440366972477
+- 82.56880733944953
+- 82.56880733944953
+- 82.56880733944953
+- 82.56880733944953
 name: kaushik-designed
 num_bays: 3
 num_cols: 4
@@ -5208,8 +5208,8 @@ storeys:
 - 3.2
 - 3.2
 uniform_beam_loads_by_mass:
-- 45.0
-- 45.0
-- 45.0
-- 45.0
+- 90.0
+- 90.0
+- 90.0
+- 90.0
 width: 9
