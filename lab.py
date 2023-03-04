@@ -637,9 +637,12 @@ if state.module == 1:
             col1, col2 = st.columns(2)
             col1.plotly_chart(fig)
             col2.plotly_chart(nfig)
+            design_error = design.fem.pushover_stats["design_error"]
+            c_design = design.fem.pushover_stats["c_design"]
+            st.metric(label="Design Cs", value=c_design, delta=design_error)
             df = pd.DataFrame(design.fem.pushover_stats, index=[0])
             st.table(df)
-            design.fem.extras
+            st.dataframe(design.fem.extras)
 
 
 if state.module == 2:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app.fem import Node, ElasticBeamColumn, FiniteElementModel, FE
+from app.fem import FiniteElementModel
 from app.hazard import Hazard, Record
 from abc import ABC, abstractmethod
 from pandas import DataFrame, set_option, read_csv
@@ -18,6 +18,7 @@ from app.utils import (
 from dataclasses import dataclass, field
 from plotly.graph_objects import Figure
 import numpy as np
+from numpy.linalg import inv
 from pathlib import Path
 import os
 import subprocess
@@ -567,6 +568,8 @@ class GravityRecorderMixin(Recorder):
 
     @property
     def gravity_str(self) -> str:
+        from app.elements import FE
+
         analysis_str = "pattern Plain 1 Linear {\n"
         for beams, beam_load in zip(
             self.fem.beams_by_storey, self.fem.uniform_beam_loads
@@ -896,7 +899,6 @@ class StructuralAnalysis:
         tries to condense Ke statically using info in FEM
         ks = ktt - kto * koo^-1 * kot
         """
-        from numpy.linalg import inv
 
         Ke = self.Ke
         ixs = self.fem.mass_dofs
