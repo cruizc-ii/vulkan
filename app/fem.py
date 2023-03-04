@@ -56,6 +56,7 @@ class FiniteElementModel(ABC, YamlMixin):
     contents: list[Asset] = field(default_factory=list)
     pushover_abs_path: str | None = None
     _pushover_view = None
+    chopra_fundamental_period: float | None = None
 
     def __str__(self) -> str:
         h = "#!/usr/local/bin/opensees\n"
@@ -104,7 +105,9 @@ class FiniteElementModel(ABC, YamlMixin):
         self.validate()
 
     @classmethod
-    def from_spec(cls, spec) -> "FiniteElementModel":
+    def from_spec(
+        cls, spec: "BuildingSpecification"  # noqa: F821
+    ) -> "FiniteElementModel":
         nodes = [Node(id=id, **info) for id, info in spec.nodes.items()]
         elements = ElasticBeamColumn.from_adjacency(spec._adjacency)
         fem = cls(
@@ -117,6 +120,7 @@ class FiniteElementModel(ABC, YamlMixin):
             num_bays=spec.num_bays,
             num_floors=spec.num_floors,
             num_storeys=spec.num_storeys,
+            chopra_fundamental_period=spec.chopra_fundamental_period,
         )
         return fem
 
@@ -128,6 +132,14 @@ class FiniteElementModel(ABC, YamlMixin):
         cs = ndf["sum"].max()
         uy = df.loc[ix]["u"]
         drift_y = ndf.loc[ix]["u"]
+        period = self.periods[0] if len(self.periods) > 0 else 0
+        period_error = (
+            (self.periods[0] - self.chopra_fundamental_period)
+            / self.chopra_fundamental_period
+            if len(self.periods) > 0
+            else ""
+        )
+
         stats = {
             "net worth [$]": self.total_net_worth,
             "elements net worth [$]": self.elements_net_worth,
@@ -138,7 +150,9 @@ class FiniteElementModel(ABC, YamlMixin):
             "cs [1]": cs,
             "drift_y [%]": 100 * drift_y,
             "c_design [1]": self.extras.get("c_design"),
-            "period [s]": self.periods[0] if len(self.periods) > 0 else None,
+            "period [s]": f"{period:.2f} s",
+            "chopra period [s]": f"{self.chopra_fundamental_period:.2f} s",
+            "period_error": f"{100*period_error:.1f} %",
             "_pushover_x": df["u"].to_list(),
             "_pushover_y": df["sum"].to_list(),
             "_norm_pushover_x": ndf["u"].to_list(),

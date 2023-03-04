@@ -637,9 +637,16 @@ if state.module == 1:
             col1, col2 = st.columns(2)
             col1.plotly_chart(fig)
             col2.plotly_chart(nfig)
-            design_error = design.fem.pushover_stats["design_error"]
+            design_c_error = design.fem.pushover_stats["design_error"]
             c_design = design.fem.pushover_stats["c_design"]
-            st.metric(label="Design Cs", value=c_design, delta=design_error)
+            design_period_error = design.fem.summary["period_error"]
+            period = design.fem.summary["period [s]"]
+            chopra_period = design.fem.summary["chopra period [s]"]
+            col1, col2 = st.columns(2)
+            col1.metric(label="Design Cs", value=c_design, delta=design_c_error)
+            col2.metric(
+                label="Empirical period", value=chopra_period, delta=design_period_error
+            )
             df = pd.DataFrame(design.fem.pushover_stats, index=[0])
             st.table(df)
             st.dataframe(design.fem.extras)

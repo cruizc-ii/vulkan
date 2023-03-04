@@ -16,3 +16,6 @@ Set a `breakpoint()` anywhere
 Give a measure of how good the design is wrt. c design.
 
 Compute Vy, uy correctly.
+
+ver periodos del modelo simplificado 
+ver periodos del modelo 

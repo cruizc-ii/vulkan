@@ -16,8 +16,6 @@ from app.fem import (
 )
 from pathlib import Path
 
-METERS_TO_FEET = 1 / 0.3048
-
 
 def put_mass(nodes_with_mass, masses):
     for node, mass in zip(nodes_with_mass, masses):
@@ -81,15 +79,17 @@ class CodeMassesPre(DesignCriterion):
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = PlainFEM.from_spec(self.specification)
+        uniform_load_kPa = kwargs.get("uniform_load_kPa") or self.CODE_UNIFORM_LOADS_kPA
         masses = np.array(
             [
-                self.CODE_UNIFORM_LOADS_kPA
+                uniform_load_kPa
                 * self.SLAB_AREA_PERCENTAGE
                 * self.fem.length**2
                 / GRAVITY
                 for _ in range(self.fem.num_modes)
             ]
         )
+        # very bad way of mutating shared state, PUT === red flag
         put_mass(fem.mass_nodes, masses.tolist())
         put_mass_spec(self.specification.nodes.values(), masses.tolist())
         self.specification.masses = masses.tolist()
@@ -106,7 +106,7 @@ class LoeraPre(DesignCriterion):
     beam depth is a percentage of the column
     """
 
-    WORKING_STRESS_PCT = 0.1  # measure of flexibility, higher -> slender
+    # WORKING_STRESS_PCT = 0.1  # measure of flexibility, higher -> slender
     BEAM_TO_COLUMN_RATIO = 0.8
     _COLUMN_CRACKED_INERTIAS = 1.0
     _BEAM_CRACKED_INERTIAS = 1.0
@@ -116,11 +116,16 @@ class LoeraPre(DesignCriterion):
         weights = np.array(self.fem.cumulative_weights)
         cols_st = fem.columns_by_storey
         beams_st = fem.beams_by_storey
+        ns = self.specification.num_storeys
+        stress_pct_empirical = (1 - np.exp(-0.05 * ns)) / (
+            1 + np.exp(-0.05 * ns)
+        )  # smaller -> stiffer
+        stress_pct_empirical = np.arctan(0.05 * ns)
         for W, columns, beams in zip(weights, cols_st, beams_st):
             num_cols = len(columns)
             weight_per_column = W / num_cols
             area_needed = weight_per_column / (
-                self.WORKING_STRESS_PCT * self.specification.fc
+                stress_pct_empirical * self.specification.fc
             )
             radius = np.sqrt(area_needed / np.pi)
             Ix = np.pi * radius**4 / 4
@@ -154,7 +159,7 @@ class ChopraPeriodsPre(DesignCriterion):
         we can estimate the storey mass to be therefore as
         m = k (0.285 T1)**2/(2pi)**2
         """
-        fundamental_period = 0.016 * (self.specification.height * METERS_TO_FEET) ** 0.9
+        fundamental_period = self.fem.chopra_fundamental_period
         data = self.fem.to_dict
         data.pop("model")
         fem: FiniteElementModel = FEMFactory(
@@ -188,7 +193,7 @@ class ChopraPeriodsPre(DesignCriterion):
 
 class ForceBasedPre(DesignCriterion):
     """
-    will take in any spec and return a realistic pre-design both
+    will take in any spec and return a 'realistic' pre-design both
     in stiffnesses (element dimensions) and masses (weights)
     """
 
@@ -208,19 +213,19 @@ class ForceBasedPre(DesignCriterion):
         return fem
 
 
-# class ShearRSA(DesignCriterion):
-#     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
-#         fem = ShearModel(**self.fem.to_dict)
-#         results = fem.get_and_set_eigen_results(results_path)
-#         S = results.S
-#         spectra: Spectra = self.specification._design_spectra[self.__class__.__name__]
-#         As = np.array(spectra.get_ordinates_for_periods(fem.periods))
-#         forces = S.dot(np.eye(len(As)) * As)
-#         peak_forces = np.sqrt(np.sum(forces**2, axis=1))
-#         fem.extras["S"] = S
-#         fem.extras["forces"] = forces.tolist()
-#         fem.extras["design_forces"] = peak_forces.tolist()
-#         return fem
+class ShearRSA(DesignCriterion):
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
+        fem = ShearModel(**self.fem.to_dict)
+        results = fem.get_and_set_eigen_results(results_path)
+        S = results.S
+        spectra: Spectra = self.specification._design_spectra[self.__class__.__name__]
+        As = np.array(spectra.get_ordinates_for_periods(fem.periods))
+        forces = S.dot(np.eye(len(As)) * As)
+        peak_forces = np.sqrt(np.sum(forces**2, axis=1))
+        fem.extras["S"] = S
+        fem.extras["forces"] = forces.tolist()
+        fem.extras["design_forces"] = peak_forces.tolist()
+        return fem
 
 
 @dataclass
@@ -274,9 +279,10 @@ class DesignCriterionFactory:
     seeds = {
         # EulerShearPre.__name__: EulerShearPre,
         # LoeraPre.__name__: LoeraPre,
-        # ChopraPeriodsPre.__name__: ChopraPeriodsPre,
+        ChopraPeriodsPre.__name__: ChopraPeriodsPre,
         ForceBasedPre.__name__: ForceBasedPre,
-        # CodeMassesPre.__name__: CodeMassesPre,
+        CodeMassesPre.__name__: CodeMassesPre,
+        ShearRSA.__name__: ShearRSA,
         CDMX2017Q1.__name__: CDMX2017Q1,
         CDMX2017Q4.__name__: CDMX2017Q4,
         CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,

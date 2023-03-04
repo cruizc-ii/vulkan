@@ -2,7 +2,7 @@ from __future__ import annotations
 from .utils import NamedYamlMixin
 from dataclasses import dataclass, field
 from abc import ABC
-from app.utils import GRAVITY, DESIGN_DIR
+from app.utils import GRAVITY, DESIGN_DIR, METERS_TO_FEET
 from app.criteria import DesignCriterionFactory
 from app.fem import FiniteElementModel, PlainFEM, FEMFactory
 from pathlib import Path
@@ -42,6 +42,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     floors: list[float] | None = None
     height: float | None = None
     width: float | None = None
+    chopra_fundamental_period: float | None = None
 
     num_storeys: float | None = None
     num_floors: float | None = None
@@ -63,6 +64,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         self.columns = [0.0] + self.bays
         self.height = sum(self.storeys)
         self.width = sum(self.bays)
+        self.chopra_fundamental_period = 0.018 * (self.height * METERS_TO_FEET) ** 0.9
 
         if self.occupancy is None:
             from app.occupancy import BuildingOccupancy
