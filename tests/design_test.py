@@ -171,7 +171,7 @@ class ForcePreDesignTest(TestCase):
         spec = ReinforcedConcreteFrame(
             name="force-based-design-test",
             storeys=[4.5],
-            bays=[3.0, 6.0, 3.0],
+            bays=[6.0, 6.0],
             damping=0.05,
             design_criteria=["ForceBasedPre"],
         )
@@ -197,7 +197,7 @@ class ForcePreDesignTest(TestCase):
         spec = ReinforcedConcreteFrame(
             name="force-based-design-test",
             storeys=[3.0],
-            bays=[3.0, 6.0, 3.0],
+            bays=[8.0],
             damping=0.05,
             design_criteria=["ForceBasedPre"],
         )
@@ -224,7 +224,7 @@ class ForcePreDesignTest(TestCase):
             name="force-based-design-test",
             storeys=[4.5, 3.0],
             bays=[3.0, 6.0, 3.0],
-            damping=0.05,
+            damping=0.15,
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
@@ -267,20 +267,83 @@ class ForcePreDesignTest(TestCase):
         )  # sanity check
 
     def test_produces_realistic_periods_and_stiffnesses_6(self):
-        pass
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test",
+            storeys=[4.5, 4.5] + 4 * [3.0],
+            bays=[3.0, 7.0, 7.0, 3.0],
+            damping=0.22,
+            design_criteria=["ForceBasedPre"],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_period = spec.chopra_fundamental_period
+        expected_weight = (
+            CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
+        )
+        self.assertAlmostEqual(
+            spec.fem.periods[0],
+            expected_period,
+            delta=expected_period * self.rtol_periods,
+        )
+        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
+        self.assertTrue(
+            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+        )
+        self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
     def test_produces_realistic_periods_and_stiffnesses_10(self):
-        pass
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test",
+            storeys=[4.5, 4.5] + 8 * [3.0],
+            bays=[3.0, 7.0, 7.0],
+            damping=0.12,
+            design_criteria=["ForceBasedPre"],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_period = spec.chopra_fundamental_period
+        expected_weight = (
+            CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
+        )
+        self.assertAlmostEqual(
+            spec.fem.periods[0],
+            expected_period,
+            delta=expected_period * self.rtol_periods,
+        )
+        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
+        self.assertTrue(
+            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+        )
+        self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
     def test_produces_realistic_periods_and_stiffnesses_15(self):
-        pass
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test",
+            storeys=[4.5, 4.5] + 13 * [3.0],
+            bays=[3.0, 6.0, 6.0, 3.0],
+            damping=0.3,
+            design_criteria=["ForceBasedPre"],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_period = spec.chopra_fundamental_period
+        expected_weight = (
+            CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
+        )
+        self.assertAlmostEqual(
+            spec.fem.periods[0],
+            expected_period,
+            delta=expected_period * self.rtol_periods,
+        )
+        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
+        self.assertTrue(
+            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+        )
+        self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
     def test_produces_realistic_periods_and_stiffnesses_20(self):
         spec = ReinforcedConcreteFrame(
             name="force-based-design-test",
             storeys=[4.5, 4.5] + 18 * [3.0],
-            bays=[3.0, 6.0, 3.0],
-            damping=0.05,
+            bays=[6, 8, 8, 6],
+            damping=0.01,
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
@@ -303,7 +366,7 @@ class ForcePreDesignTest(TestCase):
         spec = ReinforcedConcreteFrame(
             name="force-based-design-test",
             storeys=[4.5, 4.5, 4.5] + 27 * [3.0],
-            bays=[3.0, 6.0, 3.0],
+            bays=[6, 6, 6, 6],
             damping=0.05,
             design_criteria=["ForceBasedPre"],
         )

@@ -279,3 +279,20 @@ def eigenvectors_similar(a: np.ndarray, b: np.ndarray, rtol=1e-3) -> bool:
             print(f"col {ix} is not similar!")
             return False
     return True
+
+
+def chunk_arrays(a: np.ndarray, chunk_size: int = 1) -> np.ndarray:
+    """
+    slides array a to number of chunks
+    ([0.33, 0.2451, 0.21, 0.344], chunks = 2) -> [0.33, 0.33, 0.21, 0.21]
+    ([0.33, 0.2451, 0.21, 0.344], chunks = 2) -> [0.33, 0.33, 0.33, 0.344]
+    """
+    if len(a) == 0:
+        return a
+    val = a[0]
+    b = []
+    for i, v in enumerate(a):
+        if i % chunk_size == 0:
+            val = v
+        b.append(val)
+    return np.array(b)
