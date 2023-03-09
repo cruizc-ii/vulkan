@@ -12,6 +12,7 @@ from app.utils import (
 )
 from dataclasses import dataclass, field
 import numpy as np
+from scipy.linalg import eigh
 import pandas as pd
 from pathlib import Path
 from app.utils import GRAVITY, SummaryEDP, YamlMixin, ASSETS_PATH
@@ -107,7 +108,9 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @classmethod
     def from_spec(
-        cls, spec: "BuildingSpecification"  # noqa: F821
+        cls,
+        spec: "BuildingSpecification",  # noqa: F821
+        **kwargs,
     ) -> "FiniteElementModel":
         nodes = [Node(id=id, **info) for id, info in spec.nodes.items()]
         elements = ElasticBeamColumn.from_adjacency(spec._adjacency)
@@ -123,8 +126,13 @@ class FiniteElementModel(ABC, YamlMixin):
             num_storeys=spec.num_storeys,
             chopra_fundamental_period_plus1sigma=spec.chopra_fundamental_period_plus1sigma,
             miranda_fundamental_period=spec.miranda_fundamental_period,
+            **kwargs,
         )
         return fem
+
+    @property
+    def period(self) -> float:
+        return self.periods[0]
 
     @property
     def summary(self) -> dict:
@@ -855,14 +863,17 @@ class PlainFEM(FiniteElementModel):
 
 
 @dataclass
-class ShearModelOpenSees(FiniteElementModel):
+class ShearModel(FiniteElementModel):
     """
+    can run opensees to get periods!
     disregards beams completely.
     takes lateral stiffness as sum(k_columns)
     """
 
     _mass_matrix: np.ndarray | None = None
     _height_matrix: np.ndarray | None = None
+    _stifness_matrix: np.ndarray | None = None
+    _inertias: np.ndarray | None = None
 
     def validate(self, *args, **kwargs):
         return super().validate(*args, **kwargs)
@@ -876,16 +887,43 @@ class ShearModelOpenSees(FiniteElementModel):
         columns_by_storey = self.columns_by_storey
         first_bay_columns = [c for c in self.columns if c.bay == 0]
         columns = []
-        for cols, prev_col in zip(columns_by_storey, first_bay_columns):
-            data = prev_col.to_dict
-            Ixs = [c.Ix for c in cols]
-            data["Ix"] = sum(Ixs)
-            columns.append(ElasticBeamColumn(**data))
+
+        if self._inertias is not None:
+            for i, (cols, prev_col) in enumerate(
+                zip(columns_by_storey, first_bay_columns)
+            ):
+                data = prev_col.to_dict
+                data["Ix"] = self._inertias[i]
+                columns.append(ElasticBeamColumn(**data))
+        else:
+            for cols, prev_col in zip(columns_by_storey, first_bay_columns):
+                data = prev_col.to_dict
+                Ixs = [c.Ix for c in cols]
+                data["Ix"] = sum(Ixs)
+                columns.append(ElasticBeamColumn(**data))
+
         self.num_dofs = len(columns)
         self.elements = columns
+
         self._mass_matrix = np.diag(self.masses)
         heights = [n.y for n in self.nodes if not n.fixed]
         self._height_matrix = np.diag(heights)
+
+        ks = np.array(self.storey_stiffnesses)
+        upper = -np.diagflat(ks[:-1], 1)
+        lower = -np.diagflat(ks[:-1], -1)
+        ks2 = np.roll(np.copy(ks), -1)
+        ks2[-1] = 0
+        self._stifness_matrix = np.diag(ks) + np.diag(ks2) + upper + lower
+        K, M = self._stifness_matrix, self._mass_matrix
+        vals, vecs = eigh(K, M)
+        omegas = np.sqrt(vals)
+        freqs = omegas / 2 / np.pi
+        Ts = 1.0 / freqs
+        self.periods = Ts
+        self.frequencies = freqs
+        self.vectors = vecs
+        self.omegas = omegas
         self.validate()
 
     def build_and_place_assets(self) -> list[Asset]:
@@ -896,7 +934,8 @@ class ShearModelOpenSees(FiniteElementModel):
     def storey_stiffnesses(self) -> list[float]:
         ks = []
         for cols in self.columns_by_storey:
-            ks.append(sum([c.k for c in cols]))
+            cols_k = [c.k for c in cols]
+            ks.append(sum(cols_k))
         return ks
 
     @property
@@ -955,17 +994,11 @@ class ShearModelOpenSees(FiniteElementModel):
         # this is similar as S but without masses!
         # U = Phi @ G
         view.gamma = G
-        view.s = S
-        view.S = S
         view.inertial_forces = S
-        view.effective_masses = effective_masses
-        view.M = effective_masses
-        view.effective_heights = effective_heights
-        view.H = effective_heights
-        view.V = V
         view.shears = V
-        view.Mb = Mb
-        view.overturning_moments = Mb.tolist()
+        view.overturning_moments = Mb
+        view.effective_masses = effective_masses
+        view.effective_heights = effective_heights
         return view
 
 
@@ -1280,7 +1313,7 @@ class FEMFactory:
     options = {
         PlainFEM.__name__: PlainFEM,
         RigidBeamFEM.__name__: RigidBeamFEM,
-        ShearModelOpenSees.__name__: ShearModelOpenSees,
+        ShearModel.__name__: ShearModel,
         BilinFrame.__name__: BilinFrame,
         IMKFrame.__name__: IMKFrame,
     }

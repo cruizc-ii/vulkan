@@ -13,7 +13,7 @@ from scipy.linalg import eigh
 
 from app.criteria import CodeMassesPre, DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame, BuildingSpecification
-from app.fem import FiniteElementModel, ShearModelOpenSees
+from app.fem import FiniteElementModel, ShearModel
 from .test import (
     DESIGN_FIXTURES_PATH,
     DESIGN_MODELS_PATH,
@@ -39,7 +39,7 @@ class ShearModelAnalysisTest(TestCase):
 
         cls.path = STRANA_FIXTURES_PATH / "mdof-frame"
         cls.file = cls.path / "chopra1281-mdof-fem.yml"
-        cls.fem = ShearModelOpenSees.from_file(cls.file)
+        cls.fem = ShearModel.from_file(cls.file)
         cls.strana = StructuralAnalysis(results_path=cls.path, fem=cls.fem)
 
     def setUp(self) -> None:
@@ -143,7 +143,7 @@ class Chopra1326Test(TestCase):
 
         cls.path = STRANA_FIXTURES_PATH / "chopra-1326"
         cls.file = cls.path / "chopra1326-fem.yml"
-        cls.fem = ShearModelOpenSees.from_file(cls.file)
+        cls.fem = ShearModel.from_file(cls.file)
         cls.strana = StructuralAnalysis(results_path=cls.path, fem=cls.fem)
         cls.view = cls.strana.modal()
 

@@ -52,6 +52,11 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     occupancy: str | None = None
     fems: list[FiniteElementModel] = field(default_factory=list)
 
+    Icols: float = 0.001
+    Ibeams: float = 0.001
+    Ecols: float = 30e6
+    Ebeams: float = 30e6
+
     def __post_init__(self):
         self.__pre_init__()
         if all([isinstance(f, dict) for f in self.fems]):
@@ -243,13 +248,11 @@ class ReinforcedConcreteFrame(BuildingSpecification):
     Ec: float = 30e6
     fy: float = 420e3
     Es: float = 200e6
-    Ecols: float = 30e6
-    Ebeams: float = 30e6
-    Icols: float = 0.0015
-    Ibeams: float = 0.0015
 
     def __post_init__(self):
         # WARNING: this is an inconsistency with out design procedures
         # each BC defines its own Ec, but this property is independent of legal matters!
         self.Ec = 4.4e6 * (self.fc / 1e3) ** 0.5
+        self.Ecols = self.Ec
+        self.Ebeams = self.Ec
         return super().__post_init__()

@@ -236,6 +236,7 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
                 i=i,
                 j=j,
                 E=props["E"],
+                Ix=props["Ix"],
                 length=props["length"],
                 type=props["element_type"],
                 storey=props["storey"],

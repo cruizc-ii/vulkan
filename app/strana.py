@@ -56,6 +56,13 @@ class StructuralResultView(YamlMixin):
     record: Record | None = None
     scale: float | None = None
 
+    gamma: float | None = None
+    shears: np.ndarray | None = None
+    effective_masses: np.ndarray | None = None
+    inertial_forces: np.ndarray | None = None
+    overturning_moments: np.ndarray | None = None
+    effective_heights: np.ndarray | None = None
+
     _DEFAULT_NAME = "results.yml"
     _K_STATIC_NAME = "K-static.csv"
     _cache_modal_results: dict | None = None

@@ -1,24 +1,42 @@
 from app.strana import Recorder, StructuralResultView
 from pathlib import Path
-from app.fem import BilinFrame, ShearModelOpenSees, PlainFEM, IMKFrame
+from app.fem import BilinFrame, ShearModel, PlainFEM, IMKFrame
 from unittest.case import TestCase
 from app.criteria import CodeMassesPre, DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
-from app.fem import FiniteElementModel, IMKSpring
 from .test import DESIGN_FIXTURES_PATH, DESIGN_MODELS_PATH, FEM_FIXTURES_PATH
 import numpy as np
-
 from app.utils import eigenvectors_similar
 
 
 """
-
 these tests should be able to load fem.yml and produce opensees-compatible str(fem)
-
 """
 
 
 class ShearModelTest(TestCase):
+    maxDiff = None
+    file = None
+    spec = None
+    fem = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.path = FEM_FIXTURES_PATH / "shear-model"
+        cls.file = FEM_FIXTURES_PATH / "shear-model-test-spec.yml"
+
+    def setUp(self) -> None:
+        self.spec = ReinforcedConcreteFrame.from_file(self.file)
+        return super().setUp()
+
+    def test_gives_correct_periods_1(self):
+        inertias = [0.03, 0.03]
+        fem2 = ShearModel.from_spec(self.spec, _inertias=inertias)
+        fem1 = ShearModel.from_spec(self.spec)
+        self.assertTrue(fem2.period < fem1.period)
+
+
+class ShearModelOpenSeesTest(TestCase):
     """
     it should load MDOF from a file correctly
     - [x] compute lateral resistances correctly from the nodes+elements definition
@@ -41,15 +59,15 @@ class ShearModelTest(TestCase):
         return super().tearDown()
 
     def test_load_from_yaml(self) -> None:
-        mdof = ShearModelOpenSees.from_file(self.file)
+        mdof = ShearModel.from_file(self.file)
         self.assertEqual(mdof.model_str, self.expected_model_str)
 
     def test_to_file(self):
-        mdof = ShearModelOpenSees.from_file(self.file)
+        mdof = ShearModel.from_file(self.file)
         mdof.to_file(FEM_FIXTURES_PATH / "mdof-fem-after-process.yml")
 
     def test_to_tcl(self) -> None:
-        mdof = ShearModelOpenSees.from_file(self.file)
+        mdof = ShearModel.from_file(self.file)
         mdof.to_tcl(FEM_FIXTURES_PATH / "mdof-opensees.tcl")
 
 

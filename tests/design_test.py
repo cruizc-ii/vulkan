@@ -147,7 +147,7 @@ class CodeMassesPreDesignTest(TestCase):
         self.assertIsNotNone(design.fem.vectors)
 
 
-class ShearStiffnessRetryProTest(TestCase):
+class ShearStiffnessRetryPreTest(TestCase):
     """
     it should return a somewhat realistic PREDesign
     both in stiffnesses and masses.
@@ -484,6 +484,9 @@ class CDMXDesignTest(TestCase):
     """
 
     maxDiff = None
+    path = None
+    raw_file = None
+    designed_file = None
 
     @classmethod
     def setUpClass(cls) -> None:

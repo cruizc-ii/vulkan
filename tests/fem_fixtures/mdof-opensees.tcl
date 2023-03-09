@@ -1,5 +1,5 @@
 #!/usr/local/bin/opensees
-# ShearModel, storeys None, bays None
+# ShearModelOpenSees, storeys None, bays None
 wipe
 model BasicBuilder -ndm 2 -ndf 3
 geomTransf Linear 1

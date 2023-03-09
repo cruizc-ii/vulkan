@@ -10,7 +10,7 @@ from app.fem import (
     BilinFrame,
     FEMFactory,
     FiniteElementModel,
-    ShearModelOpenSees,
+    ShearModel,
     PlainFEM,
     IMKFrame,
 )
@@ -54,7 +54,7 @@ class EulerShearPre(DesignCriterion):
         radius of gyration 'rx' of a circular column is R/sqrt(2) therefore a first approx of the radius
         and therefore of Ix = pi r^4 / 4, is:  R = 1.4142 H / lambda
         """
-        mdof = ShearModelOpenSees.from_spec(self.specification)
+        mdof = ShearModel.from_spec(self.specification)
         storeys = np.array(self.specification.storeys)
         radii = 1.414 * storeys / self.EULER_LAMBDA
         Ixs = (np.pi * radii**4) / 4
@@ -64,8 +64,8 @@ class EulerShearPre(DesignCriterion):
                 col.Ix = float(Ix)
                 col.radius = float(radius)
 
-        results = mdof.get_and_set_eigen_results(results_path=results_path)
-        mdof.extras["moments"] = results.Mb.tolist()
+        # results = mdof.get_and_set_eigen_results(results_path=results_path)
+        # mdof.extras["moments"] = results.Mb.tolist()
         return mdof
 
 
@@ -177,7 +177,7 @@ class ChopraPeriodsPre(DesignCriterion):
         data = self.fem.to_dict
         data.pop("model")
         fem: FiniteElementModel = FEMFactory(
-            **data, model=ShearModelOpenSees.__name__
+            **data, model=ShearModel.__name__
         )  # make a copy
         storey_stiffnesses = fem.storey_stiffnesses
         masses = np.array(
@@ -222,16 +222,16 @@ class ShearStiffnessRetryPre(DesignCriterion):
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
 
         # fem = self.fem
-        target_period = self.specification.miranda_fundamental_period
+        # target_period = self.specification.miranda_fundamental_period
 
-        def target_fn(factor):
-            mdof = ShearModelOpenSees.from_spec(self.specification)
-            period = mdof.get_and_set_eigen_results()
-            return period - target_period
+        # def target_fn(factor):
+        #     mdof = ShearModel.from_spec(self.specification, inertias=inertias)
+        #     period = mdof.get_and_set_eigen_results()
+        #     return period - target_period
 
-        inertia_factor, real_period = regula_falsi(
-            target_fn, 0.01, 3, tol=self.PERIOD_TOLERANCE_PCT, iter=self.MAX_ITERATIONS
-        )
+        # inertia_factor, real_period = regula_falsi(
+        #     target_fn, 0.01, 3, tol=self.PERIOD_TOLERANCE_PCT, iter=self.MAX_ITERATIONS
+        # )
 
         # chopra_period = self.fem.chopra_fundamental_period
         # cols_st = fem.columns_by_storey
@@ -242,6 +242,7 @@ class ShearStiffnessRetryPre(DesignCriterion):
         # leftmost_beam_Ixs = np.array([b[0].Ix for b in self.fem.beams_by_storey])
         # columns_Ixs = chunk_arrays(leftmost_column_Ixs, chunk_size=chunk_size)
         # beams_Ixs = chunk_arrays(leftmost_beam_Ixs, chunk_size=chunk_size)
+        pass
 
 
 class ForceBasedPre(DesignCriterion):
@@ -268,7 +269,7 @@ class ForceBasedPre(DesignCriterion):
 
 class ShearRSA(DesignCriterion):
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
-        fem = ShearModelOpenSees(**self.fem.to_dict)
+        fem = ShearModel(**self.fem.to_dict)
         results = fem.get_and_set_eigen_results(results_path)
         S = results.S
         spectra: Spectra = self.specification._design_spectra[self.__class__.__name__]
@@ -293,7 +294,7 @@ class CDMX2017Q1(DesignCriterion):
         designed_fem = criterion.run(results_path=results_path, *args, **kwargs)
 
         data = designed_fem.to_dict
-        fem = ShearModelOpenSees(**data)
+        fem = ShearModel(**data)
         code = CDMXBuildingCode(Q=self.Q)
         strana = RSA(results_path=results_path, fem=fem, code=code)
         design_moments, peak_shears, cs = strana.srss()
