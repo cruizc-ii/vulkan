@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from app.hazard import Spectra
-from app.utils import GRAVITY
+from app.utils import GRAVITY, chunk_arrays, regula_falsi
 from dataclasses import dataclass
 from typing import Any, Optional
 import numpy as np
@@ -10,11 +10,12 @@ from app.fem import (
     BilinFrame,
     FEMFactory,
     FiniteElementModel,
-    ShearModel,
+    ShearModelOpenSees,
     PlainFEM,
     IMKFrame,
 )
 from pathlib import Path
+from functools import partial
 
 
 def put_mass(nodes_with_mass, masses):
@@ -46,14 +47,14 @@ class DesignCriterion(ABC):
 class EulerShearPre(DesignCriterion):
     EULER_LAMBDA = 25
 
-    def run(self, results_path: Path, *args, **kwargs) -> ShearModel:
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         """
         RC columns have a slenderness ratio LAMBDA of about 30-70.
         Mexican code recommends <35 to not be considered slender.
         radius of gyration 'rx' of a circular column is R/sqrt(2) therefore a first approx of the radius
         and therefore of Ix = pi r^4 / 4, is:  R = 1.4142 H / lambda
         """
-        mdof = ShearModel.from_spec(self.specification)
+        mdof = ShearModelOpenSees.from_spec(self.specification)
         storeys = np.array(self.specification.storeys)
         radii = 1.414 * storeys / self.EULER_LAMBDA
         Ixs = (np.pi * radii**4) / 4
@@ -100,42 +101,55 @@ class CodeMassesPre(DesignCriterion):
         return fem
 
 
+class LoeraPreArctan(DesignCriterion):
+    def __init__(self, *args, **kwargs):
+        ns = self.specification.num_storeys
+        # stress_pct_empirical = (1 - np.exp(-0.05 * ns)) / (
+        #     1 + np.exp(-0.05 * ns)
+        # )  # smaller -> stiffer
+        self.STRESS_PCT_EMPIRICAL = 2 / np.pi * np.arctan(0.05 * ns)
+        super().__init__(*args, **kwargs)
+
+
 class LoeraPre(DesignCriterion):
     """
     X-section column area such that working stress is a percentage of f'c under gravity conditions
     beam depth is a percentage of the column
     """
 
-    # WORKING_STRESS_PCT = 0.1  # measure of flexibility, higher -> slender
+    WORKING_STRESS_PCT = 0.1  # measure of flexibility, higher -> slender
     BEAM_TO_COLUMN_RATIO = 0.8
     _COLUMN_CRACKED_INERTIAS = 1.0
     _BEAM_CRACKED_INERTIAS = 1.0
+    STRESS_PCT_EMPIRICAL: float | None = None
+
+    def __init__(self, *args, **kwargs):
+        if not self.STRESS_PCT_EMPIRICAL:
+            self.STRESS_PCT_EMPIRICAL = self.WORKING_STRESS_PCT
+        super().__init__(*args, **kwargs)
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = PlainFEM.from_spec(self.specification)
         weights = np.array(self.fem.cumulative_weights)
         cols_st = fem.columns_by_storey
         beams_st = fem.beams_by_storey
-        ns = self.specification.num_storeys
-        stress_pct_empirical = (1 - np.exp(-0.05 * ns)) / (
-            1 + np.exp(-0.05 * ns)
-        )  # smaller -> stiffer
-        stress_pct_empirical = np.arctan(0.05 * ns)
+
         for W, columns, beams in zip(weights, cols_st, beams_st):
             num_cols = len(columns)
             weight_per_column = W / num_cols
             area_needed = weight_per_column / (
-                stress_pct_empirical * self.specification.fc
+                self.STRESS_PCT_EMPIRICAL * self.specification.fc
             )
-            radius = np.sqrt(area_needed / np.pi)
-            Ix = np.pi * radius**4 / 4
+            column_radius = float(np.sqrt(area_needed / np.pi))
+            beam_radius = column_radius * self.BEAM_TO_COLUMN_RATIO
+            Ix = np.pi * column_radius**4 / 4
             for col in columns:
                 col.Ix = float(Ix) * self._COLUMN_CRACKED_INERTIAS
-                col.radius = float(radius)
+                col.radius = column_radius
 
             for beam in beams:
-                beam.radius = float(radius * self.BEAM_TO_COLUMN_RATIO)
-                beam.Ix = np.pi * beam.radius**4 / 4
+                beam.radius = beam_radius
+                beam.Ix = (np.pi * beam.radius**4 / 4) * self._BEAM_CRACKED_INERTIAS
 
         fem.get_and_set_eigen_results(results_path)
         return fem
@@ -159,11 +173,11 @@ class ChopraPeriodsPre(DesignCriterion):
         we can estimate the storey mass to be therefore as
         m = k (0.285 T1)**2/(2pi)**2
         """
-        fundamental_period = self.fem.chopra_fundamental_period
+        fundamental_period = self.fem.chopra_fundamental_period_plus1sigma
         data = self.fem.to_dict
         data.pop("model")
         fem: FiniteElementModel = FEMFactory(
-            **data, model=ShearModel.__name__
+            **data, model=ShearModelOpenSees.__name__
         )  # make a copy
         storey_stiffnesses = fem.storey_stiffnesses
         masses = np.array(
@@ -191,6 +205,45 @@ class ChopraPeriodsPre(DesignCriterion):
         return fem
 
 
+class ShearStiffnessRetryPre(DesignCriterion):
+    """
+    does a more realistic grouping of sections
+
+    16 storey building has only 4 groups of inertias
+    9 storey building has only 3 groups of inertias
+
+    attempts to attain the empirical period of buildings ns/8
+    varying the stiffnesses of the model.
+    """
+
+    PERIOD_TOLERANCE_PCT: float = 0.3
+    MAX_ITERATIONS = 10
+
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
+
+        # fem = self.fem
+        target_period = self.specification.miranda_fundamental_period
+
+        def target_fn(factor):
+            mdof = ShearModelOpenSees.from_spec(self.specification)
+            period = mdof.get_and_set_eigen_results()
+            return period - target_period
+
+        inertia_factor, real_period = regula_falsi(
+            target_fn, 0.01, 3, tol=self.PERIOD_TOLERANCE_PCT, iter=self.MAX_ITERATIONS
+        )
+
+        # chopra_period = self.fem.chopra_fundamental_period
+        # cols_st = fem.columns_by_storey
+        # beams_st = fem.beams_by_storey
+        # ns = self.specification.num_storeys
+        # chunk_size = np.floor(np.sqrt(ns))
+        # leftmost_column_Ixs = np.array([c[0].Ix for c in self.fem.columns_by_storey])
+        # leftmost_beam_Ixs = np.array([b[0].Ix for b in self.fem.beams_by_storey])
+        # columns_Ixs = chunk_arrays(leftmost_column_Ixs, chunk_size=chunk_size)
+        # beams_Ixs = chunk_arrays(leftmost_beam_Ixs, chunk_size=chunk_size)
+
+
 class ForceBasedPre(DesignCriterion):
     """
     will take in any spec and return a 'realistic' pre-design both
@@ -215,7 +268,7 @@ class ForceBasedPre(DesignCriterion):
 
 class ShearRSA(DesignCriterion):
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
-        fem = ShearModel(**self.fem.to_dict)
+        fem = ShearModelOpenSees(**self.fem.to_dict)
         results = fem.get_and_set_eigen_results(results_path)
         S = results.S
         spectra: Spectra = self.specification._design_spectra[self.__class__.__name__]
@@ -240,7 +293,7 @@ class CDMX2017Q1(DesignCriterion):
         designed_fem = criterion.run(results_path=results_path, *args, **kwargs)
 
         data = designed_fem.to_dict
-        fem = ShearModel(**data)
+        fem = ShearModelOpenSees(**data)
         code = CDMXBuildingCode(Q=self.Q)
         strana = RSA(results_path=results_path, fem=fem, code=code)
         design_moments, peak_shears, cs = strana.srss()
@@ -277,11 +330,12 @@ class CDMX2017Q4IMK(CDMX2017Q4):
 
 class DesignCriterionFactory:
     seeds = {
-        # EulerShearPre.__name__: EulerShearPre,
-        # LoeraPre.__name__: LoeraPre,
+        EulerShearPre.__name__: EulerShearPre,
+        LoeraPre.__name__: LoeraPre,
         ChopraPeriodsPre.__name__: ChopraPeriodsPre,
         ForceBasedPre.__name__: ForceBasedPre,
         CodeMassesPre.__name__: CodeMassesPre,
+        ShearStiffnessRetryPre.__name__: ShearStiffnessRetryPre,
         ShearRSA.__name__: ShearRSA,
         CDMX2017Q1.__name__: CDMX2017Q1,
         CDMX2017Q4.__name__: CDMX2017Q4,
@@ -289,10 +343,11 @@ class DesignCriterionFactory:
         CDMX2017Q4IMK.__name__: CDMX2017Q4IMK,
     }
 
-    default_seeds = {
+    public_seeds = {
         CDMX2017Q1.__name__: CDMX2017Q1,
         CDMX2017Q4.__name__: CDMX2017Q4,
         CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
+        CDMX2017Q4IMK.__name__: CDMX2017Q4IMK,
     }
 
     DEFAULT: str = CDMX2017Q1.__name__
@@ -309,5 +364,5 @@ class DesignCriterionFactory:
         return list(cls.seeds.keys())
 
     @classmethod
-    def default_criteria(cls) -> list:
-        return [name for name in cls.default_seeds.keys()]
+    def public_options(cls) -> list:
+        return list(cls.public_seeds.keys())

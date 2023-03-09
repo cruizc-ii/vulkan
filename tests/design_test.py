@@ -147,12 +147,54 @@ class CodeMassesPreDesignTest(TestCase):
         self.assertIsNotNone(design.fem.vectors)
 
 
+class ShearStiffnessRetryProTest(TestCase):
+    """
+    it should return a somewhat realistic PREDesign
+    both in stiffnesses and masses.
+    the spec of what is 'realistic' is captured in the following formula for the period
+    period = num_storeys/8
+    """
+
+    maxDiff = None
+    rtol_periods = 0.3
+    rtol_weight = 0.3
+
+    def test_produces_realistic_periods_and_stiffnesses_1storey_1(self):
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test-stiffness-retry-pre",
+            storeys=[4.5, 3.0],
+            bays=[6.0, 6.0],
+            damping=0.10,
+            masses=[15.0, 15.0],
+            design_criteria=["EulerShearPre", "ShearStiffnessRetryPre"],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_period = spec.miranda_fundamental_period
+        expected_weight = (
+            CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
+        )
+        self.assertAlmostEqual(
+            spec.fem.periods[0],
+            expected_period,
+            delta=expected_period * self.rtol_periods,
+        )
+        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
+        self.assertTrue(
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+        )
+        self.assertTrue(
+            np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
+        )  # sanity check
+
+
 class ForcePreDesignTest(TestCase):
     """
-    it should create an elastic frame PREdesign
-    that is somewhat realistic in stiffnesses for analysis purposes.
+    it should return a somewhat realistic PREDesign
+    both in stiffnesses and masses.
 
-    4 storeys ~ 0.4 s main period
+    the spec of what is 'realistic' is captured in the following formula for the period
+
+    period = 0.1*num_storeys i.e. 4 storeys ~ 0.4 s main period
     all periods below are smaller just for sanity check.
 
     weight is somewhat realistic area * num_storeys * 1 t/m2
@@ -176,7 +218,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period
+        expected_period = spec.chopra_fundamental_period_plus1sigma
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -187,7 +229,7 @@ class ForcePreDesignTest(TestCase):
         )
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
         )
         self.assertTrue(
             np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
@@ -202,7 +244,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period
+        expected_period = spec.chopra_fundamental_period_plus1sigma
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -213,7 +255,7 @@ class ForcePreDesignTest(TestCase):
         )
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
         )
         self.assertTrue(
             np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
@@ -228,7 +270,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period
+        expected_period = spec.chopra_fundamental_period_plus1sigma
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -239,7 +281,7 @@ class ForcePreDesignTest(TestCase):
         )
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
         )
         self.assertTrue(
             np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
@@ -249,7 +291,7 @@ class ForcePreDesignTest(TestCase):
         """it should load a spec and produce a realistic design"""
         spec = ReinforcedConcreteFrame.from_file(self.file)
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period
+        expected_period = spec.chopra_fundamental_period_plus1sigma
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -260,7 +302,7 @@ class ForcePreDesignTest(TestCase):
         )
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
         )
         self.assertTrue(
             np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
@@ -275,7 +317,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period
+        expected_period = spec.chopra_fundamental_period_plus1sigma
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -286,7 +328,7 @@ class ForcePreDesignTest(TestCase):
         )
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
         )
         self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
@@ -299,7 +341,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period
+        expected_period = spec.chopra_fundamental_period_plus1sigma
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -310,7 +352,7 @@ class ForcePreDesignTest(TestCase):
         )
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
         )
         self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
@@ -323,7 +365,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period
+        expected_period = spec.chopra_fundamental_period_plus1sigma
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -334,7 +376,7 @@ class ForcePreDesignTest(TestCase):
         )
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
         )
         self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
@@ -347,7 +389,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period
+        expected_period = spec.chopra_fundamental_period_plus1sigma
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -358,7 +400,7 @@ class ForcePreDesignTest(TestCase):
         )
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
         )
         self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
@@ -371,7 +413,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period
+        expected_period = spec.chopra_fundamental_period_plus1sigma
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -382,7 +424,7 @@ class ForcePreDesignTest(TestCase):
         )
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
         )
         self.assertTrue(
             np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)

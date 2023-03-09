@@ -3,11 +3,7 @@ from app.utils import chunk_arrays
 import numpy as np
 
 
-class BuildingSpecificationTest(TestCase):
-    """
-    it should load and save spec
-    """
-
+class ChunkArraysTestSpec(TestCase):
     def test_even_array(self):
         a = [0.33, 0.2451, 0.21, 0.344]
 

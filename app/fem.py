@@ -56,7 +56,8 @@ class FiniteElementModel(ABC, YamlMixin):
     contents: list[Asset] = field(default_factory=list)
     pushover_abs_path: str | None = None
     _pushover_view = None
-    chopra_fundamental_period: float | None = None
+    chopra_fundamental_period_plus1sigma: float | None = None
+    miranda_fundamental_period: float | None = None
 
     def __str__(self) -> str:
         h = "#!/usr/local/bin/opensees\n"
@@ -120,7 +121,8 @@ class FiniteElementModel(ABC, YamlMixin):
             num_bays=spec.num_bays,
             num_floors=spec.num_floors,
             num_storeys=spec.num_storeys,
-            chopra_fundamental_period=spec.chopra_fundamental_period,
+            chopra_fundamental_period_plus1sigma=spec.chopra_fundamental_period_plus1sigma,
+            miranda_fundamental_period=spec.miranda_fundamental_period,
         )
         return fem
 
@@ -134,8 +136,8 @@ class FiniteElementModel(ABC, YamlMixin):
         drift_y = ndf.loc[ix]["u"]
         period = self.periods[0] if len(self.periods) > 0 else 0
         period_error = (
-            (self.periods[0] - self.chopra_fundamental_period)
-            / self.chopra_fundamental_period
+            (self.periods[0] - self.chopra_fundamental_period_plus1sigma)
+            / self.chopra_fundamental_period_plus1sigma
             if len(self.periods) > 0
             else ""
         )
@@ -151,7 +153,7 @@ class FiniteElementModel(ABC, YamlMixin):
             "drift_y [%]": 100 * drift_y,
             "c_design [1]": self.extras.get("c_design"),
             "period [s]": f"{period:.2f} s",
-            "chopra period [s]": f"{self.chopra_fundamental_period:.2f} s",
+            "chopra period [s]": f"{self.chopra_fundamental_period_plus1sigma:.2f} s",
             "period_error": f"{100*period_error:.1f} %",
             "_pushover_x": df["u"].to_list(),
             "_pushover_y": df["sum"].to_list(),
@@ -310,7 +312,7 @@ class FiniteElementModel(ABC, YamlMixin):
     def elements_str(self) -> str:
         return self.columns_str + self.beams_str
 
-    def to_tcl(self, filepath: Path):
+    def to_tcl(self, filepath: Path) -> None:
         with open(filepath, "w+") as f:
             f.write(self.model_str)
 
@@ -358,7 +360,7 @@ class FiniteElementModel(ABC, YamlMixin):
         self.a0, self.a1 = self._rayleigh()
         return view
 
-    def _rayleigh(self) -> None:
+    def _rayleigh(self) -> tuple[float, float]:
         z = self.damping
         if self.num_modes == 1:
             wi = wj = self.omegas[0]
@@ -853,13 +855,14 @@ class PlainFEM(FiniteElementModel):
 
 
 @dataclass
-class ShearModel(FiniteElementModel):
+class ShearModelOpenSees(FiniteElementModel):
     """
     disregards beams completely.
     takes lateral stiffness as sum(k_columns)
     """
 
     _mass_matrix: np.ndarray | None = None
+    _height_matrix: np.ndarray | None = None
 
     def validate(self, *args, **kwargs):
         return super().validate(*args, **kwargs)
@@ -890,7 +893,7 @@ class ShearModel(FiniteElementModel):
         return []
 
     @property
-    def storey_stiffnesses(self) -> list:
+    def storey_stiffnesses(self) -> list[float]:
         ks = []
         for cols in self.columns_by_storey:
             ks.append(sum([c.k for c in cols]))
@@ -904,7 +907,9 @@ class ShearModel(FiniteElementModel):
     def storey_radii(self) -> list[float]:
         return self.column_radii
 
-    def get_and_set_eigen_results(self, results_path: Path):
+    def get_and_set_eigen_results(
+        self, results_path: Path
+    ) -> "StructuralResultView":  # noqa: F821
         view = super().get_and_set_eigen_results(results_path)
         Phi = np.array(view.vectors)
         values = view.values
@@ -1275,7 +1280,7 @@ class FEMFactory:
     options = {
         PlainFEM.__name__: PlainFEM,
         RigidBeamFEM.__name__: RigidBeamFEM,
-        ShearModel.__name__: ShearModel,
+        ShearModelOpenSees.__name__: ShearModelOpenSees,
         BilinFrame.__name__: BilinFrame,
         IMKFrame.__name__: IMKFrame,
     }

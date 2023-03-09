@@ -158,8 +158,8 @@ with st.sidebar:
         )
         design_criteria = st.selectbox(
             "design criteria",
-            DesignCriterionFactory.options(),
-            index=DesignCriterionFactory.options().index(
+            DesignCriterionFactory.public_options(),
+            index=DesignCriterionFactory.public_options().index(
                 design.design_criteria[0] or DesignCriterionFactory.DEFAULT
             )
             # this [0] is bad design. the idea was to have multiple criteria, this is too complex in the ui.

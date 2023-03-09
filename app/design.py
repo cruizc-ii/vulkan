@@ -28,9 +28,8 @@ class BuildingSpecification(ABC, NamedYamlMixin):
 
     uniform_beam_loads_by_mass: list[float] | None = None
     design_criteria: list[str] = field(
-        default_factory=DesignCriterionFactory.default_criteria
+        default_factory=DesignCriterionFactory.public_options
     )
-
     design_spectra: dict[dict[str, str], str] = field(default_factory=dict)
 
     _design_criteria: list["DesignCriterion"] | None = None
@@ -42,7 +41,8 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     floors: list[float] | None = None
     height: float | None = None
     width: float | None = None
-    chopra_fundamental_period: float | None = None
+    chopra_fundamental_period_plus1sigma: float | None = None
+    miranda_fundamental_period: float | None = None
 
     num_storeys: float | None = None
     num_floors: float | None = None
@@ -51,6 +51,12 @@ class BuildingSpecification(ABC, NamedYamlMixin):
 
     occupancy: str | None = None
     fems: list[FiniteElementModel] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.__pre_init__()
+        if all([isinstance(f, dict) for f in self.fems]):
+            # print([f["model"] for f in self.fems])
+            self.fems = [FEMFactory(**data) for data in self.fems]
 
     def __pre_init__(self) -> None:
         self._design_criteria = [
@@ -64,7 +70,10 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         self.columns = [0.0] + self.bays
         self.height = sum(self.storeys)
         self.width = sum(self.bays)
-        self.chopra_fundamental_period = 0.018 * (self.height * METERS_TO_FEET) ** 0.9
+        self.chopra_fundamental_period_plus1sigma = (
+            0.023 * (self.height * METERS_TO_FEET) ** 0.9
+        )
+        self.miranda_fundamental_period = self.num_storeys / 8
 
         if self.occupancy is None:
             from app.occupancy import BuildingOccupancy
@@ -82,12 +91,6 @@ class BuildingSpecification(ABC, NamedYamlMixin):
             criteria: Spectra(**data) for criteria, data in self.design_spectra.items()
         }
         self.__set_up__()
-
-    def __post_init__(self):
-        self.__pre_init__()
-        if all([isinstance(f, dict) for f in self.fems]):
-            # print([f["model"] for f in self.fems])
-            self.fems = [FEMFactory(**data) for data in self.fems]
 
     def __set_up__(self):
         columns, colIDs = {}, {}
@@ -176,7 +179,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
             "design name": self.name,
             "damping": self.damping,
             "storeys": self.num_storeys,
-            "weight": self.weight,
+            "weight": self.weight_str,
             "bays": self.num_bays,
             "occupancy": self.occupancy,
             "num frames": self.num_frames,
@@ -190,11 +193,11 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         return self.fems[-1]
 
     @property
-    def total_mass(self):
+    def total_mass(self) -> float:
         return sum(self.masses)
 
     @property
-    def weight(self):
+    def weight_str(self) -> str:
         return f"{self.total_mass * GRAVITY:.1f}"
 
     def force_design(
@@ -225,10 +228,9 @@ class BuildingSpecification(ABC, NamedYamlMixin):
             fem = self.fem
 
         fems = []
-        for ix, _class in enumerate(criteria):
+        for _class in criteria:
             instance: DesignCriterion = _class(specification=self, fem=fem)
             filepath = results_path / instance.__class__.__name__
-            # filepath = results_path / str(ix)
             fem = instance.run(results_path=filepath, *args, **kwargs)
             fems.append(fem)
 
