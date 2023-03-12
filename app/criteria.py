@@ -18,17 +18,6 @@ from pathlib import Path
 from functools import partial
 
 
-def put_mass(nodes_with_mass, masses):
-    for node, mass in zip(nodes_with_mass, masses):
-        node.mass = mass
-
-
-def put_mass_spec(nodes, masses):
-    nodes_with_mass = [n for n in nodes if n["mass"] is not None]
-    for node, mass in zip(nodes_with_mass, masses):
-        node["mass"] = mass
-
-
 class DesignNotValidException(Exception):
     pass
 
@@ -58,8 +47,7 @@ class EulerShearPre(DesignCriterion):
         storeys = np.array(self.specification.storeys)
         radii = 1.414 * storeys / self.EULER_LAMBDA
         Ixs = (np.pi * radii**4) / 4
-        cols_st = mdof.columns_by_storey
-        for Ix, columns, radius in zip(Ixs, cols_st, radii):
+        for Ix, columns, radius in zip(Ixs, mdof.columns_by_storey, radii):
             for col in columns:
                 col.Ix = float(Ix)
                 col.radius = float(radius)
@@ -90,13 +78,7 @@ class CodeMassesPre(DesignCriterion):
                 for _ in range(self.fem.num_modes)
             ]
         )
-        # very bad way of mutating shared state, PUT === red flag
-        put_mass(fem.mass_nodes, masses.tolist())
-        put_mass_spec(self.specification.nodes.values(), masses.tolist())
-        self.specification.masses = masses.tolist()
-        self.specification.uniform_beam_loads_by_mass = [
-            GRAVITY * mass / self.specification.width for mass in masses.tolist()
-        ]
+        fem._update_masses_in_place(masses.tolist())
         fem.get_and_set_eigen_results(results_path=results_path)
         return fem
 
@@ -155,56 +137,6 @@ class LoeraPre(DesignCriterion):
         return fem
 
 
-class ChopraPeriodsPre(DesignCriterion):
-    period_tolerance_percentage: float = 0.25
-    MAX_ITERATIONS = 10
-    building_code: Optional[BuildingCode] = None
-
-    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
-        """
-        Chopra & Goel (2000) Building period formulas for estimating seismic displacements
-        concrete T = 0.028 H**0.8 where H is in feet (this is almost the same as num_storeys/10 surprisingly!)
-
-        this procedure MUTATES masses in fem and spec!
-        to make the building to be somewhat close to a realistic period.
-        For equal masses and storey stiffness the fundamental frequency is
-        w1 = 0.285 (k/m)^0.5
-        T1 = 2pi/w1
-        we can estimate the storey mass to be therefore as
-        m = k (0.285 T1)**2/(2pi)**2
-        """
-        fundamental_period = self.fem.chopra_fundamental_period_plus1sigma
-        data = self.fem.to_dict
-        data.pop("model")
-        fem: FiniteElementModel = FEMFactory(
-            **data, model=ShearModel.__name__
-        )  # make a copy
-        storey_stiffnesses = fem.storey_stiffnesses
-        masses = np.array(
-            [k * (0.285 * fundamental_period / 6.2832) ** 2 for k in storey_stiffnesses]
-        )
-        iteration = 0
-        err = 1
-
-        while abs(err) > self.period_tolerance_percentage:
-            put_mass(fem.mass_nodes, masses.tolist())
-            model_period = fem.get_and_set_eigen_results(
-                results_path=results_path
-            ).periods[0]
-            err = (fundamental_period - model_period) / fundamental_period
-            iteration += 1
-            if abs(err) <= self.period_tolerance_percentage:
-                break
-            masses = np.sqrt(np.exp(err)) * masses
-            if iteration > self.MAX_ITERATIONS:
-                raise DesignNotValidException(
-                    f"Computed FEM period {model_period:.2f} is not close to expected period {fundamental_period:.2f}, maybe stiffnesses are unreal? "
-                )
-        put_mass_spec(self.specification.nodes.values(), masses.tolist())
-        self.specification.masses = masses.tolist()
-        return fem
-
-
 class ShearStiffnessRetryPre(DesignCriterion):
     """
     does a more realistic grouping of sections
@@ -216,24 +148,14 @@ class ShearStiffnessRetryPre(DesignCriterion):
     varying the stiffnesses of the model.
     """
 
-    PERIOD_TOLERANCE_PCT: float = 0.3
+    PERIOD_TOLERANCE_PCT: float = 0.2
     MAX_ITERATIONS = 10
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
+        fem = self.fem
+        target_period = self.specification.miranda_fundamental_period
+        inertias = np.array(fem.storey_inertias)
 
-        # fem = self.fem
-        # target_period = self.specification.miranda_fundamental_period
-
-        # def target_fn(factor):
-        #     mdof = ShearModel.from_spec(self.specification, inertias=inertias)
-        #     period = mdof.get_and_set_eigen_results()
-        #     return period - target_period
-
-        # inertia_factor, real_period = regula_falsi(
-        #     target_fn, 0.01, 3, tol=self.PERIOD_TOLERANCE_PCT, iter=self.MAX_ITERATIONS
-        # )
-
-        # chopra_period = self.fem.chopra_fundamental_period
         # cols_st = fem.columns_by_storey
         # beams_st = fem.beams_by_storey
         # ns = self.specification.num_storeys
@@ -242,7 +164,28 @@ class ShearStiffnessRetryPre(DesignCriterion):
         # leftmost_beam_Ixs = np.array([b[0].Ix for b in self.fem.beams_by_storey])
         # columns_Ixs = chunk_arrays(leftmost_column_Ixs, chunk_size=chunk_size)
         # beams_Ixs = chunk_arrays(leftmost_beam_Ixs, chunk_size=chunk_size)
-        pass
+
+        def target_fn(factor: float) -> float:
+            _inertias = factor * inertias
+            mdof = ShearModel.from_spec(
+                self.specification, _inertias=_inertias.tolist()
+            )
+            fx = target_period - mdof.period
+            return fx
+
+        inertia_factor, period_difference = regula_falsi(
+            target_fn,
+            0.1,
+            10,
+            tol=self.PERIOD_TOLERANCE_PCT * target_period,
+            iter=self.MAX_ITERATIONS,
+        )  # if inertias are not close by 1 order of magnitude, something is wrong with our predesign methods. either the mass is too big/
+        print(period_difference)
+        # beam_inertias = inertia_factor * beams_Ixs
+        # column_inertias = inertia_factr * columns_Ixs
+        _inertias = inertia_factor * inertias
+        mdof = ShearModel.from_spec(self.specification, _inertias=_inertias.tolist())
+        return mdof
 
 
 class ForceBasedPre(DesignCriterion):
@@ -333,7 +276,6 @@ class DesignCriterionFactory:
     seeds = {
         EulerShearPre.__name__: EulerShearPre,
         LoeraPre.__name__: LoeraPre,
-        ChopraPeriodsPre.__name__: ChopraPeriodsPre,
         ForceBasedPre.__name__: ForceBasedPre,
         CodeMassesPre.__name__: CodeMassesPre,
         ShearStiffnessRetryPre.__name__: ShearStiffnessRetryPre,

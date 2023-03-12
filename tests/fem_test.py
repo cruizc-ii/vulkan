@@ -35,6 +35,13 @@ class ShearModelTest(TestCase):
         fem1 = ShearModel.from_spec(self.spec)
         self.assertTrue(fem2.period < fem1.period)
 
+    def test_gives_correct_periods_2(self):
+        inertias1 = [0.003, 0.003]
+        inertias2 = [0.03, 0.03]
+        fem1 = ShearModel.from_spec(self.spec, _inertias=inertias1)
+        fem2 = ShearModel.from_spec(self.spec, _inertias=inertias2)
+        self.assertTrue(fem2.period < fem1.period)
+
 
 class ShearModelOpenSeesTest(TestCase):
     """
@@ -59,6 +66,7 @@ class ShearModelOpenSeesTest(TestCase):
         return super().tearDown()
 
     def test_load_from_yaml(self) -> None:
+        # dumb test that asserts string equality
         mdof = ShearModel.from_file(self.file)
         self.assertEqual(mdof.model_str, self.expected_model_str)
 

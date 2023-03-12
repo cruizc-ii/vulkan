@@ -42,6 +42,8 @@ class FiniteElementModel(ABC, YamlMixin):
     num_floors: float | None = None
     num_bays: float | None = None
     num_cols: float | None = None
+    height: float | None = None
+    width: float | None = None
     occupancy: str | None = None
     periods: list = field(default_factory=list)
     frequencies: list = field(default_factory=list)
@@ -59,6 +61,7 @@ class FiniteElementModel(ABC, YamlMixin):
     _pushover_view = None
     chopra_fundamental_period_plus1sigma: float | None = None
     miranda_fundamental_period: float | None = None
+    uniform_beam_loads_by_mass: list[float] | None = None
 
     def __str__(self) -> str:
         h = "#!/usr/local/bin/opensees\n"
@@ -97,6 +100,10 @@ class FiniteElementModel(ABC, YamlMixin):
 
         self.model = self.__class__.__name__
 
+        # self.uniform_beam_loads_by_mass = [
+        #     GRAVITY * mass / self.width for mass in self.masses
+        # ]
+
         if self.pushover_abs_path:
             from app.strana import StructuralResultView
 
@@ -110,6 +117,7 @@ class FiniteElementModel(ABC, YamlMixin):
     def from_spec(
         cls,
         spec: "BuildingSpecification",  # noqa: F821
+        *args,
         **kwargs,
     ) -> "FiniteElementModel":
         nodes = [Node(id=id, **info) for id, info in spec.nodes.items()]
@@ -124,6 +132,8 @@ class FiniteElementModel(ABC, YamlMixin):
             num_bays=spec.num_bays,
             num_floors=spec.num_floors,
             num_storeys=spec.num_storeys,
+            height=spec.height,
+            width=spec.width,
             chopra_fundamental_period_plus1sigma=spec.chopra_fundamental_period_plus1sigma,
             miranda_fundamental_period=spec.miranda_fundamental_period,
             **kwargs,
@@ -178,6 +188,17 @@ class FiniteElementModel(ABC, YamlMixin):
     @property
     def assets(self):
         return self.elements_assets + self.nonstructural_elements + self.contents
+
+    def _update_masses_in_place(
+        self, new_masses: list[float] | np.ndarray[float]
+    ) -> None:
+        for node, mass in zip(self.mass_nodes, new_masses):
+            node.mass = mass
+
+        self.uniform_beam_loads_by_mass = [
+            GRAVITY * mass / self.width for mass in self.masses
+        ]
+        return
 
     # @abstractmethod
     # def build_and_place_slabs(self) -> list[Asset]:
@@ -917,6 +938,7 @@ class ShearModel(FiniteElementModel):
         self._stifness_matrix = np.diag(ks) + np.diag(ks2) + upper + lower
         K, M = self._stifness_matrix, self._mass_matrix
         vals, vecs = eigh(K, M)
+        vals, vecs = vals[::-1], vecs[::-1]
         omegas = np.sqrt(vals)
         freqs = omegas / 2 / np.pi
         Ts = 1.0 / freqs
@@ -940,7 +962,11 @@ class ShearModel(FiniteElementModel):
 
     @property
     def storey_inertias(self) -> list[float]:
-        return self.column_inertias
+        Ix = []
+        for cols in self.columns_by_storey:
+            cols_k = [c.Ix for c in cols]
+            Ix.append(sum(cols_k))
+        return Ix
 
     @property
     def storey_radii(self) -> list[float]:

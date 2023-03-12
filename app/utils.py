@@ -329,13 +329,15 @@ def regula_falsi(f, a, b, tol=1e-6, iter=100) -> tuple[float, float]:
     err = np.inf
     while abs(err) > tol:
         if i > iter:
-            raise Exception("max iters exceeded")
+            raise Exception(f"max iterations {iter} exceeded")
         x0 = a + fa * (a - b) / (fb - fa)
         fx0 = f(x0)
         if same_sign_len2arr([fb, fx0]):
             b = x0
+            fb = fx0
         else:
             a = x0
-        fa, fb = f(a), f(b)
+            fa = fx0
+        # fa, fb = f(a), f(b) # this was evaluating two more times than necessary
         err = fx0
     return x0, fx0
