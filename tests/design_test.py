@@ -8,7 +8,7 @@ import numpy as np
 
 class BuildingSpecificationTest(TestCase):
     """
-    it should load and save spec
+    it should load and save spec to .yml
     """
 
     maxDiff = None
@@ -36,7 +36,7 @@ class BuildingSpecificationTest(TestCase):
             DESIGN_FIXTURES_PATH / f"{spec.name}.yml"
         )
         self.assertDictEqual(spec.to_dict, new.to_dict)
-        self.assertEqual(len(new.fems), len(DesignCriterionFactory.default_criteria()))
+        self.assertEqual(len(new.fems), len(DesignCriterionFactory.public_options()))
         self.assertTrue(all([isinstance(f, FiniteElementModel) for f in new.fems]))
 
 

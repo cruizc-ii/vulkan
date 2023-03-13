@@ -1273,14 +1273,14 @@ class RSA(StructuralAnalysis):
     def get_design_forces(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """nxn where each column is f_n = s_i a_i"""
         view = self.fem.get_and_set_eigen_results(self.results_path)
-        S = view.S
+        S = view.inertial_forces
         pseudo_accels = self.code.get_Sas(self.fem.periods)
         As = np.array(pseudo_accels)
         n = len(As)
         As = np.eye(n) * As
         F = S.dot(As)  # s_i a_i
         cs = pseudo_accels[0] / GRAVITY
-        return F, view.V, cs
+        return F, view.shears, cs
 
     def srss(self) -> tuple[list, list, list]:
         moments = []
