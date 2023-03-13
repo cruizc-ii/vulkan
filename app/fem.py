@@ -35,15 +35,13 @@ from app.elements import (
 class FiniteElementModel(ABC, YamlMixin):
     nodes: list[Node]
     elements: list[BeamColumn]
-    damping: float
+    damping: float = 0.05
     model: str = "ABC"
     num_frames: int = 1
     num_storeys: float | None = None
     num_floors: float | None = None
     num_bays: float | None = None
     num_cols: float | None = None
-    height: float | None = None
-    width: float | None = None
     occupancy: str | None = None
     periods: list = field(default_factory=list)
     frequencies: list = field(default_factory=list)
@@ -100,10 +98,6 @@ class FiniteElementModel(ABC, YamlMixin):
 
         self.model = self.__class__.__name__
 
-        # self.uniform_beam_loads_by_mass = [
-        #     GRAVITY * mass / self.width for mass in self.masses
-        # ]
-
         if self.pushover_abs_path:
             from app.strana import StructuralResultView
 
@@ -132,10 +126,9 @@ class FiniteElementModel(ABC, YamlMixin):
             num_bays=spec.num_bays,
             num_floors=spec.num_floors,
             num_storeys=spec.num_storeys,
-            height=spec.height,
-            width=spec.width,
             chopra_fundamental_period_plus1sigma=spec.chopra_fundamental_period_plus1sigma,
             miranda_fundamental_period=spec.miranda_fundamental_period,
+            *args,
             **kwargs,
         )
         return fem
@@ -194,10 +187,6 @@ class FiniteElementModel(ABC, YamlMixin):
     ) -> None:
         for node, mass in zip(self.mass_nodes, new_masses):
             node.mass = mass
-
-        self.uniform_beam_loads_by_mass = [
-            GRAVITY * mass / self.width for mass in self.masses
-        ]
         return
 
     # @abstractmethod
@@ -506,6 +495,10 @@ class FiniteElementModel(ABC, YamlMixin):
     def length(self) -> float:
         xs = [n.x for n in self.nodes]
         return max(xs)
+
+    @property
+    def width(self) -> float:
+        return self.length
 
     @property
     def total_length(self) -> float:
@@ -864,6 +857,9 @@ class PlainFEM(FiniteElementModel):
     """the simplest implementation of the interface"""
 
     model: str = "PlainFEM"
+
+    def __init__(self, *args, **kwargs):
+        return super().__init__(*args, **kwargs)
 
     def build_and_place_slabs(self) -> list[Asset]:
         from app.assets import RiskModelFactory

@@ -25,8 +25,6 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     masses: list[float] = field(default_factory=lambda: [10.0])
     damping: float = 0.05
     num_frames: int = 1
-
-    uniform_beam_loads_by_mass: list[float] | None = None
     design_criteria: list[str] = field(
         default_factory=DesignCriterionFactory.public_options
     )
@@ -87,10 +85,6 @@ class BuildingSpecification(ABC, NamedYamlMixin):
 
         if len(self.masses) == 1:
             self.masses = [self.masses[0] for _ in range(self.num_storeys)]
-
-        self.uniform_beam_loads_by_mass = [
-            GRAVITY * mass / self.width for mass in self.masses
-        ]
 
         self._design_spectra = {
             criteria: Spectra(**data) for criteria, data in self.design_spectra.items()

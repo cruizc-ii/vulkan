@@ -124,6 +124,23 @@ class CodeMassesPreDesignTest(TestCase):
         self.assertIsNotNone(design.fem.values)
         self.assertIsNotNone(design.fem.vectors)
 
+    def test_produces_correct_masses_2(self):
+        design = ReinforcedConcreteFrame(
+            name="code-masses-test",
+            bays=5 * [4.0],
+            storeys=10 * [5.0],
+            design_criteria=[CodeMassesPre.__name__],
+        )
+        expected_masses = [20**2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81]
+        design.force_design(self.path)
+        self.assertTrue(np.allclose(design.masses, 10 * [10.0], rtol=1e-3))
+        self.assertTrue(np.allclose(expected_masses, design.fem.masses, rtol=1e-3))
+
+        self.assertIsNotNone(design.fem.periods)
+        self.assertIsNotNone(design.fem.frequencies)
+        self.assertIsNotNone(design.fem.values)
+        self.assertIsNotNone(design.fem.vectors)
+
 
 class ShearStiffnessRetryPreTest(TestCase):
     """
@@ -143,7 +160,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             storeys=[4.5, 3.0],
             bays=[6.0, 6.0],
             damping=0.10,
-            masses=[15.0, 15.0],
+            masses=[150.0],
             design_criteria=["EulerShearPre", "ShearStiffnessRetryPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
