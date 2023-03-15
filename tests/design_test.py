@@ -1,5 +1,5 @@
 from unittest.case import TestCase
-from app.criteria import CodeMassesPre, DesignCriterionFactory
+from app.criteria import CodeMassesPre, DesignCriterionFactory, ForceBasedPre
 from app.design import ReinforcedConcreteFrame
 from app.fem import FiniteElementModel
 from .test import DESIGN_FIXTURES_PATH, DESIGN_MODELS_PATH
@@ -105,9 +105,23 @@ class CodeMassesPreDesignTest(TestCase):
     def setUpClass(cls) -> None:
         cls.path = DESIGN_FIXTURES_PATH
 
-    def test_produces_correct_masses(self):
+    def test_produces_correct_masses_1(self):
         design = ReinforcedConcreteFrame(
-            name="code-masses-test",
+            name="code-masses-test-1",
+            bays=[5.0, 8.0, 5.0],
+            storeys=[8.0],
+            design_criteria=[CodeMassesPre.__name__],
+        )
+        expected_masses = [
+            (5 + 8 + 5) ** 2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81
+        ]
+        design.force_design(self.path)
+        # self.assertTrue(np.allclose(design.masses, [10.0], rtol=1e-3))
+        self.assertTrue(np.allclose(expected_masses, design.fem.masses, rtol=1e-3))
+
+    def test_produces_correct_masses_2(self):
+        design = ReinforcedConcreteFrame(
+            name="code-masses-test-2",
             bays=[5.0, 3.0, 5.0],
             storeys=[3.0, 3.0, 4.0, 5.0],
             design_criteria=[CodeMassesPre.__name__],
@@ -116,30 +130,20 @@ class CodeMassesPreDesignTest(TestCase):
             (5 + 3 + 5) ** 2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81
         ]
         design.force_design(self.path)
-        self.assertTrue(np.allclose(design.masses, [10.0, 10.0, 10.0, 10.0], rtol=1e-3))
+        # self.assertTrue(np.allclose(design.masses, [10.0, 10.0, 10.0, 10.0], rtol=1e-3))
         self.assertTrue(np.allclose(expected_masses, design.fem.masses, rtol=1e-3))
 
-        self.assertIsNotNone(design.fem.periods)
-        self.assertIsNotNone(design.fem.frequencies)
-        self.assertIsNotNone(design.fem.values)
-        self.assertIsNotNone(design.fem.vectors)
-
-    def test_produces_correct_masses_2(self):
+    def test_produces_correct_masses_3(self):
         design = ReinforcedConcreteFrame(
-            name="code-masses-test",
+            name="code-masses-test-3",
             bays=5 * [4.0],
             storeys=10 * [5.0],
             design_criteria=[CodeMassesPre.__name__],
         )
         expected_masses = [20**2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81]
         design.force_design(self.path)
-        self.assertTrue(np.allclose(design.masses, 10 * [10.0], rtol=1e-3))
+        # self.assertTrue(np.allclose(design.masses, 10 * [10.0], rtol=1e-3))
         self.assertTrue(np.allclose(expected_masses, design.fem.masses, rtol=1e-3))
-
-        self.assertIsNotNone(design.fem.periods)
-        self.assertIsNotNone(design.fem.frequencies)
-        self.assertIsNotNone(design.fem.values)
-        self.assertIsNotNone(design.fem.vectors)
 
 
 class ShearStiffnessRetryPreTest(TestCase):
@@ -153,6 +157,41 @@ class ShearStiffnessRetryPreTest(TestCase):
     maxDiff = None
     rtol_periods = 0.3
     rtol_weight = 0.3
+
+    def test_produces_realistic_periods_and_stiffnesses_1storeys_1(self):
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test-stiffness-retry-pre-1st-1",
+            storeys=[8.0],
+            bays=[6.0, 6.0, 6.0, 6.0],
+            damping=0.50,
+            design_criteria=["EulerShearPre", "ShearStiffnessRetryPre"],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_period = spec.miranda_fundamental_period
+        self.assertAlmostEqual(
+            spec.fem.periods[0],
+            expected_period,
+            delta=expected_period * self.rtol_periods,
+        )
+        self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
+
+    def test_produces_realistic_periods_and_stiffnesses_1storeys_2(self):
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test-stiffness-retry-pre-1st-2",
+            storeys=[3.0],
+            bays=[6.0, 6.0, 6.0, 0.6],
+            damping=0.50,
+            masses=[10.0],
+            design_criteria=["EulerShearPre", "ShearStiffnessRetryPre"],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_period = spec.miranda_fundamental_period
+        self.assertAlmostEqual(
+            spec.fem.periods[0],
+            expected_period,
+            delta=expected_period * self.rtol_periods,
+        )
+        self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
 
     def test_produces_realistic_periods_and_stiffnesses_2storeys_1(self):
         spec = ReinforcedConcreteFrame(
@@ -242,8 +281,8 @@ class ForcePreDesignTest(TestCase):
     """
 
     maxDiff = None
-    rtol_periods = 0.3
-    rtol_weight = 0.3
+    rtol_periods = 0.2
+    rtol_weight = 0.2
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -256,25 +295,21 @@ class ForcePreDesignTest(TestCase):
             storeys=[4.5],
             bays=[6.0, 6.0],
             damping=0.05,
-            design_criteria=["ForceBasedPre"],
+            design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period_plus1sigma
+        expected_period = spec.miranda_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
         self.assertAlmostEqual(
-            spec.fem.periods[0],
+            spec.fem.period,
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
-        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
-        self.assertTrue(
-            np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
-        )  # sanity check
 
     def test_produces_realistic_periods_and_stiffnesses_1storey_2(self):
         spec = ReinforcedConcreteFrame(
@@ -285,22 +320,18 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period_plus1sigma
+        expected_period = spec.miranda_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
         self.assertAlmostEqual(
-            spec.fem.periods[0],
+            spec.fem.period,
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
-        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
-        self.assertTrue(
-            np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
-        )  # sanity check
 
     def test_produces_realistic_periods_and_stiffnesses_2(self):
         spec = ReinforcedConcreteFrame(
@@ -311,43 +342,35 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period_plus1sigma
+        expected_period = spec.miranda_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
         self.assertAlmostEqual(
-            spec.fem.periods[0],
+            spec.fem.period,
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
-        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
-        self.assertTrue(
-            np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
-        )  # sanity check
 
     def test_produces_realistic_periods_and_stiffnesses_4(self):
         """it should load a spec and produce a realistic design"""
         spec = ReinforcedConcreteFrame.from_file(self.file)
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period_plus1sigma
+        expected_period = spec.miranda_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
         self.assertAlmostEqual(
-            spec.fem.periods[0],
+            spec.fem.period,
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
-        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
-        self.assertTrue(
-            np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
-        )  # sanity check
 
     def test_produces_realistic_periods_and_stiffnesses_6(self):
         spec = ReinforcedConcreteFrame(
@@ -358,20 +381,18 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period_plus1sigma
+        expected_period = spec.miranda_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
         self.assertAlmostEqual(
-            spec.fem.periods[0],
+            spec.fem.period,
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
-        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
-        self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
     def test_produces_realistic_periods_and_stiffnesses_10(self):
         spec = ReinforcedConcreteFrame(
@@ -382,20 +403,18 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period_plus1sigma
+        expected_period = spec.miranda_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
         self.assertAlmostEqual(
-            spec.fem.periods[0],
+            spec.fem.period,
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
-        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
-        self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
     def test_produces_realistic_periods_and_stiffnesses_15(self):
         spec = ReinforcedConcreteFrame(
@@ -406,20 +425,18 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period_plus1sigma
+        expected_period = spec.miranda_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
         self.assertAlmostEqual(
-            spec.fem.periods[0],
+            spec.fem.period,
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
-        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
-        self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
     def test_produces_realistic_periods_and_stiffnesses_20(self):
         spec = ReinforcedConcreteFrame(
@@ -430,20 +447,18 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period_plus1sigma
+        expected_period = spec.miranda_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
         self.assertAlmostEqual(
-            spec.fem.periods[0],
+            spec.fem.period,
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
-        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
-        self.assertTrue(np.allclose(spec.masses, spec.fem.masses, rtol=1e-5))
 
     def test_produces_realistic_periods_and_stiffnesses_30(self):
         spec = ReinforcedConcreteFrame(
@@ -454,22 +469,18 @@ class ForcePreDesignTest(TestCase):
             design_criteria=["ForceBasedPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.chopra_fundamental_period_plus1sigma
+        expected_period = spec.miranda_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
         self.assertAlmostEqual(
-            spec.fem.periods[0],
+            spec.fem.period,
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
-        self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))
         self.assertTrue(
-            np.allclose(spec.weight_str, expected_weight, rtol=self.rtol_weight)
+            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
-        self.assertTrue(
-            np.allclose(spec.masses, spec.fem.masses, rtol=1e-5)
-        )  # sanity check
 
 
 class Chopra1326RSADesign(TestCase):

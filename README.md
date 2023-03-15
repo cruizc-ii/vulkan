@@ -8,7 +8,6 @@ mypy --install-types
 Set a `breakpoint()` anywhere
 
 
-
 ## TODO
 
 ## Design
@@ -17,8 +16,13 @@ Give a measure of how good the design is wrt. c design.
 
 Compute Vy, uy correctly.
 
+- [ ] grouping 9x storeys
+- [ ] how to transfer masses from 1 to another? CodeMassesPre should change spec? just grab masses from the other FEM
+- [ ] something ain't right with the predefined masses that a building has
+
 ver periodos del modelo simplificado 
 ver periodos del modelo 
+
 
 ## COMMON PROBLEMS
 

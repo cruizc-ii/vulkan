@@ -22,7 +22,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     name: str
     storeys: list[float] = field(default_factory=lambda: [4.0])
     bays: list[float] = field(default_factory=lambda: [8.0])
-    masses: list[float] = field(default_factory=lambda: [10.0])
+    masses: list[float] = field(default_factory=list)
     damping: float = 0.05
     num_frames: int = 1
     design_criteria: list[str] = field(
@@ -85,6 +85,8 @@ class BuildingSpecification(ABC, NamedYamlMixin):
 
         if len(self.masses) == 1:
             self.masses = [self.masses[0] for _ in range(self.num_storeys)]
+        elif len(self.masses) == 0:
+            self.masses = [1 * self.width**2 for _ in range(self.num_storeys)]
 
         self._design_spectra = {
             criteria: Spectra(**data) for criteria, data in self.design_spectra.items()

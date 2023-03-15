@@ -175,12 +175,11 @@ class ShearStiffnessRetryPre(DesignCriterion):
 
         inertia_factor, period_difference = regula_falsi(
             target_fn,
-            0.1,
-            10,
+            0.01,
+            100,
             tol=self.PERIOD_TOLERANCE_PCT * target_period,
             iter=self.MAX_ITERATIONS,
         )  # if inertias are not close by 1 order of magnitude, something is wrong with our predesign methods. either the mass is too big/
-        print(period_difference)
         # beam_inertias = inertia_factor * beams_Ixs
         # column_inertias = inertia_factr * columns_Ixs
         _inertias = inertia_factor * inertias
@@ -192,6 +191,7 @@ class ForceBasedPre(DesignCriterion):
     """
     will take in any spec and return a 'realistic' pre-design both
     in stiffnesses (element dimensions) and masses (weights)
+    to be used before CDMXDesignQ or any other Code-based force design.
     """
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
