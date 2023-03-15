@@ -43,6 +43,7 @@ class BuildingSpecificationTest(TestCase):
 class EulerShearPreDesignTest(TestCase):
     """
     it should set inertias and radii to realistic values
+    and do a reasonable job at grouping them by sqrt(storeys)
     """
 
     file = None
@@ -58,12 +59,60 @@ class EulerShearPreDesignTest(TestCase):
         """it should load a spec and produce a realistic design"""
         spec = ReinforcedConcreteFrame.from_file(self.file)
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_inertias = [0.00065564, 0.00065564]
-        expected_radii = [0.17, 0.17]
         self.assertTrue(
-            np.allclose(spec.fem.storey_inertias, expected_inertias, rtol=0.2)
+            len(np.unique(spec.fem.storey_inertias)) == 2
+        )  # groups correctly
+        self.assertTrue(len(np.unique(spec.fem.storey_radii)) == 2)  # groups correctly
+
+    def test_produces_correct_groupings_2(self):
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test-stiffness-retry-pre-2st",
+            storeys=[4.5, 3.0, 3.0],
+            bays=[6.0, 6.0],
+            damping=0.10,
+            masses=[150.0],
+            design_criteria=["EulerShearPre"],
         )
-        self.assertTrue(np.allclose(spec.fem.storey_radii, expected_radii, rtol=0.2))
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        self.assertTrue(
+            len(np.unique(spec.fem.storey_inertias)) == 3
+        )  # groups correctly
+
+        self.assertTrue(len(np.unique(spec.fem.storey_radii)) == 3)  # groups correctly
+
+    def test_produces_correct_groupings_3(self):
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test-stiffness-retry-pre-4st",
+            storeys=[4.5, 3.0, 3.0, 3.0],
+            bays=[6.0, 6.0],
+            damping=0.10,
+            masses=4 * [25.0],
+            design_criteria=["EulerShearPre"],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        self.assertTrue(
+            len(np.unique(spec.fem.storey_inertias)) == 2
+        )  # groups correctly
+
+        self.assertTrue(len(np.unique(spec.fem.storey_radii)) == 2)  # groups correctly
+
+    def test_produces_correct_groupings_4(self):
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test-stiffness-retry-pre-4st",
+            storeys=[4.5] + 7 * [3.0],
+            bays=[6.0, 6.0],
+            damping=0.10,
+            masses=8 * [25.0],
+            design_criteria=["EulerShearPre"],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        self.assertTrue(
+            len(np.unique(spec.fem.storey_inertias)) == 4
+        )  # groups correctly
+
+        self.assertTrue(len(np.unique(spec.fem.storey_radii)) == 4)  # groups correctly
 
 
 class LoeraPreDesignTest(TestCase):
@@ -152,6 +201,7 @@ class ShearStiffnessRetryPreTest(TestCase):
     both in stiffnesses and masses.
     the spec of what is 'realistic' is captured in the following formula for the period
     period = num_storeys/8
+    masses = 1T/m2
     """
 
     maxDiff = None
@@ -209,6 +259,9 @@ class ShearStiffnessRetryPreTest(TestCase):
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
+        self.assertTrue(
+            len(np.unique(spec.fem.storey_inertias)) == 2
+        )  # groups correctly
         self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
 
     def test_produces_realistic_periods_and_stiffnesses_4storeys_1(self):
@@ -227,13 +280,16 @@ class ShearStiffnessRetryPreTest(TestCase):
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
+        self.assertTrue(
+            len(np.unique(spec.fem.storey_inertias)) == 2
+        )  # groups correctly
         self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
 
-    def test_produces_realistic_periods_and_stiffnesses_10storeys_1(self):
+    def test_produces_realistic_periods_and_stiffnesses_9storeys_1(self):
         spec = ReinforcedConcreteFrame(
-            name="force-based-design-test-stiffness-retry-pre-10st",
+            name="force-based-design-test-stiffness-retry-pre-9st",
             storeys=[4.5] + 8 * [3.0],
-            bays=[6.0, 6.0],
+            bays=[8.0, 5.0],
             damping=0.10,
             masses=[144.0],
             design_criteria=["EulerShearPre", "ShearStiffnessRetryPre"],
@@ -245,6 +301,30 @@ class ShearStiffnessRetryPreTest(TestCase):
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
+        self.assertTrue(
+            len(np.unique(spec.fem.storey_inertias)) == 3
+        )  # groups correctly
+        self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
+
+    def test_produces_realistic_periods_and_stiffnesses_10storeys_1(self):
+        spec = ReinforcedConcreteFrame(
+            name="force-based-design-test-stiffness-retry-pre-10st",
+            storeys=[4.5] + 9 * [3.0],
+            bays=[3.0, 8.0, 3.0],
+            damping=0.10,
+            masses=[144.0],
+            design_criteria=["EulerShearPre", "ShearStiffnessRetryPre"],
+        )
+        spec.force_design(DESIGN_FIXTURES_PATH)
+        expected_period = spec.miranda_fundamental_period
+        self.assertAlmostEqual(
+            spec.fem.periods[0],
+            expected_period,
+            delta=expected_period * self.rtol_periods,
+        )
+        self.assertTrue(
+            len(np.unique(spec.fem.storey_inertias)) == 4
+        )  # groups correctly
         self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
 
     # TOO SLOW!

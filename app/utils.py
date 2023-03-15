@@ -297,11 +297,11 @@ def eigenvectors_similar(a: np.ndarray, b: np.ndarray, rtol=1e-3) -> bool:
     return True
 
 
-def chunk_arrays(a: np.ndarray, chunk_size: int = 1) -> np.ndarray:
+def chunk_arrays(a: np.ndarray | list[float], chunk_size: int = 1) -> np.ndarray:
     """
     slides array a to number of chunks
     ([0.33, 0.2451, 0.21, 0.344], chunks = 2) -> [0.33, 0.33, 0.21, 0.21]
-    ([0.33, 0.2451, 0.21, 0.344], chunks = 2) -> [0.33, 0.33, 0.33, 0.344]
+    ([0.33, 0.2451, 0.21, 0.344], chunks = 3) -> [0.33, 0.33, 0.33, 0.344]
     """
     if len(a) == 0:
         return a

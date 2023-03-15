@@ -34,7 +34,8 @@ class DesignCriterion(ABC):
 
 
 class EulerShearPre(DesignCriterion):
-    EULER_LAMBDA = 25
+    EULER_LAMBDA_BOTTOM = 15
+    EULER_LAMBDA_TOP = 30
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         """
@@ -42,15 +43,34 @@ class EulerShearPre(DesignCriterion):
         Mexican code recommends <35 to not be considered slender.
         radius of gyration 'rx' of a circular column is R/sqrt(2) therefore a first approx of the radius
         and therefore of Ix = pi r^4 / 4, is:  R = 1.4142 H / lambda
+
+        this class 'chunks' or groups inertias by sqrt(storeys) and goes from
+        robust -> slender from the first floor to the last floor of the building.
         """
+
         mdof = ShearModel.from_spec(self.specification)
+        ns = self.specification.num_storeys
         storeys = np.array(self.specification.storeys)
-        radii = 1.414 * storeys / self.EULER_LAMBDA
-        Ixs = (np.pi * radii**4) / 4
-        for Ix, columns, radius in zip(Ixs, mdof.columns_by_storey, radii):
+        euler_lambdas = np.linspace(self.EULER_LAMBDA_BOTTOM, self.EULER_LAMBDA_TOP, ns)
+        Ixs, radii = [], []
+
+        for lambda_i, columns, storey_height in zip(
+            euler_lambdas, mdof.columns_by_storey, storeys
+        ):
+            radius = 1.414 * storey_height / lambda_i
+            radii.append(radius)
+            Ix = np.pi * radius**4 / 4
+            Ixs.append(Ix)
+
+        chunk_size = np.floor(np.sqrt(ns))
+        new_radii = chunk_arrays(radii, chunk_size=chunk_size)
+        new_Ixs = chunk_arrays(Ixs, chunk_size=chunk_size)
+        for new_Ix, new_radius, columns in zip(
+            new_Ixs, new_radii, mdof.columns_by_storey
+        ):
             for col in columns:
-                col.Ix = float(Ix)
-                col.radius = float(radius)
+                col.Ix = float(new_Ix)
+                col.radius = float(new_radius)
 
         # results = mdof.get_and_set_eigen_results(results_path=results_path)
         # mdof.extras["moments"] = results.Mb.tolist()
@@ -149,41 +169,41 @@ class ShearStiffnessRetryPre(DesignCriterion):
     """
 
     PERIOD_TOLERANCE_PCT: float = 0.2
-    MAX_ITERATIONS = 10
+    MAX_ITERATIONS = 20
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
-        fem = self.fem
         target_period = self.specification.miranda_fundamental_period
-        inertias = np.array(fem.storey_inertias)
+        ns = self.specification.num_storeys
+        chunk_size = np.floor(np.sqrt(ns))
+        leftmost_column_Ixs = np.array([c[0].Ix for c in self.fem.columns_by_storey])
+        columns_Ixs = chunk_arrays(leftmost_column_Ixs, chunk_size=chunk_size)
 
-        # cols_st = fem.columns_by_storey
-        # beams_st = fem.beams_by_storey
-        # ns = self.specification.num_storeys
-        # chunk_size = np.floor(np.sqrt(ns))
-        # leftmost_column_Ixs = np.array([c[0].Ix for c in self.fem.columns_by_storey])
-        # leftmost_beam_Ixs = np.array([b[0].Ix for b in self.fem.beams_by_storey])
-        # columns_Ixs = chunk_arrays(leftmost_column_Ixs, chunk_size=chunk_size)
-        # beams_Ixs = chunk_arrays(leftmost_beam_Ixs, chunk_size=chunk_size)
+        mdof = ShearModel(**{**self.fem.to_dict, "_inertias": columns_Ixs.tolist()})
 
         def target_fn(factor: float) -> float:
-            _inertias = factor * inertias
+            _inertias = factor * columns_Ixs
             mdof = ShearModel.from_spec(
                 self.specification, _inertias=_inertias.tolist()
             )
             fx = target_period - mdof.period
             return fx
 
+        period_difference_pct = (target_period - mdof.period) / target_period
+        # use regula_falsi to get to the desired period, fix (a,b) as follows:
+        # if pct>0 we are too stiff, need to make more flexible, [0.01, 1]
+        # if pct<0 we are too flexible, need to make stiffer, increase inertias [1, 100]
+        a = 0.01 if period_difference_pct > 0 else 1
+        b = 1 if period_difference_pct > 0 else 100
         inertia_factor, period_difference = regula_falsi(
             target_fn,
-            0.01,
-            100,
+            a,
+            b,
             tol=self.PERIOD_TOLERANCE_PCT * target_period,
             iter=self.MAX_ITERATIONS,
-        )  # if inertias are not close by 1 order of magnitude, something is wrong with our predesign methods. either the mass is too big/
-        # beam_inertias = inertia_factor * beams_Ixs
-        # column_inertias = inertia_factr * columns_Ixs
-        _inertias = inertia_factor * inertias
-        mdof = ShearModel.from_spec(self.specification, _inertias=_inertias.tolist())
+        )  # if inertias are not close by 2 orders of magnitude, something is wrong with our predesign methods. either the mass is too big/ or the storeys are too small/big. we have to abort
+
+        column_inertias = inertia_factor * columns_Ixs
+        mdof = ShearModel(**{**self.fem.to_dict, "_inertias": column_inertias.tolist()})
         return mdof
 
 
@@ -199,7 +219,8 @@ class ForceBasedPre(DesignCriterion):
         for index, _class in enumerate(
             [
                 CodeMassesPre,
-                LoeraPre,
+                EulerShearPre,
+                ShearStiffnessRetryPre,
             ]
         ):
             instance: DesignCriterion = _class(
