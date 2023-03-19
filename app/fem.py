@@ -20,6 +20,7 @@ from enum import Enum
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line, Pie
 from app.concrete import DesignException, RectangularConcreteColumn
 from app.elements import (
+    FE,
     Node,
     DiaphragmNode,
     BeamColumn,
@@ -34,7 +35,7 @@ from app.elements import (
 @dataclass
 class FiniteElementModel(ABC, YamlMixin):
     nodes: list[Node]
-    elements: list[BeamColumn]
+    elements: list[FE]
     damping: float = 0.05
     model: str = "ABC"
     num_frames: int = 1
@@ -225,7 +226,6 @@ class FiniteElementModel(ABC, YamlMixin):
             dict(
                 periods=self.periods,
                 freqs=self.frequencies,
-                values=self.values,
                 omegas=self.omegas,
             ),
             index=range(1, len(self.periods) + 1),
@@ -854,8 +854,6 @@ class FiniteElementModel(ABC, YamlMixin):
 
 @dataclass
 class PlainFEM(FiniteElementModel):
-    """the simplest implementation of the interface"""
-
     model: str = "PlainFEM"
 
     def __init__(self, *args, **kwargs):
@@ -1051,10 +1049,12 @@ class BilinFrame(FiniteElementModel):
         cls,
         fem: FiniteElementModel,
         design_moments: list[float],
-        beam_column_ratio: float = 0.75,
+        beam_column_ratio: float = 1.0 / 1.5,
         Q: float = 1.0,
     ) -> "BilinFrame":
-        """will take design moments and put them into beams and columns"""
+        """
+        will take design moments per storey and put them into beams and columns
+        """
         col_moments = np.array(design_moments)
         beam_moments = beam_column_ratio * col_moments
         for cm, cols, bm, beams in zip(

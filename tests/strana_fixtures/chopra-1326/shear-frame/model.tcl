@@ -64,14 +64,14 @@ element elasticBeamColumn 15 11 12 1e9 1.0 1e6 1
 
 
 set eigenvalues [eigen 5]
-set eigen_values_file [open /Users/carlo/vulture/tests/strana_fixtures/chopra-1326/shear-frame/eigen-values.csv "w"]
+set eigen_values_file [open /Users/carlo/vulkan/tests/strana_fixtures/chopra-1326/shear-frame/eigen-values.csv "w"]
 puts $eigen_values_file $eigenvalues
 close $eigen_values_file
 
-recorder EnvelopeElement -file /Users/carlo/vulture/tests/strana_fixtures/chopra-1326/shear-frame/base-columns-envelope.csv -ele 1 2 localForce
-recorder NodeEnvelope -file /Users/carlo/vulture/tests/strana_fixtures/chopra-1326/shear-frame/fixed-nodes.csv -node 1 2 -dof 1 3 reaction
+recorder EnvelopeElement -file /Users/carlo/vulkan/tests/strana_fixtures/chopra-1326/shear-frame/base-columns-envelope.csv -ele 1 2 localForce
+recorder NodeEnvelope -file /Users/carlo/vulkan/tests/strana_fixtures/chopra-1326/shear-frame/fixed-nodes.csv -node 1 2 -dof 1 3 reaction
 
-set timeSeries "Series -dt 0.02 -filePath /Users/carlo/vulture/records/elCentro.csv -factor -32.17"
+set timeSeries "Series -dt 0.02 -filePath /Users/carlo/vulkan/records/elCentro.csv -factor -32.17"
 pattern UniformExcitation 1 1 -accel $timeSeries
 rayleigh 0.26862690983780524 0.00460700264785799 0 0
 # rayleigh 0 0 0 0

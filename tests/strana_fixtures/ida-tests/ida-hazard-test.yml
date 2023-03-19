@@ -4,11 +4,11 @@ curve:
   a0: 0.05
   v0: 2
 records:
-- dt: 0.01
-  name: null
-  path: /Users/carlo/vulture/records/98_SCT190985NS.csv
-  scale: 1
-- dt: 0.01
-  name: null
-  path: /Users/carlo/vulture/records/6_JA241093EW.csv
-  scale: 1
+  - dt: 0.01
+    name: null
+    path: /Users/carlo/vulkan/records/98_SCT190985NS.csv
+    scale: 1
+  - dt: 0.01
+    name: null
+    path: /Users/carlo/vulkan/records/6_JA241093EW.csv
+    scale: 1

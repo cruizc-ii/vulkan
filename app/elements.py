@@ -116,7 +116,7 @@ class BeamColumn(FE, YamlMixin):
     E: float = 1.0
     Ix: float = 1.0
     A: float = 100_000
-    radius: float | None = None
+    radius: float = 1
     storey: int | None = None
     floor: int | None = None
     bay: str | None = None  # 0 for first column

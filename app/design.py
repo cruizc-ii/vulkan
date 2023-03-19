@@ -1,5 +1,6 @@
 from __future__ import annotations
-from .utils import NamedYamlMixin
+import numpy as np
+from .utils import NamedYamlMixin, DesignException
 from dataclasses import dataclass, field
 from abc import ABC
 from app.utils import GRAVITY, DESIGN_DIR, METERS_TO_FEET
@@ -174,6 +175,12 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         self.nodes = nodes
         self.fixed_nodes = fixed_nodes
 
+    def _update_masses_in_place(
+        self, new_masses: list[float] | np.ndarray[float]
+    ) -> None:
+        self.masses = new_masses
+        return
+
     @property
     def summary(self) -> dict:
         return {
@@ -204,9 +211,13 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     def force_design(
         self,
         results_path: Path,
-        seed_class: FiniteElementModel = PlainFEM,
+        seed_class: FiniteElementModel | None = None,
     ) -> list[FiniteElementModel]:
-        fem = seed_class.from_spec(self)
+        fem = None
+        if seed_class is not None:
+            fem = seed_class.from_spec(self)
+        elif len(self.fems) > 0:
+            fem = self.fem
         self.fems = self.design(
             results_path=results_path, criteria=self._design_criteria, fem=fem
         )
@@ -225,7 +236,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         else:
             results_path = results_path / self.name
 
-        if fem is None:
+        if fem is None and len(self.fems) > 0:
             fem = self.fem
 
         fems = []

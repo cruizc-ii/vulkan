@@ -34,8 +34,8 @@ class DesignCriterion(ABC):
 
 
 class EulerShearPre(DesignCriterion):
-    EULER_LAMBDA_BOTTOM = 15
-    EULER_LAMBDA_TOP = 30
+    EULER_LAMBDA_BOTTOM = 25
+    EULER_LAMBDA_TOP = 35
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         """
@@ -47,16 +47,18 @@ class EulerShearPre(DesignCriterion):
         this class 'chunks' or groups inertias by sqrt(storeys) and goes from
         robust -> slender from the first floor to the last floor of the building.
         """
-
-        mdof = ShearModel.from_spec(self.specification)
+        mdof = ShearModel.from_spec(
+            self.specification
+        )  # since this is a PRE design we ignore incoming FEMs
         ns = self.specification.num_storeys
         storeys = np.array(self.specification.storeys)
-        euler_lambdas = np.linspace(self.EULER_LAMBDA_BOTTOM, self.EULER_LAMBDA_TOP, ns)
         Ixs, radii = [], []
+        a, b = self.EULER_LAMBDA_BOTTOM, self.EULER_LAMBDA_TOP
+        xs = np.linspace(0, b, 200 if ns <= 200 else ns)
+        lambdas = 2 * (b - a) / np.pi * np.arctan(xs) + a
 
-        for lambda_i, columns, storey_height in zip(
-            euler_lambdas, mdof.columns_by_storey, storeys
-        ):
+        for i, storey_height in enumerate(storeys):
+            lambda_i = lambdas[i]
             radius = 1.414 * storey_height / lambda_i
             radii.append(radius)
             Ix = np.pi * radius**4 / 4
@@ -65,9 +67,11 @@ class EulerShearPre(DesignCriterion):
         chunk_size = np.floor(np.sqrt(ns))
         new_radii = chunk_arrays(radii, chunk_size=chunk_size)
         new_Ixs = chunk_arrays(Ixs, chunk_size=chunk_size)
+
         for new_Ix, new_radius, columns in zip(
             new_Ixs, new_radii, mdof.columns_by_storey
         ):
+            # changes mdof in place.
             for col in columns:
                 col.Ix = float(new_Ix)
                 col.radius = float(new_radius)
@@ -79,11 +83,11 @@ class EulerShearPre(DesignCriterion):
 
 class CodeMassesPre(DesignCriterion):
     """
-    sets masses on spec and fem equal to 1t/m2 = 10kPa assuming area = bay.length **2
-    therefore mass will be sigma*area/2 since this frame is taking half the board's mass
+    sets masses on spec and fem equal to 1T/m2 = 9.81 kPa assuming area = bay.length **2
+    therefore mass will be sigma*area since this frame is taking the totality the board's mass
     """
 
-    CODE_UNIFORM_LOADS_kPA = 10.0  # 1 t/m2
+    CODE_UNIFORM_LOADS_kPA = 9.81  # 1 t/m2
     SLAB_AREA_PERCENTAGE = 1  # part of the slab mass goes to this frame's beams
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
@@ -91,14 +95,12 @@ class CodeMassesPre(DesignCriterion):
         uniform_load_kPa = kwargs.get("uniform_load_kPa") or self.CODE_UNIFORM_LOADS_kPA
         masses = np.array(
             [
-                uniform_load_kPa
-                * self.SLAB_AREA_PERCENTAGE
-                * self.fem.length**2
-                / GRAVITY
-                for _ in range(self.fem.num_modes)
+                uniform_load_kPa * self.SLAB_AREA_PERCENTAGE * fem.length**2 / GRAVITY
+                for _ in range(fem.num_storeys)
             ]
         )
         fem._update_masses_in_place(masses.tolist())
+        self.specification._update_masses_in_place(masses.tolist())
         fem.get_and_set_eigen_results(results_path=results_path)
         return fem
 
@@ -159,16 +161,16 @@ class LoeraPre(DesignCriterion):
 
 class ShearStiffnessRetryPre(DesignCriterion):
     """
-    does a more realistic grouping of sections
-
-    16 storey building has only 4 groups of inertias
-    9 storey building has only 3 groups of inertias
+    does a more realistic inertia distribution wrt. the heights and masses given.
 
     attempts to attain the empirical period of buildings ns/8
     varying the stiffnesses of the model.
+
+    16 storey building has only 4 groups of inertias
+    9 storey building has only 3 groups of inertias
     """
 
-    PERIOD_TOLERANCE_PCT: float = 0.2
+    PERIOD_TOLERANCE_PCT: float = 0.1
     MAX_ITERATIONS = 20
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
@@ -182,9 +184,7 @@ class ShearStiffnessRetryPre(DesignCriterion):
 
         def target_fn(factor: float) -> float:
             _inertias = factor * columns_Ixs
-            mdof = ShearModel.from_spec(
-                self.specification, _inertias=_inertias.tolist()
-            )
+            mdof = ShearModel(**{**self.fem.to_dict, "_inertias": _inertias.tolist()})
             fx = target_period - mdof.period
             return fx
 
@@ -200,7 +200,8 @@ class ShearStiffnessRetryPre(DesignCriterion):
             b,
             tol=self.PERIOD_TOLERANCE_PCT * target_period,
             iter=self.MAX_ITERATIONS,
-        )  # if inertias are not close by 2 orders of magnitude, something is wrong with our predesign methods. either the mass is too big/ or the storeys are too small/big. we have to abort
+        )  # if inertias are not close by 2 orders of magnitude, something is wrong with our predesign methods.
+        # either the mass is too big/ or the storeys are too small/big. we have to abort here.
 
         column_inertias = inertia_factor * columns_Ixs
         mdof = ShearModel(**{**self.fem.to_dict, "_inertias": column_inertias.tolist()})
@@ -235,7 +236,7 @@ class ShearRSA(DesignCriterion):
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = ShearModel(**self.fem.to_dict)
         results = fem.get_and_set_eigen_results(results_path)
-        S = results.S
+        S = results.inertial_forces
         spectra: Spectra = self.specification._design_spectra[self.__class__.__name__]
         As = np.array(spectra.get_ordinates_for_periods(fem.periods))
         forces = S.dot(np.eye(len(As)) * As)
@@ -246,26 +247,49 @@ class ShearRSA(DesignCriterion):
         return fem
 
 
+# class ShearRSA(DesignCriterion):
+#     def run(
+#         self, results_path: Path, *args, building_code: BuildingCode, **kwargs
+#     ) -> FiniteElementModel:
+#         return super().run(results_path, *args, **kwargs)
+
+
 @dataclass
 class CDMX2017Q1(DesignCriterion):
     Q: int = 1
+    column_to_beam_resistance_ratio: float = 1.5  # strong-column/weak-beam criterion
+    column_to_beam_inertia_ratio: float = 1.5
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
+        """
+        this criterion changes many properties of spec in place!
+
+        - change masses in place
+        """
         from app.strana import RSA
 
         fem = PlainFEM.from_spec(self.specification)
         criterion = ForceBasedPre(specification=self.specification, fem=fem)
-        designed_fem = criterion.run(results_path=results_path, *args, **kwargs)
+        shear_fem = criterion.run(results_path=results_path, *args, **kwargs)
 
-        data = designed_fem.to_dict
-        fem = ShearModel(**data)
         code = CDMXBuildingCode(Q=self.Q)
-        strana = RSA(results_path=results_path, fem=fem, code=code)
+        strana = RSA(results_path=results_path, fem=shear_fem, code=code)
         design_moments, peak_shears, cs = strana.srss()
 
+        for columns_shear, beams_fem, columns_fem in zip(
+            shear_fem.columns_by_storey, fem.beams_by_storey, fem.columns_by_storey
+        ):
+            for new_col, b, c in zip(columns_shear, beams_fem, columns_fem):
+                b.Ix = new_col.Ix / self.column_to_beam_inertia_ratio
+                c.Ix = new_col.Ix
+
         fem = BilinFrame.from_elastic(
-            fem=designed_fem, design_moments=design_moments, Q=self.Q
+            fem=fem,
+            design_moments=design_moments,
+            beam_column_ratio=self.column_to_beam_resistance_ratio,
+            Q=self.Q,
         )
+        fem.get_and_set_eigen_results(results_path=results_path)
         fem.extras["column_design_moments"] = design_moments
         fem.extras["design_shears"] = peak_shears
         fem.extras["c_design"] = cs

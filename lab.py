@@ -32,7 +32,7 @@ st.set_page_config(
 )
 
 
-DEFAULT_MODULE = 5
+DEFAULT_MODULE = 1
 padding_top = 2
 
 st.markdown(
@@ -603,7 +603,7 @@ if state.module == 1:
 
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Net worth", f"$ {design.fem.total_net_worth:.0f} k USD")
-        col2.metric("fundamental period", f"{design.fem.periods[0]:.2f} s")
+        col2.metric("fundamental period", f"{design.fem.period:.2f} s")
         col3.metric("height", f"{design.height:.1f} m")
         col4.metric("width", f"{design.width:.1f} m")
 

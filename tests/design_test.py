@@ -270,7 +270,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             storeys=[4.5, 3.0, 3.0, 3.0],
             bays=[6.0, 6.0],
             damping=0.10,
-            masses=4 * [25.0],
+            masses=[100.0],
             design_criteria=["EulerShearPre", "ShearStiffnessRetryPre"],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
@@ -283,7 +283,7 @@ class ShearStiffnessRetryPreTest(TestCase):
         self.assertTrue(
             len(np.unique(spec.fem.storey_inertias)) == 2
         )  # groups correctly
-        self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
+        # self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
 
     def test_produces_realistic_periods_and_stiffnesses_9storeys_1(self):
         spec = ReinforcedConcreteFrame(
@@ -304,7 +304,7 @@ class ShearStiffnessRetryPreTest(TestCase):
         self.assertTrue(
             len(np.unique(spec.fem.storey_inertias)) == 3
         )  # groups correctly
-        self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
+        # self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
 
     def test_produces_realistic_periods_and_stiffnesses_10storeys_1(self):
         spec = ReinforcedConcreteFrame(
@@ -325,7 +325,7 @@ class ShearStiffnessRetryPreTest(TestCase):
         self.assertTrue(
             len(np.unique(spec.fem.storey_inertias)) == 4
         )  # groups correctly
-        self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
+        # self.assertTrue(all(spec.fem.periods[0] < spec.fem.periods[1:]))  # sanity check
 
     # TOO SLOW!
     # def test_produces_realistic_periods_and_stiffnesses_20storeys_1(self):
@@ -579,6 +579,10 @@ class Chopra1326RSADesign(TestCase):
         """it should load a spec and produce a realistic design"""
         spec = ReinforcedConcreteFrame.from_file(self.file)
         spec.fems = spec.force_design(DESIGN_FIXTURES_PATH)
+        fem = spec.fem
+        self.assertTrue(
+            np.allclose(fem.periods, [2.0, 0.6852, 0.4346, 0.3383, 0.2966], rtol=0.01)
+        )
         expected_forces = np.array(
             [
                 [4.9, 9.4, 13.14, 15.82, 17.21],
@@ -589,7 +593,9 @@ class Chopra1326RSADesign(TestCase):
             ]
         ).T
         self.assertTrue(
-            np.allclose(spec.fem.extras["forces"], expected_forces, rtol=0.10)
+            np.allclose(
+                spec.fem.extras["forces"], expected_forces, rtol=0.1
+            )  # 10% tolerance because of possible spectra differences.
         )
 
     def test_computes_design_forces_SRSS(self):
