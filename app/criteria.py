@@ -14,6 +14,7 @@ from app.fem import (
     PlainFEM,
     IMKFrame,
 )
+from app.elements import ElasticBeamColumn
 from pathlib import Path
 from functools import partial
 
@@ -221,7 +222,7 @@ class ForceBasedPre(DesignCriterion):
         for index, _class in enumerate(
             [
                 CodeMassesPre,
-                LoeraPreArctan,
+                LoeraPre,
                 ShearStiffnessRetryPre,
             ]
         ):
@@ -259,7 +260,7 @@ class ShearRSA(DesignCriterion):
 class CDMX2017Q1(DesignCriterion):
     Q: int = 1
     column_to_beam_resistance_ratio: float = 1.5  # strong-column/weak-beam criterion
-    column_to_beam_inertia_ratio: float = 1.5
+    column_to_beam_inertia_ratio: float = 1.5**4  # proportional to 1.5^4 radius
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         """
@@ -277,12 +278,27 @@ class CDMX2017Q1(DesignCriterion):
         strana = RSA(results_path=results_path, fem=shear_fem, code=code)
         design_moments, peak_shears, cs = strana.srss()
 
-        for columns_shear, beams_fem, columns_fem in zip(
+        new_elements = []
+        for columns_shear_model, beams_fem, columns_fem in zip(
             shear_fem.columns_by_storey, fem.beams_by_storey, fem.columns_by_storey
         ):
-            for new_col, b, c in zip(columns_shear, beams_fem, columns_fem):
-                b.Ix = new_col.Ix / self.column_to_beam_inertia_ratio
-                c.Ix = new_col.Ix
+            new_col = columns_shear_model[0]
+            new_Ix = new_col.Ix
+            for col in columns_fem:
+                data = col.to_dict
+                data["Ix"] = new_Ix
+                data["radius"] = None
+                ele = ElasticBeamColumn(**data)
+                new_elements.append(ele)
+
+            for beam in beams_fem:
+                data = beam.to_dict
+                data["Ix"] = new_Ix / self.column_to_beam_inertia_ratio
+                data["radius"] = None
+                ele = ElasticBeamColumn(**data)
+                new_elements.append(ele)
+
+        fem.elements = new_elements
 
         fem = BilinFrame.from_elastic(
             fem=fem,

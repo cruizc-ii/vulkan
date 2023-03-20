@@ -309,7 +309,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             delta=expected_period * self.rtol_periods,
         )
         self.assertTrue(
-            len(np.unique(spec.fem.storey_inertias)) == 2
+            len(np.unique(spec.fem.storey_inertias)) == 3
         )  # groups correctly
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))  # sanity check
 
@@ -393,6 +393,9 @@ class ShearStiffnessRetryPreTest(TestCase):
             expected_period,
             delta=expected_period * self.rtol_periods,
         )
+        self.assertTrue(
+            len(np.unique(spec.fem.storey_inertias)) == 4
+        )  # groups correctly
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))  # sanity check
 
 
@@ -446,7 +449,7 @@ class ForcePreDesignTest(TestCase):
             storeys=[3.0],
             bays=[8.0],
             damping=0.05,
-            design_criteria=["ForceBasedPre"],
+            design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
         expected_period = spec.miranda_fundamental_period
@@ -468,7 +471,7 @@ class ForcePreDesignTest(TestCase):
             storeys=[4.5, 3.0],
             bays=[3.0, 6.0, 3.0],
             damping=0.15,
-            design_criteria=["ForceBasedPre"],
+            design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
         expected_period = spec.miranda_fundamental_period
@@ -507,7 +510,7 @@ class ForcePreDesignTest(TestCase):
             storeys=[4.5, 4.5] + 4 * [3.0],
             bays=[3.0, 7.0, 7.0, 3.0],
             damping=0.22,
-            design_criteria=["ForceBasedPre"],
+            design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
         expected_period = spec.miranda_fundamental_period
@@ -529,7 +532,7 @@ class ForcePreDesignTest(TestCase):
             storeys=[4.5, 4.5] + 8 * [3.0],
             bays=[3.0, 7.0, 7.0],
             damping=0.12,
-            design_criteria=["ForceBasedPre"],
+            design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
         expected_period = spec.miranda_fundamental_period
@@ -551,7 +554,7 @@ class ForcePreDesignTest(TestCase):
             storeys=[4.5, 4.5] + 13 * [3.0],
             bays=[3.0, 6.0, 6.0, 3.0],
             damping=0.3,
-            design_criteria=["ForceBasedPre"],
+            design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
         expected_period = spec.miranda_fundamental_period
@@ -573,7 +576,7 @@ class ForcePreDesignTest(TestCase):
             storeys=[4.5, 4.5] + 18 * [3.0],
             bays=[6, 8, 8, 6],
             damping=0.01,
-            design_criteria=["ForceBasedPre"],
+            design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
         expected_period = spec.miranda_fundamental_period
@@ -595,7 +598,7 @@ class ForcePreDesignTest(TestCase):
             storeys=[4.5, 4.5, 4.5] + 27 * [3.0],
             bays=[6, 6, 6, 6],
             damping=0.05,
-            design_criteria=["ForceBasedPre"],
+            design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
         expected_period = spec.miranda_fundamental_period

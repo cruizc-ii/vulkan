@@ -148,8 +148,8 @@ class FiniteElementModel(ABC, YamlMixin):
         drift_y = ndf.loc[ix]["u"]
         period = self.periods[0] if len(self.periods) > 0 else 0
         period_error = (
-            (self.periods[0] - self.chopra_fundamental_period_plus1sigma)
-            / self.chopra_fundamental_period_plus1sigma
+            (self.periods[0] - self.miranda_fundamental_period)
+            / self.miranda_fundamental_period
             if len(self.periods) > 0
             else ""
         )
@@ -165,7 +165,7 @@ class FiniteElementModel(ABC, YamlMixin):
             "drift_y [%]": 100 * drift_y,
             "c_design [1]": self.extras.get("c_design"),
             "period [s]": f"{period:.2f} s",
-            "chopra period [s]": f"{self.chopra_fundamental_period_plus1sigma:.2f} s",
+            "miranda period [s]": f"{self.miranda_fundamental_period:.2f} s",
             "period_error": f"{100*period_error:.1f} %",
             "_pushover_x": df["u"].to_list(),
             "_pushover_y": df["sum"].to_list(),
@@ -954,7 +954,6 @@ class ShearModel(FiniteElementModel):
             raise DesignException("Stiffness matrix is not positive definite")
         vals, vecs = eigh(K, M)
         # vals, vecs = vals[::-1], vecs[::-1]
-        print(f"{vals=}")
         omegas = np.sqrt(vals)
         freqs = omegas / 2 / np.pi
         Ts = 1.0 / freqs

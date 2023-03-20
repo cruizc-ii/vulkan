@@ -641,7 +641,7 @@ if state.module == 1:
             c_design = design.fem.pushover_stats["c_design"]
             design_period_error = design.fem.summary["period_error"]
             period = design.fem.summary["period [s]"]
-            chopra_period = design.fem.summary["chopra period [s]"]
+            chopra_period = design.fem.summary["miranda period [s]"]
             col1, col2 = st.columns(2)
             col1.metric(label="Design Cs", value=c_design, delta=design_c_error)
             col2.metric(
