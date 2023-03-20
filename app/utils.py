@@ -19,6 +19,23 @@ COMPARE_DIR = MODELS_DIR / "compare"
 RESULTS_DIR = ROOT_DIR / "results"
 ASSETS_PATH = "https://vulkan1.s3.amazonaws.com/"
 GRAVITY = 9.81
+METERS_TO_FEET = 1 / 0.3048
+
+
+class DesignException(Exception):
+    pass
+
+
+class SameSignException(DesignException):
+    pass
+
+
+class NegativeSignException(DesignException):
+    pass
+
+
+class PositiveSignException(DesignException):
+    pass
 
 
 def find_files(
@@ -278,3 +295,49 @@ def eigenvectors_similar(a: np.ndarray, b: np.ndarray, rtol=1e-3) -> bool:
             print(f"col {ix} is not similar!")
             return False
     return True
+
+
+def chunk_arrays(a: np.ndarray | list[float], chunk_size: int = 1) -> np.ndarray:
+    """
+    slides array a to number of chunks
+    ([0.33, 0.2451, 0.21, 0.344], chunks = 2) -> [0.33, 0.33, 0.21, 0.21]
+    ([0.33, 0.2451, 0.21, 0.344], chunks = 3) -> [0.33, 0.33, 0.33, 0.344]
+    """
+    if len(a) == 0:
+        return a
+    val = a[0]
+    b = []
+    for i, v in enumerate(a):
+        if i % chunk_size == 0:
+            val = v
+        b.append(val)
+    return np.array(b)
+
+
+def same_sign_len2arr(arr) -> bool:
+    return np.prod(np.sign(arr)) > 0
+
+
+def regula_falsi(f, a, b, tol=1e-6, iter=100) -> tuple[float, float]:
+    fa, fb = f(a), f(b)
+    if same_sign_len2arr([fa, fb]):
+        if fa > 0:
+            raise PositiveSignException(f"{fa=} {fb=} have same sign!")
+        else:
+            raise NegativeSignException(f"{fa=} {fb=} have same sign!")
+    i = 0
+    err = np.inf
+    while abs(err) > tol:
+        if i > iter:
+            raise Exception(f"max iterations {iter} exceeded")
+        x0 = a + fa * (a - b) / (fb - fa)
+        fx0 = f(x0)
+        if same_sign_len2arr([fb, fx0]):
+            b = x0
+            fb = fx0
+        else:
+            a = x0
+            fa = fx0
+        # fa, fb = f(a), f(b) # this was evaluating two more times than necessary
+        err = fx0
+    return x0, fx0

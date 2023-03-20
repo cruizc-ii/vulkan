@@ -5,26 +5,16 @@ from dataclasses import dataclass, field
 from scipy.integrate import trapezoid
 import pandas as pd
 from functools import partial
+from app.utils import (
+    regula_falsi,
+    NegativeSignException,
+    PositiveSignException,
+    DesignException,
+)
 
 kPA_TO_KSI = 0.000145038
 INCHES_TO_METERS = 0.0254
 MomentRotationDataFrame = pd.DataFrame  # columns M and r with index
-
-
-class DesignException(Exception):
-    pass
-
-
-class SameSignException(DesignException):
-    pass
-
-
-class NegativeSignException(DesignException):
-    pass
-
-
-class PositiveSignException(DesignException):
-    pass
 
 
 @dataclass
@@ -594,30 +584,3 @@ set stable {self.stable}
         title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f} {total_cost=:.2f}"
         print(title)
         return total_cost
-
-
-def same_sign(arr) -> bool:
-    return np.prod(np.sign(arr)) > 0
-
-
-def regula_falsi(f, a, b, tol=1e-6, iter=100) -> tuple[float, float]:
-    fa, fb = f(a), f(b)
-    if same_sign([fa, fb]):
-        if fa > 0:
-            raise PositiveSignException(f"{fa=} {fb=} have same sign!")
-        else:
-            raise NegativeSignException(f"{fa=} {fb=} have same sign!")
-    i = 0
-    err = np.inf
-    while abs(err) > tol:
-        if i > iter:
-            raise Exception("max iters exceeded")
-        x0 = a + fa * (a - b) / (fb - fa)
-        fx0 = f(x0)
-        if same_sign([fb, fx0]):
-            b = x0
-        else:
-            a = x0
-        fa, fb = f(a), f(b)
-        err = fx0
-    return x0, fx0

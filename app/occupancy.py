@@ -325,7 +325,8 @@ class BuildingOccupancy:
     model_str: str
     _model: Optional[OccupancyModel] = None
 
-    DEFAULT: str = "MidRisePrivateOffice.yml"
+    # DEFAULT: str = "MidRisePrivateOffice.yml" ## TOO SLOW for HUGE buildings
+    DEFAULT: str = "EmptyOccupancy.yml"
 
     @classmethod
     def options(cls) -> dict:

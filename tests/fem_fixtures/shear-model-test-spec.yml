@@ -1,0 +1,5 @@
+name: shear-spec-for-shear-model-test
+storeys: [3.0, 3.0]
+masses: [100, 100]
+bays: [5.0, 5.0]
+damping: 0.05

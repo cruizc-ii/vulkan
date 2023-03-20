@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app.fem import Node, ElasticBeamColumn, FiniteElementModel, FE
+from app.fem import FiniteElementModel
 from app.hazard import Hazard, Record
 from abc import ABC, abstractmethod
 from pandas import DataFrame, set_option, read_csv
@@ -18,6 +18,7 @@ from app.utils import (
 from dataclasses import dataclass, field
 from plotly.graph_objects import Figure
 import numpy as np
+from numpy.linalg import inv
 from pathlib import Path
 import os
 import subprocess
@@ -54,6 +55,13 @@ class StructuralResultView(YamlMixin):
     peak_floor_accels: list | None = None
     record: Record | None = None
     scale: float | None = None
+
+    gamma: float | None = None
+    shears: np.ndarray | None = None
+    effective_masses: np.ndarray | None = None
+    inertial_forces: np.ndarray | None = None
+    overturning_moments: np.ndarray | None = None
+    effective_heights: np.ndarray | None = None
 
     _DEFAULT_NAME = "results.yml"
     _K_STATIC_NAME = "K-static.csv"
@@ -567,6 +575,8 @@ class GravityRecorderMixin(Recorder):
 
     @property
     def gravity_str(self) -> str:
+        from app.elements import FE
+
         analysis_str = "pattern Plain 1 Linear {\n"
         for beams, beam_load in zip(
             self.fem.beams_by_storey, self.fem.uniform_beam_loads
@@ -896,7 +906,6 @@ class StructuralAnalysis:
         tries to condense Ke statically using info in FEM
         ks = ktt - kto * koo^-1 * kot
         """
-        from numpy.linalg import inv
 
         Ke = self.Ke
         ixs = self.fem.mass_dofs
@@ -1264,14 +1273,14 @@ class RSA(StructuralAnalysis):
     def get_design_forces(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """nxn where each column is f_n = s_i a_i"""
         view = self.fem.get_and_set_eigen_results(self.results_path)
-        S = view.S
+        S = view.inertial_forces
         pseudo_accels = self.code.get_Sas(self.fem.periods)
         As = np.array(pseudo_accels)
         n = len(As)
         As = np.eye(n) * As
         F = S.dot(As)  # s_i a_i
         cs = pseudo_accels[0] / GRAVITY
-        return F, view.V, cs
+        return F, view.shears, cs
 
     def srss(self) -> tuple[list, list, list]:
         moments = []

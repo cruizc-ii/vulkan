@@ -32,7 +32,7 @@ st.set_page_config(
 )
 
 
-DEFAULT_MODULE = 5
+DEFAULT_MODULE = 1
 padding_top = 2
 
 st.markdown(
@@ -158,8 +158,8 @@ with st.sidebar:
         )
         design_criteria = st.selectbox(
             "design criteria",
-            DesignCriterionFactory.options(),
-            index=DesignCriterionFactory.options().index(
+            DesignCriterionFactory.public_options(),
+            index=DesignCriterionFactory.public_options().index(
                 design.design_criteria[0] or DesignCriterionFactory.DEFAULT
             )
             # this [0] is bad design. the idea was to have multiple criteria, this is too complex in the ui.
@@ -603,7 +603,7 @@ if state.module == 1:
 
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Net worth", f"$ {design.fem.total_net_worth:.0f} k USD")
-        col2.metric("fundamental period", f"{design.fem.periods[0]:.2f} s")
+        col2.metric("fundamental period", f"{design.fem.period:.2f} s")
         col3.metric("height", f"{design.height:.1f} m")
         col4.metric("width", f"{design.width:.1f} m")
 
@@ -637,9 +637,19 @@ if state.module == 1:
             col1, col2 = st.columns(2)
             col1.plotly_chart(fig)
             col2.plotly_chart(nfig)
+            design_c_error = design.fem.pushover_stats["design_error"]
+            c_design = design.fem.pushover_stats["c_design"]
+            design_period_error = design.fem.summary["period_error"]
+            period = design.fem.summary["period [s]"]
+            chopra_period = design.fem.summary["miranda period [s]"]
+            col1, col2 = st.columns(2)
+            col1.metric(label="Design Cs", value=c_design, delta=design_c_error)
+            col2.metric(
+                label="Empirical period", value=chopra_period, delta=design_period_error
+            )
             df = pd.DataFrame(design.fem.pushover_stats, index=[0])
             st.table(df)
-            design.fem.extras
+            st.dataframe(design.fem.extras)
 
 
 if state.module == 2:

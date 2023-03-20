@@ -1,8 +1,9 @@
 from __future__ import annotations
-from .utils import NamedYamlMixin
+import numpy as np
+from .utils import NamedYamlMixin, DesignException
 from dataclasses import dataclass, field
 from abc import ABC
-from app.utils import GRAVITY, DESIGN_DIR
+from app.utils import GRAVITY, DESIGN_DIR, METERS_TO_FEET
 from app.criteria import DesignCriterionFactory
 from app.fem import FiniteElementModel, PlainFEM, FEMFactory
 from pathlib import Path
@@ -22,15 +23,12 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     name: str
     storeys: list[float] = field(default_factory=lambda: [4.0])
     bays: list[float] = field(default_factory=lambda: [8.0])
-    masses: list[float] = field(default_factory=lambda: [10.0])
+    masses: list[float] = field(default_factory=list)
     damping: float = 0.05
     num_frames: int = 1
-
-    uniform_beam_loads_by_mass: list[float] | None = None
     design_criteria: list[str] = field(
-        default_factory=DesignCriterionFactory.default_criteria
+        default_factory=DesignCriterionFactory.public_options
     )
-
     design_spectra: dict[dict[str, str], str] = field(default_factory=dict)
 
     _design_criteria: list["DesignCriterion"] | None = None
@@ -42,6 +40,8 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     floors: list[float] | None = None
     height: float | None = None
     width: float | None = None
+    chopra_fundamental_period_plus1sigma: float | None = None
+    miranda_fundamental_period: float | None = None
 
     num_storeys: float | None = None
     num_floors: float | None = None
@@ -50,6 +50,17 @@ class BuildingSpecification(ABC, NamedYamlMixin):
 
     occupancy: str | None = None
     fems: list[FiniteElementModel] = field(default_factory=list)
+
+    Icols: float = 0.001
+    Ibeams: float = 0.001
+    Ecols: float = 30e6
+    Ebeams: float = 30e6
+
+    def __post_init__(self):
+        self.__pre_init__()
+        if all([isinstance(f, dict) for f in self.fems]):
+            # print([f["model"] for f in self.fems])
+            self.fems = [FEMFactory(**data) for data in self.fems]
 
     def __pre_init__(self) -> None:
         self._design_criteria = [
@@ -63,6 +74,10 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         self.columns = [0.0] + self.bays
         self.height = sum(self.storeys)
         self.width = sum(self.bays)
+        self.chopra_fundamental_period_plus1sigma = (
+            0.023 * (self.height * METERS_TO_FEET) ** 0.9
+        )
+        self.miranda_fundamental_period = self.num_storeys / 8
 
         if self.occupancy is None:
             from app.occupancy import BuildingOccupancy
@@ -71,21 +86,13 @@ class BuildingSpecification(ABC, NamedYamlMixin):
 
         if len(self.masses) == 1:
             self.masses = [self.masses[0] for _ in range(self.num_storeys)]
-
-        self.uniform_beam_loads_by_mass = [
-            GRAVITY * mass / self.width for mass in self.masses
-        ]
+        elif len(self.masses) == 0:
+            self.masses = [1 * self.width**2 for _ in range(self.num_storeys)]
 
         self._design_spectra = {
             criteria: Spectra(**data) for criteria, data in self.design_spectra.items()
         }
         self.__set_up__()
-
-    def __post_init__(self):
-        self.__pre_init__()
-        if all([isinstance(f, dict) for f in self.fems]):
-            # print([f["model"] for f in self.fems])
-            self.fems = [FEMFactory(**data) for data in self.fems]
 
     def __set_up__(self):
         columns, colIDs = {}, {}
@@ -168,13 +175,19 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         self.nodes = nodes
         self.fixed_nodes = fixed_nodes
 
+    def _update_masses_in_place(
+        self, new_masses: list[float] | np.ndarray[float]
+    ) -> None:
+        self.masses = new_masses
+        return
+
     @property
     def summary(self) -> dict:
         return {
             "design name": self.name,
             "damping": self.damping,
             "storeys": self.num_storeys,
-            "weight": self.weight,
+            "weight": self.weight_str,
             "bays": self.num_bays,
             "occupancy": self.occupancy,
             "num frames": self.num_frames,
@@ -188,19 +201,23 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         return self.fems[-1]
 
     @property
-    def total_mass(self):
+    def total_mass(self) -> float:
         return sum(self.masses)
 
     @property
-    def weight(self):
+    def weight_str(self) -> str:
         return f"{self.total_mass * GRAVITY:.1f}"
 
     def force_design(
         self,
         results_path: Path,
-        seed_class: FiniteElementModel = PlainFEM,
+        seed_class: FiniteElementModel | None = None,
     ) -> list[FiniteElementModel]:
-        fem = seed_class.from_spec(self)
+        fem = None
+        if seed_class is not None:
+            fem = seed_class.from_spec(self)
+        elif len(self.fems) > 0:
+            fem = self.fem
         self.fems = self.design(
             results_path=results_path, criteria=self._design_criteria, fem=fem
         )
@@ -219,14 +236,13 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         else:
             results_path = results_path / self.name
 
-        if fem is None:
+        if fem is None and len(self.fems) > 0:
             fem = self.fem
 
         fems = []
-        for ix, _class in enumerate(criteria):
+        for _class in criteria:
             instance: DesignCriterion = _class(specification=self, fem=fem)
             filepath = results_path / instance.__class__.__name__
-            # filepath = results_path / str(ix)
             fem = instance.run(results_path=filepath, *args, **kwargs)
             fems.append(fem)
 
@@ -239,13 +255,11 @@ class ReinforcedConcreteFrame(BuildingSpecification):
     Ec: float = 30e6
     fy: float = 420e3
     Es: float = 200e6
-    Ecols: float = 30e6
-    Ebeams: float = 30e6
-    Icols: float = 0.0015
-    Ibeams: float = 0.0015
 
     def __post_init__(self):
         # WARNING: this is an inconsistency with out design procedures
         # each BC defines its own Ec, but this property is independent of legal matters!
         self.Ec = 4.4e6 * (self.fc / 1e3) ** 0.5
+        self.Ecols = self.Ec
+        self.Ebeams = self.Ec
         return super().__post_init__()
