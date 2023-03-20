@@ -12,7 +12,7 @@ from app.utils import (
 )
 from dataclasses import dataclass, field
 import numpy as np
-from scipy.linalg import eigh
+from scipy.linalg import eigh, ishermitian
 import pandas as pd
 from pathlib import Path
 from app.utils import GRAVITY, SummaryEDP, YamlMixin, ASSETS_PATH
@@ -793,6 +793,22 @@ class FiniteElementModel(ABC, YamlMixin):
         return [c.radius for c in self.beams]
 
     @property
+    def storey_stiffnesses(self) -> list[float]:
+        ks = []
+        for cols in self.columns_by_storey:
+            cols_k = [c.get_and_set_k() for c in cols]
+            ks.append(sum(cols_k))
+        return ks
+
+    @property
+    def storey_inertias(self) -> list[float]:
+        Ix = []
+        for cols in self.columns_by_storey:
+            cols_k = [c.Ix for c in cols]
+            Ix.append(sum(cols_k))
+        return Ix
+
+    @property
     def node_recorders(self) -> str:
         """TODO; add -time to .envelope to see the pseudotime that the min/max happened in"""
         s = ""
@@ -909,12 +925,14 @@ class ShearModel(FiniteElementModel):
             ):
                 data = prev_col.to_dict
                 data["Ix"] = self._inertias[i]
+                data["radius"] = None
                 columns.append(ElasticBeamColumn(**data))
         else:
             for cols, prev_col in zip(columns_by_storey, first_bay_columns):
                 data = prev_col.to_dict
                 Ixs = [c.Ix for c in cols]
                 data["Ix"] = sum(Ixs)
+                data["radius"] = None
                 columns.append(ElasticBeamColumn(**data))
 
         self.num_dofs = len(columns)
@@ -925,14 +943,18 @@ class ShearModel(FiniteElementModel):
         self._height_matrix = np.diag(heights)
 
         ks = np.array(self.storey_stiffnesses)
-        upper = -np.diagflat(ks[:-1], 1)
-        lower = -np.diagflat(ks[:-1], -1)
+        upper = -np.diagflat(ks[1:], 1)
+        lower = -np.diagflat(ks[1:], -1)
         ks2 = np.roll(np.copy(ks), -1)
         ks2[-1] = 0
         self._stifness_matrix = np.diag(ks) + np.diag(ks2) + upper + lower
         K, M = self._stifness_matrix, self._mass_matrix
+        isher = ishermitian(K)
+        if not isher:
+            raise DesignException("Stiffness matrix is not positive definite")
         vals, vecs = eigh(K, M)
-        vals, vecs = vals[::-1], vecs[::-1]
+        # vals, vecs = vals[::-1], vecs[::-1]
+        print(f"{vals=}")
         omegas = np.sqrt(vals)
         freqs = omegas / 2 / np.pi
         Ts = 1.0 / freqs
@@ -945,22 +967,6 @@ class ShearModel(FiniteElementModel):
     def build_and_place_assets(self) -> list[Asset]:
         """no room for assets"""
         return []
-
-    @property
-    def storey_stiffnesses(self) -> list[float]:
-        ks = []
-        for cols in self.columns_by_storey:
-            cols_k = [c.k for c in cols]
-            ks.append(sum(cols_k))
-        return ks
-
-    @property
-    def storey_inertias(self) -> list[float]:
-        Ix = []
-        for cols in self.columns_by_storey:
-            cols_k = [c.Ix for c in cols]
-            Ix.append(sum(cols_k))
-        return Ix
 
     @property
     def storey_radii(self) -> list[float]:

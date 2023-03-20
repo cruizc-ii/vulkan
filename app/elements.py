@@ -109,23 +109,35 @@ class DiaphragmNode(Node):
 
 @dataclass
 class BeamColumn(FE, YamlMixin):
+    """
+    circular & axially rigid.
+    natural coordinates bay:ix storey:iy
+    """
+
     type: str = ElementTypes.BEAM.value
     model: str = "BeamColumn"
     i: int | None = None
     j: int | None = None
+    radius: float | None = None
+    Ix: float | None = None
     E: float = 1.0
-    Ix: float = 1.0
     A: float = 100_000
-    radius: float = 1
     storey: int | None = None
     floor: int | None = None
     bay: str | None = None  # 0 for first column
     transf: int = 1
     length: float = 1.0
     category: str = "structural"
+    CRACKED_INERTIA_FACTOR: float = 1.0
 
     def __post_init__(self):
         self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
+        if self.Ix and not self.radius:
+            self.radius = (4 * self.Ix / np.pi) ** 0.25
+        elif self.radius and not self.Ix:
+            self.Ix = self.CRACKED_INERTIA_FACTOR * np.pi * self.radius**4 / 4
+        elif not self.Ix and not self.radius:
+            raise Exception("BeamColumn requires Ix or radius")
 
     def __str__(self) -> str:
         return f"element elasticBeamColumn {self.id} {self.i} {self.j} {self.A:.5g} {self.E:.6g} {self.Ix:.6g} {self.transf}\n"
@@ -134,12 +146,8 @@ class BeamColumn(FE, YamlMixin):
 @dataclass
 class ElasticBeamColumn(RiskAsset, BeamColumn):
     """
-    circular & axially rigid.
-    natural coordinates bay:ix storey:iy
-
-    we include nonlinear properties so it can load nonlinear models as well..
-    this is bad design.?
-    I can transition from elastic -> plastic
+    we include nonlinear properties so it can load nonlinear models as well
+    so we can transition from elastic -> plastic
     """
 
     model: str = "ElasticBeamColumn"
@@ -167,8 +175,9 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
             else:
                 self.name = "ConcreteBeamAsset"
         self._risk = RiskModelFactory(self.name)
-        self.k = self.get_k()
-        super().__post_init__()
+        self.k = self.get_and_set_k()
+        BeamColumn.__post_init__(self)
+        RiskAsset.__post_init__(self)
         if self.radius:
             self.get_and_set_net_worth()
         self.node = self.i
@@ -223,8 +232,10 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
         )
         return self.net_worth
 
-    def get_k(self) -> float:
-        return 12 * self.E * self.Ix / self.length**3
+    def get_and_set_k(self) -> float:
+        k = 12 * self.E * self.Ix / self.length**3
+        self.k = k
+        return self.k
 
     @staticmethod
     def from_adjacency(

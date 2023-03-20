@@ -105,16 +105,6 @@ class CodeMassesPre(DesignCriterion):
         return fem
 
 
-class LoeraPreArctan(DesignCriterion):
-    def __init__(self, *args, **kwargs):
-        ns = self.specification.num_storeys
-        # stress_pct_empirical = (1 - np.exp(-0.05 * ns)) / (
-        #     1 + np.exp(-0.05 * ns)
-        # )  # smaller -> stiffer
-        self.STRESS_PCT_EMPIRICAL = 2 / np.pi * np.arctan(0.05 * ns)
-        super().__init__(*args, **kwargs)
-
-
 class LoeraPre(DesignCriterion):
     """
     X-section column area such that working stress is a percentage of f'c under gravity conditions
@@ -127,14 +117,11 @@ class LoeraPre(DesignCriterion):
     _BEAM_CRACKED_INERTIAS = 1.0
     STRESS_PCT_EMPIRICAL: float | None = None
 
-    def __init__(self, *args, **kwargs):
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         if not self.STRESS_PCT_EMPIRICAL:
             self.STRESS_PCT_EMPIRICAL = self.WORKING_STRESS_PCT
-        super().__init__(*args, **kwargs)
-
-    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = PlainFEM.from_spec(self.specification)
-        weights = np.array(self.fem.cumulative_weights)
+        weights = np.array(fem.cumulative_weights)
         cols_st = fem.columns_by_storey
         beams_st = fem.beams_by_storey
 
@@ -150,13 +137,25 @@ class LoeraPre(DesignCriterion):
             for col in columns:
                 col.Ix = float(Ix) * self._COLUMN_CRACKED_INERTIAS
                 col.radius = column_radius
+                col.get_and_set_k()
 
             for beam in beams:
                 beam.radius = beam_radius
                 beam.Ix = (np.pi * beam.radius**4 / 4) * self._BEAM_CRACKED_INERTIAS
+                beam.get_and_set_k()
 
         fem.get_and_set_eigen_results(results_path)
         return fem
+
+
+class LoeraPreArctan(LoeraPre):
+    def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
+        ns = self.specification.num_storeys
+        # stress_pct_empirical = (1 - np.exp(-0.05 * ns)) / (
+        #     1 + np.exp(-0.05 * ns)
+        # )  # smaller -> stiffer
+        self.STRESS_PCT_EMPIRICAL = 2 / np.pi * np.arctan(0.05 * ns)
+        return super().run(results_path, *args, **kwargs)
 
 
 class ShearStiffnessRetryPre(DesignCriterion):
@@ -177,8 +176,10 @@ class ShearStiffnessRetryPre(DesignCriterion):
         target_period = self.specification.miranda_fundamental_period
         ns = self.specification.num_storeys
         chunk_size = np.floor(np.sqrt(ns))
-        leftmost_column_Ixs = np.array([c[0].Ix for c in self.fem.columns_by_storey])
-        columns_Ixs = chunk_arrays(leftmost_column_Ixs, chunk_size=chunk_size)
+        summed_column_Ixs_by_storey = np.array(
+            [sum([c.Ix for c in cols]) for cols in self.fem.columns_by_storey]
+        )
+        columns_Ixs = chunk_arrays(summed_column_Ixs_by_storey, chunk_size=chunk_size)
 
         mdof = ShearModel(**{**self.fem.to_dict, "_inertias": columns_Ixs.tolist()})
 
@@ -220,7 +221,7 @@ class ForceBasedPre(DesignCriterion):
         for index, _class in enumerate(
             [
                 CodeMassesPre,
-                EulerShearPre,
+                LoeraPreArctan,
                 ShearStiffnessRetryPre,
             ]
         ):
@@ -321,6 +322,7 @@ class DesignCriterionFactory:
     seeds = {
         EulerShearPre.__name__: EulerShearPre,
         LoeraPre.__name__: LoeraPre,
+        LoeraPreArctan.__name__: LoeraPreArctan,
         ForceBasedPre.__name__: ForceBasedPre,
         CodeMassesPre.__name__: CodeMassesPre,
         ShearStiffnessRetryPre.__name__: ShearStiffnessRetryPre,
