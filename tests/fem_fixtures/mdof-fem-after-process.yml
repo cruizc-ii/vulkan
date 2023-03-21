@@ -25,7 +25,7 @@ elements:
   j: 2
   k: 1.000000008
   length: 1.0
-  model: BilinBeamColumn
+  model: ElasticBeamColumn
   name: FragileConcreteColumnAsset
   net_worth: 7.519902408654845
   node: 0
@@ -57,7 +57,7 @@ elements:
   j: 4
   k: 1.000000008
   length: 1.0
-  model: BilinBeamColumn
+  model: ElasticBeamColumn
   name: FragileConcreteColumnAsset
   net_worth: 7.519902408654845
   node: 2
@@ -89,7 +89,7 @@ elements:
   j: 6
   k: 1.000000008
   length: 1.0
-  model: BilinBeamColumn
+  model: ElasticBeamColumn
   name: FragileConcreteColumnAsset
   net_worth: 7.519902408654845
   node: 4
@@ -121,7 +121,7 @@ elements:
   j: 8
   k: 1.000000008
   length: 1.0
-  model: BilinBeamColumn
+  model: ElasticBeamColumn
   name: FragileConcreteColumnAsset
   net_worth: 7.519902408654845
   node: 6
@@ -153,7 +153,7 @@ elements:
   j: 10
   k: 1.000000008
   length: 1.0
-  model: BilinBeamColumn
+  model: ElasticBeamColumn
   name: FragileConcreteColumnAsset
   net_worth: 7.519902408654845
   node: 8

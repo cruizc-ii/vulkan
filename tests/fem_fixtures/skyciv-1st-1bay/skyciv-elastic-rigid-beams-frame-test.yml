@@ -1,4 +1,3 @@
-
 occupancy: MedicalOccupancy
 damping: 0.05
 nodes:

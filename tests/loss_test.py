@@ -13,6 +13,8 @@ class LognormalExpectedLossTest(TestCase):
     """
 
     maxDiff = None
+    path = None
+    risk = None
 
     @classmethod
     def setUpClass(cls) -> None:
