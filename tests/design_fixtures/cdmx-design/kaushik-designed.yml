@@ -5207,9 +5207,4 @@ storeys:
 - 3.2
 - 3.2
 - 3.2
-uniform_beam_loads_by_mass:
-- 90.0
-- 90.0
-- 90.0
-- 90.0
 width: 9

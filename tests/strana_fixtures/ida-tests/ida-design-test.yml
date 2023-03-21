@@ -297,6 +297,3 @@ occupancy: MedicalOccupancy.yml
 storeys:
 - 4
 - 4
-uniform_beam_loads_by_mass:
-- 30.0
-- 30.0

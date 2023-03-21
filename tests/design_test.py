@@ -688,7 +688,7 @@ class CDMXDesignTest(TestCase):
         """contain My and Vy needed for nonlin implementation."""
         spec = ReinforcedConcreteFrame.from_file(self.raw_file)
         spec.force_design(DESIGN_FIXTURES_PATH)
-        spec.to_file(self.path)
+        # spec.to_file(self.path)
         Vd = spec.fem.extras["design_shears"]
         self.assertTrue(np.allclose(sum(Vd), 400, atol=30.0))
 

@@ -33,6 +33,10 @@ class ShearModelAnalysisTest(TestCase):
     """
 
     maxDiff = None
+    path = None
+    fem = None
+    file = None
+    strana = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -137,6 +141,12 @@ class Chopra1326Test(TestCase):
     """
 
     maxDiff = None
+    path = None
+    fem = None
+    file = None
+    strana = None
+    view = None
+
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -283,6 +293,9 @@ class IDATest(TestCase):
     """
 
     maxDiff = None
+    hazard_path = None
+    design_path = None
+    IDA_TESTS = None
 
     @classmethod
     def setUpClass(cls) -> None:
