@@ -1,0 +1,302 @@
+a0: null
+a1: null
+chopra_fundamental_period_plus1sigma: null
+contents: []
+damping: 0.05
+elements:
+- A: 100000
+  CRACKED_INERTIA_FACTOR: 1.0
+  E: 0.041666667
+  EA: 1000000000.0
+  Ix: 2.0
+  My: null
+  Q: 1.0
+  Vy: null
+  alpha: '0.0055'
+  bay: 0
+  category: structural
+  edp: peak_drifts
+  floor: null
+  hidden: false
+  i: 0
+  icon: null
+  id: 0
+  integration_points: 5
+  j: 2
+  k: 1.000000008
+  length: 1.0
+  model: BilinBeamColumn
+  name: FragileConcreteColumnAsset
+  net_worth: 7.519902408654845
+  node: 0
+  radius: 1.2632375554921293
+  rugged: false
+  storey: 1
+  transf: 2
+  type: column
+  x: null
+  y: null
+- A: 100000
+  CRACKED_INERTIA_FACTOR: 1.0
+  E: 0.041666667
+  EA: 1000000000.0
+  Ix: 2.0
+  My: null
+  Q: 1.0
+  Vy: null
+  alpha: '0.0055'
+  bay: 0
+  category: structural
+  edp: peak_drifts
+  floor: null
+  hidden: false
+  i: 2
+  icon: null
+  id: 3
+  integration_points: 5
+  j: 4
+  k: 1.000000008
+  length: 1.0
+  model: BilinBeamColumn
+  name: FragileConcreteColumnAsset
+  net_worth: 7.519902408654845
+  node: 2
+  radius: 1.2632375554921293
+  rugged: false
+  storey: 2
+  transf: 2
+  type: column
+  x: null
+  y: null
+- A: 100000
+  CRACKED_INERTIA_FACTOR: 1.0
+  E: 0.041666667
+  EA: 1000000000.0
+  Ix: 2.0
+  My: null
+  Q: 1.0
+  Vy: null
+  alpha: '0.0055'
+  bay: 0
+  category: structural
+  edp: peak_drifts
+  floor: null
+  hidden: false
+  i: 4
+  icon: null
+  id: 6
+  integration_points: 5
+  j: 6
+  k: 1.000000008
+  length: 1.0
+  model: BilinBeamColumn
+  name: FragileConcreteColumnAsset
+  net_worth: 7.519902408654845
+  node: 4
+  radius: 1.2632375554921293
+  rugged: false
+  storey: 3
+  transf: 2
+  type: column
+  x: null
+  y: null
+- A: 100000
+  CRACKED_INERTIA_FACTOR: 1.0
+  E: 0.041666667
+  EA: 1000000000.0
+  Ix: 2.0
+  My: null
+  Q: 1.0
+  Vy: null
+  alpha: '0.0055'
+  bay: 0
+  category: structural
+  edp: peak_drifts
+  floor: null
+  hidden: false
+  i: 6
+  icon: null
+  id: 9
+  integration_points: 5
+  j: 8
+  k: 1.000000008
+  length: 1.0
+  model: BilinBeamColumn
+  name: FragileConcreteColumnAsset
+  net_worth: 7.519902408654845
+  node: 6
+  radius: 1.2632375554921293
+  rugged: false
+  storey: 4
+  transf: 2
+  type: column
+  x: null
+  y: null
+- A: 100000
+  CRACKED_INERTIA_FACTOR: 1.0
+  E: 0.041666667
+  EA: 1000000000.0
+  Ix: 2.0
+  My: null
+  Q: 1.0
+  Vy: null
+  alpha: '0.0055'
+  bay: 0
+  category: structural
+  edp: peak_drifts
+  floor: null
+  hidden: false
+  i: 8
+  icon: null
+  id: 12
+  integration_points: 5
+  j: 10
+  k: 1.000000008
+  length: 1.0
+  model: BilinBeamColumn
+  name: FragileConcreteColumnAsset
+  net_worth: 7.519902408654845
+  node: 8
+  radius: 1.2632375554921293
+  rugged: false
+  storey: 5
+  transf: 2
+  type: column
+  x: null
+  y: null
+extras: {}
+frequencies:
+- 0.04530022015423485
+- 0.1322307060365912
+- 0.2084486465221519
+- 0.26777931735832244
+- 0.3054161004470419
+miranda_fundamental_period: null
+model: ShearModel
+nodes:
+- base: false
+  bay: null
+  column: null
+  fixed: true
+  floor: null
+  free_dofs: 0
+  id: 0
+  mass: null
+  orientation: null
+  storey: null
+  x: 0.0
+  y: 0.0
+  zerolen: null
+- base: false
+  bay: null
+  column: null
+  fixed: false
+  floor: null
+  free_dofs: 2
+  id: 2
+  mass: 1.0
+  orientation: null
+  storey: null
+  x: 0.0
+  y: 1.0
+  zerolen: null
+- base: false
+  bay: null
+  column: null
+  fixed: false
+  floor: null
+  free_dofs: 2
+  id: 4
+  mass: 1.0
+  orientation: null
+  storey: null
+  x: 0.0
+  y: 2.0
+  zerolen: null
+- base: false
+  bay: null
+  column: null
+  fixed: false
+  floor: null
+  free_dofs: 2
+  id: 6
+  mass: 1.0
+  orientation: null
+  storey: null
+  x: 0.0
+  y: 3.0
+  zerolen: null
+- base: false
+  bay: null
+  column: null
+  fixed: false
+  floor: null
+  free_dofs: 2
+  id: 8
+  mass: 1.0
+  orientation: null
+  storey: null
+  x: 0.0
+  y: 4.0
+  zerolen: null
+- base: false
+  bay: null
+  column: null
+  fixed: false
+  floor: null
+  free_dofs: 2
+  id: 10
+  mass: 1.0
+  orientation: null
+  storey: null
+  x: 0.0
+  y: 5.0
+  zerolen: null
+nonstructural_elements: []
+num_bays: 0
+num_cols: null
+num_floors: null
+num_frames: 1
+num_storeys: 2
+occupancy: EmptyOccupancy.yml
+omegas:
+- 0.28462967768508896
+- 0.8308300293270929
+- 1.309721473129456
+- 1.682507072392391
+- 1.9189859549049384
+periods:
+- 22.07494790522593
+- 7.562539972548263
+- 4.797344653872481
+- 3.734418363095138
+- 3.2742216226855287
+pushover_abs_path: null
+uniform_beam_loads_by_mass: null
+values: []
+vectors:
+- - 0.16989112404918158
+  - -0.45573414065524986
+  - 0.5968847876668415
+  - 0.5485287319805896
+  - -0.3260186796093166
+- - 0.32601867960931724
+  - -0.5968847876668414
+  - 0.16989112404918147
+  - -0.4557341406552499
+  - 0.5485287319805893
+- - 0.4557341406552501
+  - -0.32601867960931685
+  - -0.5485287319805896
+  - -0.16989112404918105
+  - -0.5968847876668412
+- - 0.5485287319805897
+  - 0.1698911240491815
+  - -0.32601867960931713
+  - 0.5968847876668413
+  - 0.45573414065525
+- - 0.5968847876668413
+  - 0.5485287319805902
+  - 0.4557341406552501
+  - -0.32601867960931685
+  - -0.1698911240491815

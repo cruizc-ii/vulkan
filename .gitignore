@@ -7,7 +7,6 @@ __pycache__/
 *$py.class
 *.swp
 *.pdf
-**/results/**
 e2e_fixtures/
 # ignore folders starting with __ but keep files starting with __
 __**/
@@ -21,23 +20,10 @@ __**/
 **/hypothesis/**
 **/pushover/**
 
-# models
-models/loss_csvs/**
-models/rate_csvs/**
-models/design/**
-models/compare/**
-models/hazard/**
-models/strana/**
-models/loss/**
+# models and results
+**/results/**
 
 # tests
-fem-from-spec.yml
-spec-test.yml
-mdof-fem-after-process.yml
-loss-ivew_test.yml
-expected_strana_results_csvs/
-sampled_strana_results_csvs/
-
 # C extensions
 *.so
 .DS_Store
@@ -142,5 +128,3 @@ data/
 results/
 tmp/
 temp/
-
-
