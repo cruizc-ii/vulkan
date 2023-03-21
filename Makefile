@@ -15,12 +15,12 @@ black:
 	python3 -m black .
 .PHONY: ci
 ci: black test
-.PHONY
+.PHONY: clean
 clean:
-	rm -rf models/design/**
-	rm -rf models/hazard/**
-	rm -rf models/strana/**
-	rm -rf models/loss/**
-	rm -rf models/compare/**
-	rm -rf models/loss_csvs/**
-	rm -rf models/rate_csvs/**
+	rm -rf models/design/**;
+	rm -rf models/hazard/**;
+	rm -rf models/strana/**;
+	rm -rf models/loss/**;
+	rm -rf models/compare/**;
+	rm -rf models/loss_csvs/**;
+	rm -rf models/rate_csvs/**;
