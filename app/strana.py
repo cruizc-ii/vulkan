@@ -401,6 +401,12 @@ class StructuralResultView(YamlMixin):
         return self._read_timehistory(filename)
 
     def view_floor_accels(self) -> DataFrame:
+        """
+        floor relative accelerations wrt ground motion are obtained by the analyses
+        absolute floor accelerations are obtained by summing record accel to results
+        a_abs = a_g + a(t)
+
+        """
         self.__lazy_init__()
         filename = "mass-accel.csv"
         storey_accels = self._read_timehistory(filename)
@@ -409,7 +415,7 @@ class StructuralResultView(YamlMixin):
         accels = storey_accels.merge(
             ground_accel, how="outer", left_index=True, right_index=True
         )
-        # accels = accels.interpolate("cubic").fillna(0)
+        accels = accels.interpolate("cubic").fillna(0)
         return accels
 
     def view_floor_accels_envelope(self) -> DataFrame:
