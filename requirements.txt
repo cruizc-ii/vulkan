@@ -18,6 +18,7 @@ debugpy==1.6.0
 decorator==5.1.1
 defusedxml==0.7.1
 entrypoints==0.4
+execnet==1.9.0
 executing==0.8.3
 fastjsonschema==2.15.3
 gitdb==4.0.9
@@ -29,6 +30,7 @@ ipykernel==6.13.0
 ipython==8.3.0
 ipython-genutils==0.2.0
 ipywidgets==7.7.0
+iteration-utilities==0.11.0
 jedi==0.18.1
 Jinja2==3.1.2
 jsonschema==4.5.1
@@ -76,6 +78,7 @@ pyparsing==3.0.9
 pyrsistent==0.18.1
 pytest==7.1.2
 pytest-timeout==2.1.0
+pytest-xdist==3.2.1
 python-dateutil==2.8.2
 pytz==2022.1
 pytz-deprecation-shim==0.1.0.post0

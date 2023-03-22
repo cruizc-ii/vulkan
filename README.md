@@ -1,12 +1,18 @@
 # README
 
 # Quickstart
+Make sure opensees is on your path, make a symlink
+
+`cp ./bin/opensees /usr/local/bin`
+
+```
 pip3 install -r requirements.txt
 mypy --install-types
-`make`
+make
+```
+
 ## Debugging
 Set a `breakpoint()` anywhere
-
 
 ## TODO
 
@@ -15,10 +21,6 @@ Set a `breakpoint()` anywhere
 Give a measure of how good the design is wrt. c design.
 
 Compute Vy, uy correctly.
-
-- [ ] grouping 9x storeys
-- [ ] how to transfer masses from 1 to another? CodeMassesPre should change spec? just grab masses from the other FEM
-- [ ] something ain't right with the predefined masses that a building has
 
 ver periodos del modelo simplificado 
 ver periodos del modelo 

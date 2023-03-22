@@ -18,6 +18,7 @@ class ShearModelTest(TestCase):
     maxDiff = None
     file = None
     spec = None
+    path = None
     fem = None
 
     @classmethod
@@ -52,6 +53,9 @@ class ShearModelOpenSeesTest(TestCase):
     """
 
     maxDiff = None
+    path = None
+    file = None
+    expected_model_str = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -66,7 +70,7 @@ class ShearModelOpenSeesTest(TestCase):
         return super().tearDown()
 
     def test_load_from_yaml(self) -> None:
-        # dumb test that asserts string equality
+        # sanity check that asserts string equality
         mdof = ShearModel.from_file(self.file)
         self.assertEqual(mdof.model_str, self.expected_model_str)
 
@@ -81,6 +85,9 @@ class ShearModelOpenSeesTest(TestCase):
 
 class SkyCivElasticFrameFEMTest(TestCase):
     maxDiff = None
+    path = None
+    file = None
+    expected_model_str = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -146,6 +153,7 @@ class ElastoplasticFrameTest(TestCase):
     maxDiff = None
     path = None
     file = None
+    expected_model_str = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -248,6 +256,7 @@ class IMKFrameTest(TestCase):
     maxDiff = None
     path = None
     file = None
+    expected_nodes_str = None
 
     @classmethod
     def setUpClass(cls) -> None:

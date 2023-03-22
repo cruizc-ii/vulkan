@@ -2,92 +2,60 @@ design_abspath: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/ida-design-t
 hazard_abspath: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/ida-hazard-test.yml
 name: ida-loss-tests
 results:
-- accel:
-  - 0.08101367440659646
-  - 0.1248446883925435
-  - 0.061392345884195426
-  collapse: false
+- collapse: false
   freq: 1.7840039472670224
   inf: 0.05
   intensity: 0.1
   intensity_str: '0.10000000'
   path: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/__single_run/98_SCT190985NS.csv/0.10000000/timehistory
+  peak_drift: 0.00793451
   peak_drifts:
-  - 0.00268497
-  - 0.00793995
-  pfa:
-  - 0.08101367440659646
-  - 0.1248446883925435
-  - 0.061392345884195426
-  pfv:
-  - 0.0592586
-  - 0.166067
+  - 0.00268482
+  - 0.00793451
+  pfa: 0.12476813385635598
+  pfv: 0.166015
   record: 98_SCT190985NS.csv
   sup: 0.15000000000000002
-- accel:
-  - 0.16202724687639375
-  - 0.2496895806586854
-  - 0.12278469176839085
-  collapse: false
+- collapse: false
   freq: 0.13084714172131995
   inf: 0.15000000000000002
   intensity: 0.2
   intensity_str: '0.20000000'
   path: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/__single_run/98_SCT190985NS.csv/0.20000000/timehistory
+  peak_drift: 0.015869
   peak_drifts:
-  - 0.00536993
-  - 0.0158799
-  pfa:
-  - 0.16202724687639375
-  - 0.2496895806586854
-  - 0.12278469176839085
-  pfv:
-  - 0.118517
-  - 0.332134
+  - 0.00536964
+  - 0.015869
+  pfa: 0.24953667545990865
+  pfv: 0.33203
   record: 98_SCT190985NS.csv
   sup: 0.25
-- accel:
-  - 0.05671243953951426
-  - 0.11256818026448993
-  - 0.037952200873198894
-  collapse: false
+- collapse: false
   freq: 1.7840039472670224
   inf: 0.05
   intensity: 0.1
   intensity_str: '0.10000000'
   path: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/__single_run/6_JA241093EW.csv/0.10000000/timehistory
+  peak_drift: 0.00716412
   peak_drifts:
-  - 0.00202365
-  - 0.00715194
-  pfa:
-  - 0.05671243953951426
-  - 0.11256818026448993
-  - 0.037952200873198894
-  pfv:
-  - 0.0502875
-  - 0.221624
+  - 0.0020256
+  - 0.00716412
+  pfa: 0.11277001512687526
+  pfv: 0.221963
   record: 6_JA241093EW.csv
   sup: 0.15000000000000002
-- accel:
-  - 0.11342487907902853
-  - 0.22513534116098805
-  - 0.07590440174639779
-  collapse: false
+- collapse: false
   freq: 0.13084714172131995
   inf: 0.15000000000000002
   intensity: 0.2
   intensity_str: '0.20000000'
   path: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/__single_run/6_JA241093EW.csv/0.20000000/timehistory
+  peak_drift: 0.0143282
   peak_drifts:
-  - 0.0040473
-  - 0.0143039
-  pfa:
-  - 0.11342487907902853
-  - 0.22513534116098805
-  - 0.07590440174639779
-  pfv:
-  - 0.100575
-  - 0.443248
+  - 0.0040512
+  - 0.0143282
+  pfa: 0.22554104962174237
+  pfv: 0.443925
   record: 6_JA241093EW.csv
   sup: 0.25
 standard: false

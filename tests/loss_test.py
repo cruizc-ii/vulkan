@@ -13,6 +13,8 @@ class LognormalExpectedLossTest(TestCase):
     """
 
     maxDiff = None
+    path = None
+    risk = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -66,6 +68,11 @@ class LossComputationTest(TestCase):
 
     maxDiff = None
     NUM_SIMULATIONS = 3
+    path = None
+    ida_file = None
+    ida = None
+    loss_summary_name = None
+    agg = None
 
     @classmethod
     def setUpClass(cls) -> None:

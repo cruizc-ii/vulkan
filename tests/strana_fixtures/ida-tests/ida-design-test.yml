@@ -44,7 +44,7 @@ fems:
     y: null
   damping: 0.05
   elements:
-  - A: 1e6
+  - A: 100000
     E: 30000000.0
     Ix: 0.0002864788975654115
     bay: 0
@@ -65,7 +65,7 @@ fems:
     type: column
     x: null
     y: null
-  - A: 1e6
+  - A: 100000
     E: 30000000.0
     Ix: 0.0002864788975654115
     bay: 1
@@ -86,7 +86,7 @@ fems:
     type: column
     x: null
     y: null
-  - A: 1e6
+  - A: 100000
     E: 30000000.0
     Ix: 0.004583662361046584
     bay: 1
@@ -107,7 +107,7 @@ fems:
     type: beam
     x: null
     y: null
-  - A: 1e6
+  - A: 100000
     E: 30000000.0
     Ix: 7.16197243913529e-05
     bay: 0
@@ -128,7 +128,7 @@ fems:
     type: column
     x: null
     y: null
-  - A: 1e6
+  - A: 100000
     E: 30000000.0
     Ix: 7.16197243913529e-05
     bay: 1
@@ -149,7 +149,7 @@ fems:
     type: column
     x: null
     y: null
-  - A: 1e6
+  - A: 100000
     E: 30000000.0
     Ix: 0.0011459155902616464
     bay: 1
@@ -238,7 +238,7 @@ fems:
     y: 8.0
   nonstructural_elements:
   - category: nonstructural
-    edp: accel
+    edp: pfa
     floor: 1
     icon: marble-tiles.jpg
     name: NonStructuralGenericTest
@@ -247,7 +247,7 @@ fems:
     x: 0.0
     y: null
   - category: nonstructural
-    edp: accel
+    edp: pfa
     floor: 1
     icon: marble-tiles.jpg
     name: NonStructuralGenericTest
@@ -256,7 +256,7 @@ fems:
     x: 0.0
     y: null
   - category: nonstructural
-    edp: accel
+    edp: pfa
     floor: 2
     icon: marble-tiles.jpg
     name: NonStructuralGenericTest
@@ -265,7 +265,7 @@ fems:
     x: 0.0
     y: null
   - category: nonstructural
-    edp: accel
+    edp: pfa
     floor: 2
     icon: marble-tiles.jpg
     name: NonStructuralGenericTest
@@ -297,6 +297,3 @@ occupancy: MedicalOccupancy.yml
 storeys:
 - 4
 - 4
-uniform_beam_loads_by_mass:
-- 30.0
-- 30.0

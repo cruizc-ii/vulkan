@@ -33,6 +33,10 @@ class ShearModelAnalysisTest(TestCase):
     """
 
     maxDiff = None
+    path = None
+    fem = None
+    file = None
+    strana = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -137,6 +141,12 @@ class Chopra1326Test(TestCase):
     """
 
     maxDiff = None
+    path = None
+    fem = None
+    file = None
+    strana = None
+    view = None
+
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -283,6 +293,9 @@ class IDATest(TestCase):
     """
 
     maxDiff = None
+    hazard_path = None
+    design_path = None
+    IDA_TESTS = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -339,6 +352,7 @@ class IDATest(TestCase):
     def test_run(self):
         """
         it should run gravity + timehistory, it should return a view to result objects
+        it should contain the results_df with non NA values
         """
         ida = IDA(
             name="ida-loss-tests",
@@ -359,18 +373,22 @@ class IDATest(TestCase):
         self.assertEqual(
             set(results_df.columns),
             {
-                "intensity",
                 "record",
-                "path",
                 "intensity_str",
-                "accel",
+                "intensity",
                 "sup",
                 "inf",
                 "freq",
                 "collapse",
+                "path",
+                "collapse",
+                "pfa",
+                "pfv",
+                "peak_drift"
             }
             | set(SummaryEDP.list()),
         )
         pfas = results_df["pfa"]
-        self.assertTrue(all(pfas.apply(lambda lst: len(lst) == 3)))
+        # check there are no NaN
+        self.assertTrue((~results_df.isna()).all().all()) # all elems evaluate to True
         ida.to_file(LOSS_FIXTURES_PATH)

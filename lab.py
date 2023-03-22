@@ -377,6 +377,7 @@ with st.sidebar:
                         },
                     )
                     ida.run_parallel(results_dir=RESULTS_DIR)
+                    state.ida_abspath = STRANA_DIR / ida.name_yml
                     ida.to_file(STRANA_DIR)
 
                 st.success("analysis successful")
@@ -391,7 +392,7 @@ with st.sidebar:
                             selected_ix = ix
 
     if state.module == 4:
-        state.ida_abspath
+        'ida path:', state.ida_abspath
         losses = find_files(LOSS_MODELS_DIR)
         ida_missing = False
         file = st.selectbox("select a loss file", options=losses)
@@ -437,43 +438,47 @@ with st.sidebar:
                 loss.delete(LOSS_MODELS_DIR)
                 loss = None
             st.success("delete successful")
-        design = loss._ida._design
-        st.header("Design")
-        st.text(f"{design.name}")
-        st.text(f"St {design.num_storeys} bays {design.num_bays}")
-        st.text(f"{design.design_criteria}")
-        st.text(f"{design.occupancy.split('.')[0]}")
-        st.metric("$ Net worth", 3414)
 
-        assets = loss.to_dict["loss_models"] or []
-        filtered_assets = assets
-        fig = design.fem.assets_pie_fig
+        if loss is not None:
+            if not ida_missing:
+                design = loss._ida._design
+                st.header("Design")
+                st.text(f"{design.name}")
+                st.text(f"St {design.num_storeys} bays {design.num_bays}")
+                st.text(f"{design.design_criteria}")
+                st.text(f"{design.occupancy.split('.')[0]}")
+                st.metric("$ Net worth", 3414)
 
-        fig.update_layout(height=300, width=300)
-        st.plotly_chart(fig)
-        st.header("Filter")
-        all_categories = sorted(list(set([lm["category"] for lm in assets])))
-        selected_categories = st.multiselect(
-            "Category", options=all_categories, default=all_categories
-        )
-        all_floors = sorted(list(set([lm["floor"] for lm in assets])))
-        selected_floors = st.multiselect(
-            "Floor", options=all_floors, default=all_floors
-        )
+            assets = loss.to_dict["loss_models"] or []
+            filtered_assets = assets
+            fig = design.fem.assets_pie_fig
 
-        all_names = sorted(list(set([lm["name"] for lm in assets])))
-        selected_names = st.multiselect("Name", options=all_names, default=all_names)
+            fig.update_layout(height=300, width=300)
+            st.plotly_chart(fig)
+            st.header("Filter")
+            all_categories = sorted(list(set([lm["category"] for lm in assets])))
+            selected_categories = st.multiselect(
+                "Category", options=all_categories, default=all_categories
+            )
+            all_floors = sorted(list(set([lm["floor"] for lm in assets])))
+            selected_floors = st.multiselect(
+                "Floor", options=all_floors, default=all_floors
+            )
 
-        st.header("View")
-        selected_ix = None
-        view_all = st.button("view all", help="view stats for building")
-        for ix, a in enumerate(filtered_assets):
-            with st.container():
-                c1, c2 = st.columns([5, 1])
-                c1.write(f'{a["name"]}-{a["category"]}-{a["floor"]}')
-                view_asset = c2.button("view", key=f"asset{ix}")
-                if view_asset:
-                    selected_ix = ix
+            all_names = sorted(list(set([lm["name"] for lm in assets])))
+            selected_names = st.multiselect("Name", options=all_names, default=all_names)
+
+            st.header("View")
+            selected_ix = None
+            view_all = st.button("view all", help="view stats for building")
+            view_asset = None
+            for ix, a in enumerate(filtered_assets):
+                with st.container():
+                    c1, c2 = st.columns([5, 1])
+                    c1.write(f'{a["name"]}-{a["category"]}-{a["floor"]}')
+                    view_asset = c2.button("view", key=f"asset{ix}")
+                    if view_asset:
+                        selected_ix = ix
 
     if state.module == 5:
         "hazard abspath: ", state.hazard_abspath
@@ -650,7 +655,6 @@ if state.module == 1:
             df = pd.DataFrame(design.fem.pushover_stats, index=[0])
             st.table(df)
             st.dataframe(design.fem.extras)
-
 
 if state.module == 2:
     left, right = st.columns(2)

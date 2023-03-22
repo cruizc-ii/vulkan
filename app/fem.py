@@ -871,10 +871,6 @@ class FiniteElementModel(ABC, YamlMixin):
 @dataclass
 class PlainFEM(FiniteElementModel):
     model: str = "PlainFEM"
-
-    def __init__(self, *args, **kwargs):
-        return super().__init__(*args, **kwargs)
-
     def build_and_place_slabs(self) -> list[Asset]:
         from app.assets import RiskModelFactory
 
@@ -888,9 +884,6 @@ class PlainFEM(FiniteElementModel):
                 slabs.append(slab)
         self.elements = self.elements + slabs
         return slabs
-
-    def validate(self, *args, **kwargs):
-        return super().validate(*args, **kwargs)
 
 
 @dataclass
@@ -1359,7 +1352,7 @@ class FEMFactory:
 
 
 class ElementFactory:
-    DEFAULT = BilinBeamColumn.__name__
+    DEFAULT = ElasticBeamColumn.__name__
     options = {
         BeamColumn.__name__: BeamColumn,
         ElasticBeamColumn.__name__: ElasticBeamColumn,
