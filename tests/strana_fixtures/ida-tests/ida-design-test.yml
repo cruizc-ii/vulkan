@@ -238,7 +238,7 @@ fems:
     y: 8.0
   nonstructural_elements:
   - category: nonstructural
-    edp: accel
+    edp: pfa
     floor: 1
     icon: marble-tiles.jpg
     name: NonStructuralGenericTest
@@ -247,7 +247,7 @@ fems:
     x: 0.0
     y: null
   - category: nonstructural
-    edp: accel
+    edp: pfa
     floor: 1
     icon: marble-tiles.jpg
     name: NonStructuralGenericTest
@@ -256,7 +256,7 @@ fems:
     x: 0.0
     y: null
   - category: nonstructural
-    edp: accel
+    edp: pfa
     floor: 2
     icon: marble-tiles.jpg
     name: NonStructuralGenericTest
@@ -265,7 +265,7 @@ fems:
     x: 0.0
     y: null
   - category: nonstructural
-    edp: accel
+    edp: pfa
     floor: 2
     icon: marble-tiles.jpg
     name: NonStructuralGenericTest

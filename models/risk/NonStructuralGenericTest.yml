@@ -1,7 +1,7 @@
 name: NonStructuralGenericTest
 net_worth: 3.3
 category: nonstructural
-edp: accel
+edp: pfa
 icon: marble-tiles.jpg
 damage_states:
   - name: ds0

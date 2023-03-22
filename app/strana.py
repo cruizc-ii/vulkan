@@ -513,7 +513,7 @@ class StructuralResultView(YamlMixin):
 
     def get_and_set_timehistory_summary(self) -> dict:
         results = self.view_timehistory_summary()
-        self.pfa = max(results[SummaryEDP.peak_floor_accels.value])
+        self.pfa = results[SummaryEDP.peak_floor_accels.value]
         self.peak_drift = max(results[SummaryEDP.peak_drifts.value])
         self.pfv = max(results[SummaryEDP.peak_floor_vels.value])
         results["pfa"] = self.pfa
