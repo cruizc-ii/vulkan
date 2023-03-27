@@ -24,3 +24,4 @@ clean:
 	rm -rf models/compare/**;
 	rm -rf models/loss_csvs/**;
 	rm -rf models/rate_csvs/**;
+	git restore models/;

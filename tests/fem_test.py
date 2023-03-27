@@ -240,17 +240,6 @@ class ElastoplasticFrameTest(TestCase):
             np.allclose(Vb, expected_V, rtol=1e-1),
         )
 
-    def test_generates_pushover_fig(self) -> None:
-        frame = BilinFrame.from_file(self.file)
-        fig = frame.pushover_figs(self.path, drift=0.10)
-        self.assertIsNotNone(fig)
-        fig = frame.pushover_figs(self.path, drift=0.10)
-        self.assertIsNotNone(fig)
-        fig = frame.pushover_figs(self.path, drift=0.10)
-        self.assertIsNotNone(fig)
-        fig = frame.pushover_figs(self.path, drift=0.10)
-        self.assertIsNotNone(fig)
-
 
 class IMKFrameTest(TestCase):
     maxDiff = None

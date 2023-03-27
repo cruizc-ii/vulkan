@@ -191,6 +191,9 @@ class RectangularConcreteColumn:
     gammaJiangCheng: float | None = None
     Et: float | None = None  # energy capacity
 
+    def __repr__(self):
+        return f'RectangularConcreteColumn {self.b=:.2f} {self.h=:.2f}'
+
     def __str__(self):
         s = f"""
 set Ic {self.Iy}
@@ -478,9 +481,9 @@ set stable {self.stable}
         # there is more work involved when stirrup spacing is smaller i.e. when concrete is more confined
         # when unions/overlapping with beams are stricter it is more work
         work = 0.722 * num_stirrups**2 * WORK_UNIT_COST
-        # print(f"{steel=} {concrete=} {work=}")
+        print(f"{steel=} {concrete=} {work=}")
         dollars = steel + concrete + work
-        return dollars
+        return dollars / 1000
 
     def analyze(self, As: float | None = None, *, Ast=0, Asc=0, P=0, tol=5, iter=20):
         P = P or self.P

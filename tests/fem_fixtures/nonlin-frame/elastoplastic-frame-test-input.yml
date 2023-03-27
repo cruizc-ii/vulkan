@@ -33,7 +33,7 @@ contents:
   y: null
 damping: 0.05
 elements:
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   Ix: 0.0020371832715762603
   bay: 0
@@ -57,7 +57,7 @@ elements:
   y: null
   alpha: 1e-5
   My: 400.0
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   Ix: 0.0020371832715762603
   bay: 1
@@ -81,7 +81,7 @@ elements:
   y: null
   alpha: 1e-5
   My: 400.0
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   alpha: 1e-5
   Ix: 0.032594932345220165
@@ -105,7 +105,7 @@ elements:
   x: null
   y: null
   My: 1e9
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   alpha: 1e-5
   Ix: 0.0020371832715762603
@@ -129,7 +129,7 @@ elements:
   x: null
   y: null
   My: 400.0
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   alpha: 1e-5
   Ix: 0.032594932345220165
@@ -153,7 +153,7 @@ elements:
   x: null
   y: null
   My: 1e9
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   alpha: 1e-5
   Ix: 0.000509295817894065
@@ -177,7 +177,7 @@ elements:
   x: null
   y: null
   My: 1e9
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   alpha: 1e-5
   Ix: 0.000509295817894065
@@ -201,7 +201,7 @@ elements:
   x: null
   y: null
   My: 1e9
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   alpha: 1e-5
   Ix: 0.00814873308630504
@@ -225,7 +225,7 @@ elements:
   x: null
   y: null
   My: 1e9
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   alpha: 1e-5
   Ix: 0.000509295817894065
@@ -249,7 +249,7 @@ elements:
   x: null
   y: null
   My: 1e9
-- A: 1e6
+- A: 1.0e+6
   E: 30000000.0
   alpha: 1e-5
   Ix: 0.00814873308630504

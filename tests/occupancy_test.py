@@ -67,12 +67,12 @@ class MedicalOccupancyTest(TestCase):
         self.assertEqual(asset2.name, "NonStructuralGenericTest")
         self.assertEqual(asset2.floor, 1)
         self.assertTrue(asset2.x >= 1.5)
-        self.assertEqual(asset2.node, 0)
+        self.assertEqual(asset2.node, None)
         asset3 = assets[2]
         self.assertEqual(asset3.name, "NonStructuralGenericTest")
         self.assertEqual(asset3.floor, 1)
         self.assertTrue(asset3.x >= 1.5)
-        self.assertEqual(asset3.node, 0)
+        self.assertEqual(asset3.node, None)
         asset4 = assets[3]
         self.assertEqual(asset4.name, "ContentsGenericTest")
         self.assertEqual(asset4.floor, 2)

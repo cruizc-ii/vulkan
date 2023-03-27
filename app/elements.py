@@ -26,6 +26,7 @@ class ElementTypes(Enum):
     COLUMN = "column"
     SPRING_BEAM = "spring_beam"
     SPRING_COLUMN = "spring_column"
+    SLAB = 'slab'
 
 
 class FEMValidationException(Exception):
@@ -161,6 +162,9 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
     _SLAB_PCT: float = 5.0
     Q: float = 1.0
 
+    def __repr__(self) -> str:
+        return 'ElasticBeamColumn 1'
+
     def __post_init__(self):
         if self.E <= 0 or self.Ix <= 0:
             raise FEMValidationException(
@@ -259,11 +263,33 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
             for i, j, props in adjacency
         ]
 
+@dataclass
+class ConcreteElasticSlab(YamlMixin, RiskAsset):
+    id: int | None = None
+    type: str = ElementTypes.SLAB.value
+    name: str = "ConcreteSlabAsset"
+    model: str = "ConcreteElasticSlab"
+    length: float | None = None
+    thickness: float = 0
+
+    def __post_init__(self):
+        if self.thickness < 0.08:
+            self.thickness = 0.08
+        if self.thickness > 0.30:
+            self.thickness = 0.30
+        area = self.length**2
+        self.net_worth = area * (40 + 3 * 100*self.thickness)  # lstsq regression on median prices
+        # self.net_worth = self.net_worth / 1000 # in 1k usd
+        self.type = ElementTypes.SLAB.value
+        return super().__post_init__()
 
 @dataclass
 class BilinBeamColumn(ElasticBeamColumn):
     model: str = "BilinBeamColumn"
     Vy: float | None = None
+
+    def __repr__(self) -> str:
+        return 'BilinBeamColumn My={self.My:.0f}'
 
     def __post_init__(self):
         self.model = self.__class__.__name__
@@ -302,6 +328,9 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     imkMatTag: int | None = None
     elasticMatTag: int | None = None
     Vy: float | None = None
+
+    def __repr__(self) -> str:
+        return f'IMKSpring My={self.My:.0f}'
 
     def __str__(self) -> str:
         s = f"uniaxialMaterial Elastic {self.elasticMatTag} 1e9\n"
@@ -345,7 +374,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self.secColTag = self.id + 100000
         self.imkMatTag = self.id + 200000
         self.elasticMatTag = self.id + 300000
-        self.net_worth = self.cost
+        self.net_worth = self.net_worth if self.net_worth is not None else self.cost
         self._risk.edp = EDP.spring_moment_rotation_th.value
         self._risk.losses = self.losses
 

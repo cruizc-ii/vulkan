@@ -18,12 +18,20 @@ Set a `breakpoint()` anywhere
 
 ## Design
 
-Give a measure of how good the design is wrt. c design.
+- fix deselecting model.yml when clicking 'run'
+- deploy to streamlit see how it works
 
-Compute Vy, uy correctly.
+- include slabs
+- fix tests
 
-ver periodos del modelo simplificado 
-ver periodos del modelo 
+include more tests for CDMX design
+include tests for convergence of IDA
+include tests for convergence of pushover
+
+- fix pushover convergence
+- fix ida convergence
+- Compute Vy, uy correctly from pushover curve
+- aim for lower period to account for more flexibility in real model
 
 
 ## COMMON PROBLEMS

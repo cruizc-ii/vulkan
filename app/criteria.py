@@ -222,7 +222,7 @@ class ForceBasedPre(DesignCriterion):
         for index, _class in enumerate(
             [
                 CodeMassesPre,
-                LoeraPre,
+                LoeraPreArctan,
                 ShearStiffnessRetryPre,
             ]
         ):
@@ -299,13 +299,14 @@ class CDMX2017Q1(DesignCriterion):
                 new_elements.append(ele)
 
         fem.elements = new_elements
-
         fem = BilinFrame.from_elastic(
             fem=fem,
             design_moments=design_moments,
             beam_column_ratio=self.column_to_beam_resistance_ratio,
             Q=self.Q,
         )
+        slabs = fem.build_and_place_slabs()
+        fem.elements = fem.elements + slabs
         fem.get_and_set_eigen_results(results_path=results_path)
         fem.extras["column_design_moments"] = design_moments
         fem.extras["design_shears"] = peak_shears

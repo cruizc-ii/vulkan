@@ -87,6 +87,7 @@ with st.sidebar:
     b4.button("loss", on_click=partial(goto_module, 4))
     b5.button("com", on_click=partial(goto_module, 5))
     st.header(title[state.module - 1])
+
     if state.module == 1:
         state.design_abspath
         state.hazard_abspath
@@ -96,7 +97,9 @@ with st.sidebar:
             "give it a name",
             value=file.split(".")[0] if file else "",
         )
-        if file:
+        if state.design_abspath:
+            design = ReinforcedConcreteFrame.from_file(state.design_abspath)
+        elif file:
             state.design_abspath = DESIGN_DIR / file
             design = ReinforcedConcreteFrame.from_file(state.design_abspath)
         else:
@@ -138,7 +141,7 @@ with st.sidebar:
         storeys = [float(s) for s in storeys_input.split(",")]
         np.array(storeys).cumsum().tolist()
         cumstoreys = "sum: " + ",".join(
-            [str(b) for b in np.array(storeys).cumsum().tolist()]
+            [f'{b:.2f}' for b in np.array(storeys).cumsum().tolist()]
         )
         cumstoreys
         bays_input = st.text_input(
@@ -147,7 +150,7 @@ with st.sidebar:
             help="widths in meters separated by comma",
         )
         bays = [float(s) for s in bays_input.split(",")]
-        cumbays = "sum: " + ",".join([str(b) for b in np.array(bays).cumsum().tolist()])
+        cumbays = "sum: " + ",".join([f'{b:.2f}' for b in np.array(bays).cumsum().tolist()])
         cumbays
         occupancy = st.selectbox(
             "occupancy class",
@@ -196,6 +199,7 @@ with st.sidebar:
                 design.fem.pushover(DESIGN_DIR / design.name)
                 design.to_file(DESIGN_DIR)
                 state.design_abspath = DESIGN_DIR / design.name_yml
+
             st.success("design successful")
 
         if design and design.fems:
@@ -447,7 +451,7 @@ with st.sidebar:
                 st.text(f"St {design.num_storeys} bays {design.num_bays}")
                 st.text(f"{design.design_criteria}")
                 st.text(f"{design.occupancy.split('.')[0]}")
-                st.metric("$ Net worth", 3414)
+                st.metric("Net worth", design.fem.readable_total_net_worth)
 
             assets = loss.to_dict["loss_models"] or []
             filtered_assets = assets
@@ -607,7 +611,7 @@ if state.module == 1:
         )
 
         col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Net worth", f"$ {design.fem.total_net_worth:.0f} k USD")
+        col1.metric("Net worth", design.fem.readable_total_net_worth)
         col2.metric("fundamental period", f"{design.fem.period:.2f} s")
         col3.metric("height", f"{design.height:.1f} m")
         col4.metric("width", f"{design.width:.1f} m")
@@ -620,7 +624,30 @@ if state.module == 1:
             )
             col3.metric("Contents", f"$ {design.fem.contents_net_worth:.0f} k ")
             fig = design.fem.assets_pie_fig
+            st.header('summary')
             st.plotly_chart(fig)
+            asset_records = [a.to_dict for a in design.fem.assets]
+            df = pd.DataFrame.from_records(asset_records)
+            columns = 'name category edp net_worth hidden bay storey floor rugged x node'.split(' ')
+            df = df[columns]
+            df2 = df[df.category == 'structural'].groupby('name').sum()
+            df2['name'] = df2.index
+            structural_pie_fig = px.pie(df2, names='name', values='net_worth', height=400)
+            st.header('structural')
+            st.plotly_chart(structural_pie_fig)
+
+            df3 = df[df.category == 'nonstructural'].groupby('name').sum()
+            df3['name'] = df3.index
+            nonstructural_pie_fig = px.pie(df3, names='name', values='net_worth', height=400)
+            st.header('non structural')
+            st.plotly_chart(nonstructural_pie_fig)
+
+            df4 = df[df.category == 'contents'].groupby('name').sum()
+            df4['name'] = df4.index
+            contents_pie_fig = px.pie(df4, names='name', values='net_worth', height=400)
+            st.header('contents')
+            st.plotly_chart(contents_pie_fig, )
+            df
 
         with st.expander("summary"):
             st.dataframe(pd.DataFrame([design.summary]))
@@ -655,6 +682,14 @@ if state.module == 1:
             df = pd.DataFrame(design.fem.pushover_stats, index=[0])
             st.table(df)
             st.dataframe(design.fem.extras)
+            sdf = design.fem.structural_elements_breakdown()
+            desired_columns = 'name model type storey bay My Ix Iy Ig Mc b h radius edp p s'.split(' ')
+            desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]
+            sorted_unique_columns = sorted(list(set(sdf.columns.tolist()) - set(desired_columns)))
+            columns = desired_columns + sorted_unique_columns
+            sdf = sdf[columns]
+            sdf = sdf.sort_values(['storey', 'bay'])
+            st.dataframe(sdf, height=1000)
 
 if state.module == 2:
     left, right = st.columns(2)

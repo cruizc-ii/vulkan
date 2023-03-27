@@ -381,10 +381,10 @@ class ShearStiffnessRetryPreTest(TestCase):
         spec = ReinforcedConcreteFrame(
             name="force-based-design-test-stiffness-retry-pre-20st",
             storeys=[4.5] + 19 * [3.0],
-            bays=5 * [6.0],
+            bays=5 * [8.0],
             damping=0.36,
-            masses=[1800],
-            design_criteria=[EulerShearPre.__name__, ShearStiffnessRetryPre.__name__],
+            # masses=[1800],
+            design_criteria=[LoeraPreArctan.__name__, ShearStiffnessRetryPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
         expected_period = spec.miranda_fundamental_period
@@ -394,7 +394,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             delta=expected_period * self.rtol_periods,
         )
         self.assertTrue(
-            len(np.unique(spec.fem.storey_inertias)) == 4
+            len(np.unique(spec.fem.storey_inertias)) == 5
         )  # groups correctly
         self.assertTrue(all(spec.fem.periods[0] > spec.fem.periods[1:]))  # sanity check
 
@@ -574,7 +574,7 @@ class ForcePreDesignTest(TestCase):
         spec = ReinforcedConcreteFrame(
             name="force-based-design-test",
             storeys=[4.5, 4.5] + 18 * [3.0],
-            bays=[6, 8, 8, 6],
+            bays=[6, 8, 10, 8, 6],
             damping=0.01,
             design_criteria=[ForceBasedPre.__name__],
         )
@@ -593,6 +593,7 @@ class ForcePreDesignTest(TestCase):
         )
 
     def test_produces_realistic_periods_and_stiffnesses_30(self):
+        # this seems to crash the test runner, memory?
         spec = ReinforcedConcreteFrame(
             name="force-based-design-test",
             storeys=[4.5, 4.5, 4.5] + 27 * [3.0],

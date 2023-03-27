@@ -54,20 +54,20 @@ class Lognormal:
 
 @dataclass
 class LognormalRisk(YamlMixin):
-    name: str = None
-    category: str = None
-    edp: str = None
-    damage_states: str = None
-    net_worth: float = None
-    icon: str = None
+    name: str | None = None
+    category: str | None = None
+    edp: str | None = None
+    damage_states: str | None = None
+    net_worth: float | None = None
+    icon: str | None = None
     vulnerabilities: list[Lognormal] = field(default_factory=list)
-    frag_dict: dict = None
-    vuln_dict: dict = None
-    frag_pdf_df: pd.DataFrame = None
-    frag_cdf_df: pd.DataFrame = None
-    vuln_pdf_df: pd.DataFrame = None
-    vuln_cdf_df: pd.DataFrame = None
-    vuln_means: np.ndarray = None
+    frag_dict: dict| None = None
+    vuln_dict: dict| None = None
+    frag_pdf_df: pd.DataFrame | None = None
+    frag_cdf_df: pd.DataFrame | None = None
+    vuln_pdf_df: pd.DataFrame | None = None
+    vuln_cdf_df: pd.DataFrame | None = None
+    vuln_means: np.ndarray | None = None
     init: bool = False
     hidden: bool = False
     rugged: bool = False
@@ -222,7 +222,7 @@ class RiskModelFactory:
         # "normal": NormalRisk
     }
 
-    def __new__(cls, name):
+    def __new__(cls, name) -> "RiskAsset":
         return cls.models["lognormal"].from_file(RISK_MODELS_DIR / f"{name}.yml")
 
 

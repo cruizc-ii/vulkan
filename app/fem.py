@@ -29,6 +29,7 @@ from app.elements import (
     ElasticBeamColumn,
     FEMValidationException,
     ElementTypes,
+    ConcreteElasticSlab
 )
 
 
@@ -91,21 +92,21 @@ class FiniteElementModel(ABC, YamlMixin):
                 AssetFactory(**data) for data in self.nonstructural_elements
             ]
         else:
-            self.build_and_place_assets()
+            self.nonstructural_elements = self.build_nonstructural_elements()
+
         if len(self.contents) > 0 and isinstance(self.contents[0], dict):
             self.contents = [AssetFactory(**data) for data in self.contents]
         else:
-            self.build_and_place_assets()
+            self.contents = self.build_contents()
 
         self.model = self.__class__.__name__
 
         if self.pushover_abs_path:
             from app.strana import StructuralResultView
-
             self._pushover_view = StructuralResultView(
                 abs_folder=self.pushover_abs_path
             )
-
+        print(self.elements)
         self.validate()
 
     @classmethod
@@ -176,11 +177,13 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @property
     def elements_assets(self) -> list["Asset"]:
+        # here we count only the elements that are indeed Assets
+        # for instance, the elastic column used in the IMK ensemble is not an Asset
         eles = [ele for ele in self.elements if Asset in inspect.getmro(ele.__class__)]
         return eles
 
     @property
-    def assets(self):
+    def assets(self) -> list["Asset"]:
         return self.elements_assets + self.nonstructural_elements + self.contents
 
     def _update_masses_in_place(
@@ -190,28 +193,50 @@ class FiniteElementModel(ABC, YamlMixin):
             node.mass = mass
         return
 
-    # @abstractmethod
-    # def build_and_place_slabs(self) -> list[Asset]:
-    #     """needs to include the slabs based on the beams"""
+    def build_and_place_slabs(self) -> list[Asset]:
+        slabs = []
+        for floor, beams in enumerate(self.beams_by_storey, 1):
+            for beam in beams:
+                id = beam.id * 10000000 # hack to avoid having duplicate ids, each beam is tied to a slab via an ID.
+                slab = ConcreteElasticSlab(id=id, length=beam.length, floor=floor)
+                slabs.append(slab)
+        for asset in slabs:
+            if asset.net_worth:
+                asset.net_worth = self.num_frames * asset.net_worth
+        return slabs
 
-    def build_and_place_assets(self) -> list[Asset]:
+    def build_nonstructural_elements(self) -> list[Asset]:
         from app.occupancy import BuildingOccupancy
 
         occupancy = BuildingOccupancy(fem=self, model_str=self.occupancy)
         nonstructural_and_contents = occupancy.build()
-        self.nonstructural_elements = [
-            a for a in nonstructural_and_contents if a.category == "nonstructural"
-        ]  # this is pretty bad and arbitrary... as categories can be anythiing.. we shouldn't tie them
-        # to attrs.. for now it's fine.
-        self.contents = [
-            a for a in nonstructural_and_contents if a.category == "contents"
-        ]
-        # self.build_and_place_slabs() # this doesn't work because there is no constructor
-        for asset in self.assets:
+        nonstructural = [a for a in nonstructural_and_contents if a.category == "nonstructural"] # categories can be any string but we should ideally filter by ENUM
+        for asset in nonstructural:
             if asset.net_worth:
                 asset.net_worth = self.num_frames * asset.net_worth
-        return self.assets
+        return nonstructural
 
+    def build_contents(self) -> list[Asset]:
+        from app.occupancy import BuildingOccupancy
+
+        occupancy = BuildingOccupancy(fem=self, model_str=self.occupancy)
+        nonstructural_and_contents = occupancy.build()
+        contents = [a for a in nonstructural_and_contents if a.category == "contents"] # categories can be any string but we should ideally filter by ENUM
+        for asset in contents:
+            if asset.net_worth:
+                asset.net_worth = self.num_frames * asset.net_worth
+        return contents
+
+    @property
+    def readable_total_net_worth(self) -> str:
+        total = self.total_net_worth
+        s = '$ '
+        if total >= 1000:
+            s += f'{total/1000:.2f} M'
+        else:
+            s += f'{total:.0f} k'
+        return s + ' USD'
+    
     @property
     def total_net_worth(self) -> float:
         return (
@@ -221,7 +246,7 @@ class FiniteElementModel(ABC, YamlMixin):
         )
 
     @property
-    def eigen_df(self) -> pd.DataFrame:
+    def eigen_df(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         eigen_table = pd.DataFrame(
             dict(
                 periods=self.periods,
@@ -349,16 +374,15 @@ class FiniteElementModel(ABC, YamlMixin):
         return collapse
 
     def validate(self, *args, **kwargs):
-        # TODO:
-        # no dangling nodes, at least one element has that ID in i or j,
-        # no dangling elements, all element i,j IDs must exist in nodeSet
+        # TODO: no dangling nodes, at least one element has that ID in i or j,
+        # TODO: no dangling elements, all element i,j IDs must exist in nodeSet
         if len(set(self.nodeIDs)) != len(self.nodeIDs):
             raise FEMValidationException(
                 "Node ids must be unique" + f"{sorted(self.nodeIDs)}"
             )
         if len(set(self.elementIDs)) != len(self.elementIDs):
             raise FEMValidationException(
-                "Node ids must be unique" + f"{sorted(self.elementIDs)}"
+                "Element ids must be unique" + f"{sorted(self.elementIDs)}"
             )
         if len(self.fixed_nodes) == 0:
             raise FEMValidationException(
@@ -530,7 +554,7 @@ class FiniteElementModel(ABC, YamlMixin):
                     "r": 2 * SCALE * e.radius,
                 }
             }
-            for e in self.elements
+            for e in self.elements if (e.type != ElementTypes.SLAB.value)
         ]
         fig += [
             {
@@ -871,20 +895,6 @@ class FiniteElementModel(ABC, YamlMixin):
 @dataclass
 class PlainFEM(FiniteElementModel):
     model: str = "PlainFEM"
-    def build_and_place_slabs(self) -> list[Asset]:
-        from app.assets import RiskModelFactory
-
-        slabs = []
-        for floor, beams in enumerate(self.beams_by_storey, 1):
-            for beam in beams:
-                slab = RiskModelFactory("ConcreteSlabAsset")
-                slab.net_worth = 3000 * (2 * beam.length**2)
-                #  * beam.radius doesn't work here.. fem is not designed yet!
-                slab.floor = floor
-                slabs.append(slab)
-        self.elements = self.elements + slabs
-        return slabs
-
 
 @dataclass
 class ShearModel(FiniteElementModel):
@@ -1037,10 +1047,11 @@ class BilinFrame(FiniteElementModel):
     def __post_init__(self):
         super().__post_init__()
         self.model = self.__class__.__name__
-        if isinstance(self.elements[0], dict):
-            self.elements = [BilinBeamColumn(**data) for data in self.elements]
-        else:
-            self.elements = [BilinBeamColumn(**elem.to_dict) for elem in self.elements]
+        # if isinstance(self.elements[0], dict):
+        #     self.elements = [BilinBeamColumn(**data) for data in self.elements]
+        # else:
+        #     self.elements = [BilinBeamColumn(**elem.to_dict) for elem in self.elements]
+
 
     @classmethod
     def from_elastic(
@@ -1241,7 +1252,8 @@ class IMKFrame(FiniteElementModel):
                 ElementTypes.SPRING_COLUMN.value: 1,
                 ElementTypes.SPRING_BEAM.value: 1,
             }
-            for elem in self.elements:
+            beams_and_columns = [e for e in self.elements if (e.type == ElementTypes.BEAM.value or e.type == ElementTypes.COLUMN.value)]
+            for elem in beams_and_columns:
                 i, j, bay, st, fl = elem.i, elem.j, elem.bay, elem.storey, elem.floor
                 if elem.type == ElementTypes.BEAM.value:
                     imk_i, imk_j = (
@@ -1265,15 +1277,11 @@ class IMKFrame(FiniteElementModel):
                 )
                 recorder_ixs[type] = recorder_ixs[type] + 1
                 d1 = {**elem.to_dict, **data_imk1}
-                print("trying to design", elem.type)
                 imk1 = IMKSpring.from_bilin(**d1)
 
                 elem_id += 1
                 elements.append(imk1)
                 Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1e5
-                print(
-                    "imk radius", elem.type, imk1.radius, elem.radius, imk1.Ic, elem.Ix
-                )
                 bc = BeamColumn(
                     id=elem_id,
                     radius=imk1.radius,
@@ -1301,6 +1309,8 @@ class IMKFrame(FiniteElementModel):
                 elements.append(imk2)
                 elem_id += 1
             self.elements = elements
+            slabs = self.build_and_place_slabs()
+            self.elements = self.elements + slabs
             self.done = True
 
     @property
@@ -1355,6 +1365,7 @@ class ElementFactory:
     DEFAULT = ElasticBeamColumn.__name__
     options = {
         BeamColumn.__name__: BeamColumn,
+        ConcreteElasticSlab.__name__: ConcreteElasticSlab,
         ElasticBeamColumn.__name__: ElasticBeamColumn,
         BilinBeamColumn.__name__: BilinBeamColumn,
         IMKSpring.__name__: IMKSpring,
