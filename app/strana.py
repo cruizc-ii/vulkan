@@ -828,7 +828,7 @@ set analysis_dt [expr {$record_dt/2}]
 constraints Transformation
 numberer RCM
 test NormDispIncr $tol 100 0
-algorithm NewtonLineSearch
+algorithm KrylovNewton
 integrator Newmark 0.5 0.25
 system BandGeneral
 analysis Transient

@@ -272,6 +272,10 @@ class ConcreteElasticSlab(YamlMixin, RiskAsset):
     length: float | None = None
     thickness: float = 0
 
+    def __str__(self) -> str:
+        # must return empty for OpenSees
+        return ''
+
     def __post_init__(self):
         if self.thickness < 0.08:
             self.thickness = 0.08

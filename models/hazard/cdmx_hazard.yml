@@ -45,13 +45,23 @@ records:
   name: 1_ROMCS241093EW.csv
   path: /Users/carlo/vulkan/records/1_ROMCS241093EW.csv
   scale: 1.0
+- dt: 0.005
+  kind: acc
+  name: 11_TL101294_2EW.csv
+  path: /Users/carlo/vulkan/records/11_TL101294_2EW.csv
+  scale: 1.0
 - dt: 0.01
   kind: acc
   name: 100_SCT190917.csv
   path: /Users/carlo/vulkan/records/100_SCT190917.csv
   scale: 1.0
-- dt: 0.005
+- dt: 0.01
   kind: acc
-  name: 11_TL101294_2EW.csv
-  path: /Users/carlo/vulkan/records/11_TL101294_2EW.csv
+  name: 97_CO140995NS.csv
+  path: /Users/carlo/vulkan/records/97_CO140995NS.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: 72_XP101294NS.csv
+  path: /Users/carlo/vulkan/records/72_XP101294NS.csv
   scale: 1.0

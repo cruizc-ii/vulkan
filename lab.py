@@ -673,15 +673,33 @@ if state.module == 1:
             c_design = design.fem.pushover_stats["c_design"]
             design_period_error = design.fem.summary["period_error"]
             period = design.fem.summary["period [s]"]
-            chopra_period = design.fem.summary["miranda period [s]"]
-            col1, col2 = st.columns(2)
-            col1.metric(label="Design Cs", value=c_design, delta=design_c_error)
-            col2.metric(
-                label="Empirical period", value=chopra_period, delta=design_period_error
+            miranda_period = design.fem.summary["miranda period [s]"]
+            cs = design.fem.pushover_stats['cs']
+            Vy_design = design.fem.pushover_stats['Vy_design']
+            Vy = design.fem.pushover_stats['Vy']
+            Vy_error = design.fem.pushover_stats['Vy_error']
+            uy = design.fem.pushover_stats['uy']
+            drift_y = design.fem.pushover_stats['drift_y']
+            col1, col2, col3 = st.columns(3)
+            col1.header('Design values')
+            col1.metric(
+                label="period T0", value=miranda_period,
             )
-            df = pd.DataFrame(design.fem.pushover_stats, index=[0])
-            st.table(df)
-            st.dataframe(design.fem.extras)
+            col1.metric(label="seismic coeff Cs", value=c_design, )
+            col1.metric(label="Vy base shear", value=Vy_design, )
+
+            col2.header('Empirical (measured)')
+            col2.metric(
+                label="period T0", value=period, delta=design_period_error
+            )
+            col2.metric(label="seismic coeff Cs", value=cs, delta=design_c_error)
+            col2.metric(label="Vy base shear", value=Vy, delta=Vy_error)
+            col2.metric(label="drift yield", value=drift_y, )
+            col2.metric(label="roof disp yield", value=uy, )
+            col3.header('Moments and shears')
+            col3.dataframe(design.fem.extras)
+
+            st.header('Element properties')
             sdf = design.fem.structural_elements_breakdown()
             desired_columns = 'name model type storey bay My Ix Iy Ig Mc b h radius edp p s'.split(' ')
             desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]

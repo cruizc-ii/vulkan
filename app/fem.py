@@ -486,14 +486,18 @@ class FiniteElementModel(ABC, YamlMixin):
         uy = df.loc[ix]["u"]
         drift_y = normalized_df.loc[ix]["u"]
         c_design = self.extras.get("c_design")
-        design_error = (cs - c_design) / c_design
+        c_design_error = (cs - c_design) / c_design
+        Vy_design = c_design * self.weight
+        Vy_error = (Vy-Vy_design)/Vy_design
         stats = {
             "Vy": f"{Vy:.1f} kN",
+            "Vy_design": f"{Vy_design:.1f} kN",
+            "Vy_error": f"{100*Vy_error:.2f} %",
             "uy": f"{uy:.3f} [m]",
             "cs": f"{cs:.3f} [1]",
             "drift_y": f"{100*drift_y:.2f} %",
             "c_design": f"{c_design:.3f} [1]",
-            "design_error": f"{100*design_error:.2f} %",
+            "design_error": f"{100*c_design_error:.2f} %",
         }
         return stats
 
