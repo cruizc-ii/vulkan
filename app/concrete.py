@@ -190,6 +190,11 @@ class RectangularConcreteColumn:
     gammaParkAng: float | None = None
     gammaJiangCheng: float | None = None
     Et: float | None = None  # energy capacity
+    theta_y: float | None = None
+    theta_u: float | None = None
+    theta_pc_cyclic: float | None = None
+    theta_cap_cyclic: float | None = None
+    theta_u_cyclic: float | None = None
 
     def __repr__(self):
         return f'RectangularConcreteColumn {self.b=:.2f} {self.h=:.2f}'
@@ -220,8 +225,8 @@ set stable {self.stable}
     def describe(self):
         s = "\n"
         s += f"As: {self.As:.6f} {self.num_bars}#{self.bar_caliber}\n"
-        s += "M2 {:.0f} V {:.0f} - p {:.2f} %\n".format(
-            self.My, self.VR, (self.p + self.pc) * 100
+        s += "M2 {:.0f} V {:.0f} - pt {:.2f} pc {:.2f} %\n".format(
+            self.My, self.VR, self.pt * 100, self.pc * 100
         )
         return s
 

@@ -11,7 +11,7 @@ from app.strana import (
     StructuralResultView,
 )
 from app.loss import LossAggregator, IDANotFoundException, LossModel
-from app.utils import DESIGN_DIR, HAZARD_DIR, RESULTS_DIR, find_files, COMPARE_DIR
+from app.utils import DESIGN_DIR, HAZARD_DIR, RESULTS_DIR, find_files, COMPARE_DIR, GRAVITY
 from app.occupancy import BuildingOccupancy
 from app.compare import IDACompare
 import pandas as pd
@@ -97,10 +97,10 @@ with st.sidebar:
             "give it a name",
             value=file.split(".")[0] if file else "",
         )
-        if state.design_abspath:
-            design = ReinforcedConcreteFrame.from_file(state.design_abspath)
-        elif file:
+        if file:
             state.design_abspath = DESIGN_DIR / file
+            design = ReinforcedConcreteFrame.from_file(state.design_abspath)
+        elif state.design_abspath:
             design = ReinforcedConcreteFrame.from_file(state.design_abspath)
         else:
             design = ReinforcedConcreteFrame(name=name)
@@ -230,19 +230,20 @@ with st.sidebar:
         )
         st.subheader(f"Records ({len(hazard.records)})")
         record_files = find_files(RECORDS_DIR, only_yml=False, only_csv=True)
+        record_files = ['add a record'] + record_files
         record_name = st.selectbox("add a record", options=record_files)
-        if record_name and not state.first_render:
+        if record_name != 'add a record':
             record_path = str((RECORDS_DIR / record_name).resolve())
             record = Record(record_path)
             hazard.add_record(record)
             hazard.to_file(HAZARD_DIR)
         left, middle, right = st.columns(3)
-        go = left.button("sample 5", help="grab 5 at random")
+        go = left.button("sample 3", help="grab 3 at random")
         if go:
             with st.spinner("sampling..."):
                 time.sleep(1)
                 untouched = [r for r in record_files if r not in hazard.record_names]
-                samples = random.sample(untouched, 5)
+                samples = random.sample(untouched, 3)
                 for path in samples:
                     record_path = str((RECORDS_DIR / path).resolve())
                     record = Record(record_path)
@@ -610,11 +611,12 @@ if state.module == 1:
             key="fem",
         )
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         col1.metric("Net worth", design.fem.readable_total_net_worth)
         col2.metric("fundamental period", f"{design.fem.period:.2f} s")
         col3.metric("height", f"{design.height:.1f} m")
         col4.metric("width", f"{design.width:.1f} m")
+        col5.metric("weight", f"{design.weight_str} kN")
 
         with st.expander("costs"):
             col1, col2, col3 = st.columns(3)
@@ -669,17 +671,18 @@ if state.module == 1:
             col1, col2 = st.columns(2)
             col1.plotly_chart(fig)
             col2.plotly_chart(nfig)
-            design_c_error = design.fem.pushover_stats["design_error"]
-            c_design = design.fem.pushover_stats["c_design"]
+            stats = design.fem.pushover_stats()
+            design_c_error = stats["design_error"]
+            c_design = stats["c_design"]
             design_period_error = design.fem.summary["period_error"]
             period = design.fem.summary["period [s]"]
             miranda_period = design.fem.summary["miranda period [s]"]
-            cs = design.fem.pushover_stats['cs']
-            Vy_design = design.fem.pushover_stats['Vy_design']
-            Vy = design.fem.pushover_stats['Vy']
-            Vy_error = design.fem.pushover_stats['Vy_error']
-            uy = design.fem.pushover_stats['uy']
-            drift_y = design.fem.pushover_stats['drift_y']
+            cs = stats['cs']
+            Vy_design = stats['Vy_design']
+            Vy = stats['Vy']
+            Vy_error = stats['Vy_error']
+            uy = stats['uy']
+            drift_y = stats['drift_y']
             col1, col2, col3 = st.columns(3)
             col1.header('Design values')
             col1.metric(
@@ -692,8 +695,8 @@ if state.module == 1:
             col2.metric(
                 label="period T0", value=period, delta=design_period_error
             )
-            col2.metric(label="seismic coeff Cs", value=cs, delta=design_c_error)
             col2.metric(label="Vy base shear", value=Vy, delta=Vy_error)
+            col2.metric(label="Say_g, cs (g)", value=cs, delta=design_c_error)
             col2.metric(label="drift yield", value=drift_y, )
             col2.metric(label="roof disp yield", value=uy, )
             col3.header('Moments and shears')
@@ -701,7 +704,7 @@ if state.module == 1:
 
             st.header('Element properties')
             sdf = design.fem.structural_elements_breakdown()
-            desired_columns = 'name model type storey bay My Ix Iy Ig Mc b h radius edp p s'.split(' ')
+            desired_columns = 'name model type storey bay My Ix Iy Ig Ic Mc b h radius theta_y Ks Ke Ke_Ks_ratio edp p s'.split(' ')
             desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]
             sorted_unique_columns = sorted(list(set(sdf.columns.tolist()) - set(desired_columns)))
             columns = desired_columns + sorted_unique_columns
@@ -710,20 +713,17 @@ if state.module == 1:
             st.dataframe(sdf, height=1000)
 
 if state.module == 2:
-    left, right = st.columns(2)
-    logx = left.checkbox("log x", value=True)
+    left, mid, right = st.columns(3)
+    normalize_g = left.checkbox("normalize (g)", value=True)
+    logx = mid.checkbox("log x", value=True)
     logy = right.checkbox("log y", value=True)
     if hazard:
-        fig = hazard.rate_figure(logx=logx, logy=logy)
+        fig = hazard.rate_figure(normalize_g=normalize_g, logx=logx, logy=logy)
         st.plotly_chart(fig)
-        if selected_ix is not None:
-            record = hazard.records[selected_ix]
-            st.plotly_chart(record.figure)
-            st.plotly_chart(record.spectra)
-        elif len(hazard.records) > 0:
-            record = hazard.records[0]
-            st.plotly_chart(record.figure)
-            st.plotly_chart(record.spectra)
+        if len(hazard.records) > 0:
+            record = hazard.records[selected_ix] if selected_ix is not None else hazard.records[0]
+            st.plotly_chart(record.figure(normalize_g=normalize_g))
+            st.plotly_chart(record.spectra(normalize_g=normalize_g))
 
 if state.module == 3:
     if design_missing:
@@ -732,8 +732,9 @@ if state.module == 3:
         st.warning("Please select a hazard")
     if not (design_missing or hazard_missing) and ida and ida.results:
         fig = ida.view_ida_curves()
-        # todo@carlo width 85% parent container
         # fig.update_layout(width=640 * 3, height=640,)
+        st.plotly_chart(fig, container_width=True)
+        fig = ida.view_normalized_ida_curves()
         st.plotly_chart(fig, container_width=True)
         st.dataframe(pd.DataFrame.from_records(ida.stats), height=800)
         if selected_ix is not None:
@@ -775,7 +776,7 @@ if state.module == 4:
         average_annual_loss_pct,
         net_worth,
     ) = asset.stats()
-    if average_annual_loss:
+    if average_annual_loss is not None:
         one, two, three, four = st.columns(4)
         one.metric("AAL", f"{average_annual_loss or 0:.4f}")
         two.metric("AAL %", f"{average_annual_loss_pct or 0:.3f}")

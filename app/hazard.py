@@ -16,12 +16,13 @@ from app.utils import NamedYamlMixin, YamlMixin, UploadComponent
 import yaml
 import streamlit
 from typing_extensions import TypeAlias
+from app.utils import GRAVITY
 
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent
 RECORDS_DIR = ROOT_DIR / "records"
 CONFIG_FILE = RECORDS_DIR / "record-parameters.yml"
-SDOF_API_PATH = ROOT_DIR / "api" / "sdof" / "elastoplastic-sdof-api.tcl"
+SDOF_API_PATH = ROOT_DIR / "api" / "opensees-elastoplastic-sdof-api.tcl"
 SA_SPECTRA_DIR = RECORDS_DIR / "Sa_spectra"
 SD_SPECTRA_DIR = RECORDS_DIR / "Sd_spectra"
 SV_SPECTRA_DIR = RECORDS_DIR / "Sv_spectra"
@@ -159,26 +160,31 @@ class Record:
             return str(self.path.resolve())
         return self.path
 
-    @property
-    def figure(self):
+    def figure(self, normalize_g: bool=False):
         df = self._df
-        fig = px.line(df, x=df.index, y=df.values)
+        x, y = df.index, df.values
+        y = y / 100 # from gals to m/s/s
+        y = y / GRAVITY if normalize_g else y
+        fig = px.line(df, x=x, y=y)
         fig.update_traces(line=dict(width=1.0, color="Black"))
         fig.update_layout(
             xaxis_title="s",
-            yaxis_title="acc (gals)",
+            yaxis_title="a (g)" if normalize_g else "a (m/s/s)",
             title_text=f"{self.name}",
         )
         return fig
 
-    @property
-    def spectra(self):
+    def spectra(self, normalize_g: bool=False):
         df = self._spectra
         x, y = df.index, df.Sa
+        y = y / 100 # from gals to m/s/s
+        y = y / GRAVITY if normalize_g else y
         fig = px.line(df, x=x, y=y)
         fig.update_traces(line=dict(width=1.0, color="Black"))
         fig.update_layout(
-            xaxis_title="T (s)", yaxis_title="Sa (gals)", title_text=f"Sa 5% spectra"
+            xaxis_title="T (s)",
+            yaxis_title="a (g)" if normalize_g else "a (m/s/s)",
+            title_text=f"Sa 5% spectra"
         )
         return fig
 
@@ -251,9 +257,8 @@ class Hazard(NamedYamlMixin):
     def record_names(self) -> list[str]:
         return [r.name for r in self.records if r.name]
 
-    @property
-    def rate_figure(self):
-        return self._curve.figure
+    def rate_figure(self, normalize_g:bool=True, logx:bool=True, logy:bool=True):
+        return self._curve.figure(normalize_g=normalize_g, logx=logx, logy=logy)
 
 
 @dataclass
@@ -294,12 +299,15 @@ class HazardCurve(ABC, YamlMixin):
         """
         pass
 
-    def figure(self, logx=True, logy=True):
+    def figure(self, normalize_g:bool=True, logx=True, logy=True):
         fig = Figure()
-        trace = Scattergl(x=self.x, y=self.y, marker=dict(color="LightSkyBlue"))
+        x, y = self.x, self.y
+        x, y = np.array(x), np.array(y)
+        y = y if normalize_g else y * GRAVITY
+        trace = Scattergl(x=x, y=y, marker=dict(color="LightSkyBlue"))
         fig.add_trace(trace)
         fig.update_layout(
-            xaxis_title="Sa (g)",
+            xaxis_title="Sa (g)" if normalize_g else 'Sa m/s/s',
             yaxis_title="1/yr",
             title_text="annual rate of exceedance.",
             # xaxis_type="log",
@@ -461,7 +469,7 @@ class UserDefinedCurve(HazardCurve):
 
     def html(self, st: streamlit) -> None:
         """
-        TODO: return a file uploader
+        TODO: return a file uploader for streamlit
         """
         #         return html.Div(
         #             [

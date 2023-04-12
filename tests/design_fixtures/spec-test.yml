@@ -94,7 +94,7 @@ fems:
     E: 24099792.53022731
     EA: 1000000000.0
     Ix: 0.0018703728876081974
-    My: 179.89464165060613
+    My: 79.95317406693606
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -190,7 +190,7 @@ fems:
     E: 24099792.53022731
     EA: 1000000000.0
     Ix: 0.0004675932219020494
-    My: 74.31699373866316
+    My: 33.0297749949614
     Q: 1
     Vy: null
     alpha: '0.0055'
@@ -217,13 +217,45 @@ fems:
     type: beam
     x: null
     y: null
+  - category: structural
+    edp: null
+    floor: 1
+    hidden: false
+    icon: null
+    id: 20000000
+    length: 5.0
+    model: ConcreteElasticSlab
+    name: ConcreteSlabAsset
+    net_worth: 1600.0
+    node: null
+    rugged: true
+    thickness: 0.08
+    type: slab
+    x: null
+    y: null
+  - category: structural
+    edp: null
+    floor: 2
+    hidden: false
+    icon: null
+    id: 50000000
+    length: 5.0
+    model: ConcreteElasticSlab
+    name: ConcreteSlabAsset
+    net_worth: 1600.0
+    node: null
+    rugged: true
+    thickness: 0.08
+    type: slab
+    x: null
+    y: null
   extras:
     c_design: 0.24678899082568803
     column_design_moments:
     - 119.9297611004041
     - 49.54466249244211
     design_shears:
-    - 38.729833462074154
+    - 38.72983346207415
     - 29.58039891549807
   frequencies:
   - 2.906087764714352
@@ -407,7 +439,7 @@ fems:
     E: 24099792.53022731
     EA: 1000000000.0
     Ix: 0.0018703728876081974
-    My: 79.22660704335696
+    My: 35.21182535260309
     Q: 4
     Vy: null
     alpha: '0.0055'
@@ -503,7 +535,7 @@ fems:
     E: 24099792.53022731
     EA: 1000000000.0
     Ix: 0.0004675932219020494
-    My: 44.66559716967971
+    My: 19.851376519857645
     Q: 4
     Vy: null
     alpha: '0.0055'
@@ -530,13 +562,45 @@ fems:
     type: beam
     x: null
     y: null
+  - category: structural
+    edp: null
+    floor: 1
+    hidden: false
+    icon: null
+    id: 20000000
+    length: 5.0
+    model: ConcreteElasticSlab
+    name: ConcreteSlabAsset
+    net_worth: 1600.0
+    node: null
+    rugged: true
+    thickness: 0.08
+    type: slab
+    x: null
+    y: null
+  - category: structural
+    edp: null
+    floor: 2
+    hidden: false
+    icon: null
+    id: 50000000
+    length: 5.0
+    model: ConcreteElasticSlab
+    name: ConcreteSlabAsset
+    net_worth: 1600.0
+    node: null
+    rugged: true
+    thickness: 0.08
+    type: slab
+    x: null
+    y: null
   extras:
     c_design: 0.09857288481141692
     column_design_moments:
     - 52.81773802890464
     - 29.77706477978647
     design_shears:
-    - 38.729833462074154
+    - 38.72983346207415
     - 29.58039891549807
   frequencies:
   - 2.906087764714352
@@ -756,6 +820,7 @@ fems:
     qt: 0.03482420327679438
     radius: 0.36502585483269273
     recorder_ix: 1
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -770,7 +835,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: -0.0006764634361818053
+    Ix: 0.009468762743516499
     bay: 0
     category: structural
     floor: 1
@@ -887,6 +952,7 @@ fems:
     qt: 0.03482420327679438
     radius: 0.36502585483269273
     recorder_ix: 2
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -1002,6 +1068,7 @@ fems:
     qt: 0.03482420327679438
     radius: 0.36502585483269273
     recorder_ix: 3
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -1016,7 +1083,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: -0.0006764634361818053
+    Ix: 0.009468762743516499
     bay: 1
     category: structural
     floor: 1
@@ -1133,6 +1200,7 @@ fems:
     qt: 0.03482420327679438
     radius: 0.36502585483269273
     recorder_ix: 4
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -1149,11 +1217,11 @@ fems:
     Ac: 0.08891078610673954
     Acc: 0.057468304042801045
     Ag: 0.09475119978406263
-    As: 0.002138222427912538
-    Asc: 0.001069111213956269
+    As: 0.0009492762238141957
+    Asc: 0.00047463811190709784
     Asmax: null
     Asmin: null
-    Ast: 0.001069111213956269
+    Ast: 0.00047463811190709784
     Asw: 0.000142
     CRACKED_INERTIA_FACTOR: 1.0
     DESIGN_TOL: 0.05
@@ -1162,28 +1230,28 @@ fems:
     EFFECTIVE_INERTIA_COEFF: 1
     Ec: 24099792.53022731
     Es: 200000000.0
-    Et: 68.19181384425765
+    Et: 30.11226520410014
     FRM: 0.9
     FRV: 0.75
-    Ic: -0.004508453351814515
+    Ic: -0.0008566202463228983
     Ig: 0.001870372887608198
     Ix: 0.0018703728876081974
     Iy: 0.001870372887608198
-    Kb: -130383.34849312526
+    Kb: -24773.24425628888
     Ke: 54090.718254623665
-    Ks: 38230.46291964564
+    Ks: 16991.31685317584
     L: 1.0
     Lpl: 0.03
     Ls: 0.5
-    Mc: 268.46334414703676
+    Mc: 119.31704184312744
     Mu: 0.0
-    My: 179.89464165060613
+    My: 79.95317406693606
     N: 0.0
     P: 0.0
     Q: 1
     Vy: null
     alpha: '0.0055'
-    alpha_confinement: 1.4458681004091125
+    alpha_confinement: 1.4154525137306948
     alpha_cyclic: 1
     alpha_postyield: 0.13
     alpha_slippage: 1
@@ -1196,8 +1264,8 @@ fems:
     bars_top: null
     bay: 1
     beta: 0.8357142857142857
-    betaJiangCheng: 0.047012501309546234
-    betaParkAng: 0.10109519868088704
+    betaJiangCheng: 0.047317267431271445
+    betaParkAng: -0.0032118633313930056
     c: null
     category: structural
     cover: 0.03
@@ -1217,8 +1285,8 @@ fems:
     fy: 420000.0
     fyMPa: 420.0
     fyw: 420000.0
-    gammaJiangCheng: 21.270937987656968
-    gammaParkAng: 9.891666597902033
+    gammaJiangCheng: 21.133933853059133
+    gammaParkAng: -311.3457506818304
     h: 0.48670113977692364
     hidden: false
     i: 2
@@ -1236,18 +1304,19 @@ fems:
     node: 2
     nu: 0.0
     num_bars: null
-    p: 0.022566705569803155
-    pc: 0.011283352784901578
-    pcc: 0.03720698676473974
+    p: 0.010018619563420728
+    pc: 0.005009309781710364
+    pcc: 0.016518257144098023
     pmax: null
     pmin: null
-    pt: 0.011283352784901578
+    pt: 0.005009309781710364
     pw: 0.00364700193801387
     pweff: null
-    qc: 0.1890202688752743
-    qt: 0.1890202688752743
+    qc: 0.08391664249702831
+    qt: 0.08391664249702831
     radius: 0.24335056988846182
     recorder_ix: 1
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -1262,7 +1331,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: 100000.0
+    Ix: 0.0018703728876081974
     bay: 1
     category: structural
     floor: 2
@@ -1280,11 +1349,11 @@ fems:
     Ac: 0.08891078610673954
     Acc: 0.057468304042801045
     Ag: 0.09475119978406263
-    As: 0.002138222427912538
-    Asc: 0.001069111213956269
+    As: 0.0009492762238141957
+    Asc: 0.00047463811190709784
     Asmax: null
     Asmin: null
-    Ast: 0.001069111213956269
+    Ast: 0.00047463811190709784
     Asw: 0.000142
     CRACKED_INERTIA_FACTOR: 1.0
     DESIGN_TOL: 0.05
@@ -1293,28 +1362,28 @@ fems:
     EFFECTIVE_INERTIA_COEFF: 1
     Ec: 24099792.53022731
     Es: 200000000.0
-    Et: 68.19181384425765
+    Et: 30.11226520410014
     FRM: 0.9
     FRV: 0.75
-    Ic: -0.004508453351814515
+    Ic: -0.0008566202463228983
     Ig: 0.001870372887608198
     Ix: 0.0018703728876081974
     Iy: 0.001870372887608198
-    Kb: -130383.34849312526
+    Kb: -24773.24425628888
     Ke: 54090.718254623665
-    Ks: 38230.46291964564
+    Ks: 16991.31685317584
     L: 1.0
     Lpl: 0.03
     Ls: 0.5
-    Mc: 268.46334414703676
+    Mc: 119.31704184312744
     Mu: 0.0
-    My: 179.89464165060613
+    My: 79.95317406693606
     N: 0.0
     P: 0.0
     Q: 1
     Vy: null
     alpha: '0.0055'
-    alpha_confinement: 1.4458681004091125
+    alpha_confinement: 1.4154525137306948
     alpha_cyclic: 1
     alpha_postyield: 0.13
     alpha_slippage: 1
@@ -1327,8 +1396,8 @@ fems:
     bars_top: null
     bay: 1
     beta: 0.8357142857142857
-    betaJiangCheng: 0.047012501309546234
-    betaParkAng: 0.10109519868088704
+    betaJiangCheng: 0.047317267431271445
+    betaParkAng: -0.0032118633313930056
     c: null
     category: structural
     cover: 0.03
@@ -1348,8 +1417,8 @@ fems:
     fy: 420000.0
     fyMPa: 420.0
     fyw: 420000.0
-    gammaJiangCheng: 21.270937987656968
-    gammaParkAng: 9.891666597902033
+    gammaJiangCheng: 21.133933853059133
+    gammaParkAng: -311.3457506818304
     h: 0.48670113977692364
     hidden: false
     i: 13
@@ -1367,18 +1436,19 @@ fems:
     node: 13
     nu: 0.0
     num_bars: null
-    p: 0.022566705569803155
-    pc: 0.011283352784901578
-    pcc: 0.03720698676473974
+    p: 0.010018619563420728
+    pc: 0.005009309781710364
+    pcc: 0.016518257144098023
     pmax: null
     pmin: null
-    pt: 0.011283352784901578
+    pt: 0.005009309781710364
     pw: 0.00364700193801387
     pweff: null
-    qc: 0.1890202688752743
-    qt: 0.1890202688752743
+    qc: 0.08391664249702831
+    qt: 0.08391664249702831
     radius: 0.24335056988846182
     recorder_ix: 2
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -1494,6 +1564,7 @@ fems:
     qt: 0.04299164509747992
     radius: 0.2581122572606133
     recorder_ix: 5
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -1508,7 +1579,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: -0.00024842034076566065
+    Ix: 0.002367190685879125
     bay: 0
     category: structural
     floor: 2
@@ -1625,6 +1696,7 @@ fems:
     qt: 0.04299164509747992
     radius: 0.2581122572606133
     recorder_ix: 6
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -1740,6 +1812,7 @@ fems:
     qt: 0.04299164509747992
     radius: 0.2581122572606133
     recorder_ix: 7
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -1754,7 +1827,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: -0.00024842034076566065
+    Ix: 0.002367190685879125
     bay: 1
     category: structural
     floor: 2
@@ -1871,6 +1944,7 @@ fems:
     qt: 0.04299164509747992
     radius: 0.2581122572606133
     recorder_ix: 8
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -1887,11 +1961,11 @@ fems:
     Ac: 0.04324580377586151
     Acc: 0.022067027078842626
     Ag: 0.04737559989203132
-    As: 0.0013593045923427876
-    Asc: 0.0006796522961713938
+    As: 0.0006045208812264723
+    Asc: 0.00030226044061323616
     Asmax: null
     Asmin: null
-    Ast: 0.0006796522961713938
+    Ast: 0.00030226044061323616
     Asw: 0.000142
     CRACKED_INERTIA_FACTOR: 1.0
     DESIGN_TOL: 0.05
@@ -1900,28 +1974,28 @@ fems:
     EFFECTIVE_INERTIA_COEFF: 1
     Ec: 24099792.53022731
     Es: 200000000.0
-    Et: 34.29468974297497
+    Et: 15.233604955761926
     FRM: 0.9
     FRV: 0.75
-    Ic: -0.01227551755734605
+    Ic: -0.0003500719795618194
     Ig: 0.00046759322190204956
     Ix: 0.0004675932219020494
     Iy: 0.00046759322190204956
-    Kb: -355004.911599843
+    Kb: -10123.994493702987
     Ke: 13522.67956365592
-    Ks: 13026.480996802375
+    Ks: 5789.547109689944
     L: 1.0
     Lpl: 0.03
     Ls: 0.5
-    Mc: 104.85802721158105
+    Mc: 46.60356764959157
     Mu: 0.0
-    My: 74.31699373866316
+    My: 33.0297749949614
     N: 0.0
     P: 0.0
     Q: 1
     Vy: null
     alpha: '0.0055'
-    alpha_confinement: 3.8632930324498544
+    alpha_confinement: 3.7274304903350766
     alpha_cyclic: 1
     alpha_postyield: 0.13
     alpha_slippage: 1
@@ -1934,8 +2008,8 @@ fems:
     bars_top: null
     bay: 1
     beta: 0.8357142857142857
-    betaJiangCheng: 0.039081796723189115
-    betaParkAng: 0.23614524921129618
+    betaJiangCheng: 0.039103550548992304
+    betaParkAng: 0.057300459473375774
     c: null
     category: structural
     cover: 0.03
@@ -1955,8 +2029,8 @@ fems:
     fy: 420000.0
     fyMPa: 420.0
     fyw: 420000.0
-    gammaJiangCheng: 25.587359943629504
-    gammaParkAng: 4.234681846617325
+    gammaJiangCheng: 25.573125354617446
+    gammaParkAng: 17.451867038948308
     h: 0.34414967634748445
     hidden: false
     i: 4
@@ -1974,18 +2048,19 @@ fems:
     node: 4
     nu: 0.0
     num_bars: null
-    p: 0.028692081903778185
-    pc: 0.014346040951889093
-    pcc: 0.06159889991008615
+    p: 0.012760173646437648
+    pc: 0.006380086823218824
+    pcc: 0.02739475866262354
     pmax: null
     pmin: null
-    pt: 0.014346040951889093
+    pt: 0.006380086823218824
     pw: 0.005157639602740177
     pweff: null
-    qc: 0.24032683987780018
-    qt: 0.24032683987780018
+    qc: 0.10688008695306747
+    qt: 0.10688008695306747
     radius: 0.17207483817374222
     recorder_ix: 3
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -2000,7 +2075,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: 100000.0
+    Ix: 0.0004675932219020494
     bay: 1
     category: structural
     floor: 3
@@ -2018,11 +2093,11 @@ fems:
     Ac: 0.04324580377586151
     Acc: 0.022067027078842626
     Ag: 0.04737559989203132
-    As: 0.0013593045923427876
-    Asc: 0.0006796522961713938
+    As: 0.0006045208812264723
+    Asc: 0.00030226044061323616
     Asmax: null
     Asmin: null
-    Ast: 0.0006796522961713938
+    Ast: 0.00030226044061323616
     Asw: 0.000142
     CRACKED_INERTIA_FACTOR: 1.0
     DESIGN_TOL: 0.05
@@ -2031,28 +2106,28 @@ fems:
     EFFECTIVE_INERTIA_COEFF: 1
     Ec: 24099792.53022731
     Es: 200000000.0
-    Et: 34.29468974297497
+    Et: 15.233604955761926
     FRM: 0.9
     FRV: 0.75
-    Ic: -0.01227551755734605
+    Ic: -0.0003500719795618194
     Ig: 0.00046759322190204956
     Ix: 0.0004675932219020494
     Iy: 0.00046759322190204956
-    Kb: -355004.911599843
+    Kb: -10123.994493702987
     Ke: 13522.67956365592
-    Ks: 13026.480996802375
+    Ks: 5789.547109689944
     L: 1.0
     Lpl: 0.03
     Ls: 0.5
-    Mc: 104.85802721158105
+    Mc: 46.60356764959157
     Mu: 0.0
-    My: 74.31699373866316
+    My: 33.0297749949614
     N: 0.0
     P: 0.0
     Q: 1
     Vy: null
     alpha: '0.0055'
-    alpha_confinement: 3.8632930324498544
+    alpha_confinement: 3.7274304903350766
     alpha_cyclic: 1
     alpha_postyield: 0.13
     alpha_slippage: 1
@@ -2065,8 +2140,8 @@ fems:
     bars_top: null
     bay: 1
     beta: 0.8357142857142857
-    betaJiangCheng: 0.039081796723189115
-    betaParkAng: 0.23614524921129618
+    betaJiangCheng: 0.039103550548992304
+    betaParkAng: 0.057300459473375774
     c: null
     category: structural
     cover: 0.03
@@ -2086,8 +2161,8 @@ fems:
     fy: 420000.0
     fyMPa: 420.0
     fyw: 420000.0
-    gammaJiangCheng: 25.587359943629504
-    gammaParkAng: 4.234681846617325
+    gammaJiangCheng: 25.573125354617446
+    gammaParkAng: 17.451867038948308
     h: 0.34414967634748445
     hidden: false
     i: 17
@@ -2105,18 +2180,19 @@ fems:
     node: 17
     nu: 0.0
     num_bars: null
-    p: 0.028692081903778185
-    pc: 0.014346040951889093
-    pcc: 0.06159889991008615
+    p: 0.012760173646437648
+    pc: 0.006380086823218824
+    pcc: 0.02739475866262354
     pmax: null
     pmin: null
-    pt: 0.014346040951889093
+    pt: 0.006380086823218824
     pw: 0.005157639602740177
     pweff: null
-    qc: 0.24032683987780018
-    qt: 0.24032683987780018
+    qc: 0.10688008695306747
+    qt: 0.10688008695306747
     radius: 0.17207483817374222
     recorder_ix: 4
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -2128,13 +2204,45 @@ fems:
     up: false
     x: null
     y: null
+  - category: structural
+    edp: null
+    floor: 1
+    hidden: false
+    icon: null
+    id: 80000000
+    length: 1.0
+    model: ConcreteElasticSlab
+    name: ConcreteSlabAsset
+    net_worth: 64.0
+    node: null
+    rugged: true
+    thickness: 0.08
+    type: slab
+    x: null
+    y: null
+  - category: structural
+    edp: null
+    floor: 2
+    hidden: false
+    icon: null
+    id: 170000000
+    length: 1.0
+    model: ConcreteElasticSlab
+    name: ConcreteSlabAsset
+    net_worth: 64.0
+    node: null
+    rugged: true
+    thickness: 0.08
+    type: slab
+    x: null
+    y: null
   extras:
     c_design: 0.24678899082568803
     column_design_moments:
     - 119.9297611004041
     - 49.54466249244211
     design_shears:
-    - 38.729833462074154
+    - 38.72983346207415
     - 29.58039891549807
   frequencies:
   - 2.906087764714352
@@ -2510,6 +2618,7 @@ fems:
     qt: 0.015281129916178375
     radius: 0.36502585483269273
     recorder_ix: 1
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -2524,7 +2633,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: -0.0002864658617769784
+    Ix: 0.009468762743516499
     bay: 0
     category: structural
     floor: 1
@@ -2641,6 +2750,7 @@ fems:
     qt: 0.015281129916178375
     radius: 0.36502585483269273
     recorder_ix: 2
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -2756,6 +2866,7 @@ fems:
     qt: 0.015281129916178375
     radius: 0.36502585483269273
     recorder_ix: 3
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -2770,7 +2881,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: -0.0002864658617769784
+    Ix: 0.009468762743516499
     bay: 1
     category: structural
     floor: 1
@@ -2887,6 +2998,7 @@ fems:
     qt: 0.015281129916178375
     radius: 0.36502585483269273
     recorder_ix: 4
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -2903,11 +3015,11 @@ fems:
     Ac: 0.08891078610673954
     Acc: 0.057468304042801045
     Ag: 0.09475119978406263
-    As: 0.0009406326734882591
-    Asc: 0.00047031633674412957
+    As: 0.00041701411073673825
+    Asc: 0.00020850705536836912
     Asmax: null
     Asmin: null
-    Ast: 0.00047031633674412957
+    Ast: 0.00020850705536836912
     Asw: 0.000142
     CRACKED_INERTIA_FACTOR: 1.0
     DESIGN_TOL: 0.05
@@ -2916,28 +3028,28 @@ fems:
     EFFECTIVE_INERTIA_COEFF: 1
     Ec: 24099792.53022731
     Es: 200000000.0
-    Et: 29.837229402673234
+    Et: 13.223629498949384
     FRM: 0.9
     FRV: 0.75
-    Ic: -0.0008453175937118657
+    Ic: -0.00030029692613096817
     Ig: 0.001870372887608198
     Ix: 0.0018703728876081974
     Iy: 0.001870372887608198
-    Kb: -24446.374356728335
+    Kb: -8684.512340665595
     Ke: 54090.718254623665
-    Ks: 16836.909843613394
+    Ks: 7483.071041605952
     L: 1.0
     Lpl: 0.03
     Ls: 0.5
-    Mc: 118.23275933694894
+    Mc: 52.54789303864398
     Mu: 0.0
-    My: 79.22660704335696
+    My: 35.21182535260309
     N: 0.0
     P: 0.0
     Q: 4
     Vy: null
     alpha: '0.0055'
-    alpha_confinement: 1.4152360792882344
+    alpha_confinement: 1.4022469973117635
     alpha_cyclic: 1
     alpha_postyield: 0.13
     alpha_slippage: 1
@@ -2950,7 +3062,7 @@ fems:
     bars_top: null
     bay: 1
     beta: 0.8357142857142857
-    betaJiangCheng: 0.047319477142933865
+    betaJiangCheng: 0.047453171102715755
     betaParkAng: -0.0032118633313930056
     c: null
     category: structural
@@ -2971,7 +3083,7 @@ fems:
     fy: 420000.0
     fyMPa: 420.0
     fyw: 420000.0
-    gammaJiangCheng: 21.132946946547744
+    gammaJiangCheng: 21.07340725102289
     gammaParkAng: -311.3457506818304
     h: 0.48670113977692364
     hidden: false
@@ -2990,18 +3102,19 @@ fems:
     node: 2
     nu: 0.0
     num_bars: null
-    p: 0.009927395913001154
-    pc: 0.004963697956500577
-    pcc: 0.01636785162109009
+    p: 0.004401148604842057
+    pc: 0.0022005743024210286
+    pcc: 0.0072564193024759515
     pmax: null
     pmin: null
-    pt: 0.004963697956500577
+    pt: 0.0022005743024210286
     pw: 0.00364700193801387
     pweff: null
-    qc: 0.08315254696359942
-    qt: 0.08315254696359942
+    qc: 0.03686432164739501
+    qt: 0.03686432164739501
     radius: 0.24335056988846182
     recorder_ix: 1
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -3016,7 +3129,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: 100000.0
+    Ix: 0.0018703728876081974
     bay: 1
     category: structural
     floor: 2
@@ -3034,11 +3147,11 @@ fems:
     Ac: 0.08891078610673954
     Acc: 0.057468304042801045
     Ag: 0.09475119978406263
-    As: 0.0009406326734882591
-    Asc: 0.00047031633674412957
+    As: 0.00041701411073673825
+    Asc: 0.00020850705536836912
     Asmax: null
     Asmin: null
-    Ast: 0.00047031633674412957
+    Ast: 0.00020850705536836912
     Asw: 0.000142
     CRACKED_INERTIA_FACTOR: 1.0
     DESIGN_TOL: 0.05
@@ -3047,28 +3160,28 @@ fems:
     EFFECTIVE_INERTIA_COEFF: 1
     Ec: 24099792.53022731
     Es: 200000000.0
-    Et: 29.837229402673234
+    Et: 13.223629498949384
     FRM: 0.9
     FRV: 0.75
-    Ic: -0.0008453175937118657
+    Ic: -0.00030029692613096817
     Ig: 0.001870372887608198
     Ix: 0.0018703728876081974
     Iy: 0.001870372887608198
-    Kb: -24446.374356728335
+    Kb: -8684.512340665595
     Ke: 54090.718254623665
-    Ks: 16836.909843613394
+    Ks: 7483.071041605952
     L: 1.0
     Lpl: 0.03
     Ls: 0.5
-    Mc: 118.23275933694894
+    Mc: 52.54789303864398
     Mu: 0.0
-    My: 79.22660704335696
+    My: 35.21182535260309
     N: 0.0
     P: 0.0
     Q: 4
     Vy: null
     alpha: '0.0055'
-    alpha_confinement: 1.4152360792882344
+    alpha_confinement: 1.4022469973117635
     alpha_cyclic: 1
     alpha_postyield: 0.13
     alpha_slippage: 1
@@ -3081,7 +3194,7 @@ fems:
     bars_top: null
     bay: 1
     beta: 0.8357142857142857
-    betaJiangCheng: 0.047319477142933865
+    betaJiangCheng: 0.047453171102715755
     betaParkAng: -0.0032118633313930056
     c: null
     category: structural
@@ -3102,7 +3215,7 @@ fems:
     fy: 420000.0
     fyMPa: 420.0
     fyw: 420000.0
-    gammaJiangCheng: 21.132946946547744
+    gammaJiangCheng: 21.07340725102289
     gammaParkAng: -311.3457506818304
     h: 0.48670113977692364
     hidden: false
@@ -3121,18 +3234,19 @@ fems:
     node: 13
     nu: 0.0
     num_bars: null
-    p: 0.009927395913001154
-    pc: 0.004963697956500577
-    pcc: 0.01636785162109009
+    p: 0.004401148604842057
+    pc: 0.0022005743024210286
+    pcc: 0.0072564193024759515
     pmax: null
     pmin: null
-    pt: 0.004963697956500577
+    pt: 0.0022005743024210286
     pw: 0.00364700193801387
     pweff: null
-    qc: 0.08315254696359942
-    qt: 0.08315254696359942
+    qc: 0.03686432164739501
+    qt: 0.03686432164739501
     radius: 0.24335056988846182
     recorder_ix: 2
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -3248,6 +3362,7 @@ fems:
     qt: 0.025777296969394452
     radius: 0.2581122572606133
     recorder_ix: 5
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -3262,7 +3377,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: -0.0001433039995178144
+    Ix: 0.002367190685879125
     bay: 0
     category: structural
     floor: 2
@@ -3379,6 +3494,7 @@ fems:
     qt: 0.025777296969394452
     radius: 0.2581122572606133
     recorder_ix: 6
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -3494,6 +3610,7 @@ fems:
     qt: 0.025777296969394452
     radius: 0.2581122572606133
     recorder_ix: 7
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -3508,7 +3625,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: -0.0001433039995178144
+    Ix: 0.002367190685879125
     bay: 1
     category: structural
     floor: 2
@@ -3625,6 +3742,7 @@ fems:
     qt: 0.025777296969394452
     radius: 0.2581122572606133
     recorder_ix: 8
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -3641,11 +3759,11 @@ fems:
     Ac: 0.04324580377586151
     Acc: 0.022067027078842626
     Ag: 0.04737559989203132
-    As: 0.0008179993259821995
-    Asc: 0.00040899966299109974
+    As: 0.0003432173013947845
+    Asc: 0.00017160865069739225
     Asmax: null
     Asmin: null
-    Ast: 0.00040899966299109974
+    Ast: 0.00017160865069739225
     Asw: 0.000142
     CRACKED_INERTIA_FACTOR: 1.0
     DESIGN_TOL: 0.05
@@ -3654,28 +3772,28 @@ fems:
     EFFECTIVE_INERTIA_COEFF: 1
     Ec: 24099792.53022731
     Es: 200000000.0
-    Et: 20.603575831940837
+    Et: 9.153657012238067
     FRM: 0.9
     FRV: 0.75
-    Ic: -0.0006429768280860508
+    Ic: -0.00016200596483882502
     Ig: 0.00046759322190204956
     Ix: 0.0004675932219020494
     Iy: 0.00046759322190204956
-    Kb: -18594.72979034095
+    Kb: -4685.17216952998
     Ke: 13522.67956365592
-    Ks: 7829.105073702203
+    Ks: 3479.6022549787567
     L: 1.0
     Lpl: 0.03
     Ls: 0.5
-    Mc: 63.021203735844786
+    Mc: 28.00942388259768
     Mu: 0.0
-    My: 44.66559716967971
+    My: 19.851376519857645
     N: 0.0
     P: 0.0
     Q: 4
     Vy: null
     alpha: '0.0055'
-    alpha_confinement: 3.7648781360940546
+    alpha_confinement: 3.682595309918911
     alpha_cyclic: 1
     alpha_postyield: 0.13
     alpha_slippage: 1
@@ -3688,8 +3806,8 @@ fems:
     bars_top: null
     bay: 1
     beta: 0.8357142857142857
-    betaJiangCheng: 0.039097033893198095
-    betaParkAng: 0.08690212419935495
+    betaJiangCheng: 0.039111930967796464
+    betaParkAng: 0.057300459473375774
     c: null
     category: structural
     cover: 0.03
@@ -3709,8 +3827,8 @@ fems:
     fy: 420000.0
     fyMPa: 420.0
     fyw: 420000.0
-    gammaJiangCheng: 25.577387858416927
-    gammaParkAng: 11.507198577861953
+    gammaJiangCheng: 25.567645862930384
+    gammaParkAng: 17.451867038948308
     h: 0.34414967634748445
     hidden: false
     i: 4
@@ -3728,18 +3846,19 @@ fems:
     node: 4
     nu: 0.0
     num_bars: null
-    p: 0.01726625790167121
-    pc: 0.008633128950835605
-    pcc: 0.03706885041920663
+    p: 0.007244600642038823
+    pc: 0.0036223003210194113
+    pcc: 0.015553400109970118
     pmax: null
     pmin: null
-    pt: 0.008633128950835605
+    pt: 0.0036223003210194113
     pw: 0.005157639602740177
     pweff: null
-    qc: 0.14462335678322893
-    qt: 0.14462335678322893
+    qc: 0.06068127033502604
+    qt: 0.06068127033502604
     radius: 0.17207483817374222
     recorder_ix: 3
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -3754,7 +3873,7 @@ fems:
   - A: 100000
     CRACKED_INERTIA_FACTOR: 1.0
     E: 24099792.53022731
-    Ix: 100000.0
+    Ix: 0.0004675932219020494
     bay: 1
     category: structural
     floor: 3
@@ -3772,11 +3891,11 @@ fems:
     Ac: 0.04324580377586151
     Acc: 0.022067027078842626
     Ag: 0.04737559989203132
-    As: 0.0008179993259821995
-    Asc: 0.00040899966299109974
+    As: 0.0003432173013947845
+    Asc: 0.00017160865069739225
     Asmax: null
     Asmin: null
-    Ast: 0.00040899966299109974
+    Ast: 0.00017160865069739225
     Asw: 0.000142
     CRACKED_INERTIA_FACTOR: 1.0
     DESIGN_TOL: 0.05
@@ -3785,28 +3904,28 @@ fems:
     EFFECTIVE_INERTIA_COEFF: 1
     Ec: 24099792.53022731
     Es: 200000000.0
-    Et: 20.603575831940837
+    Et: 9.153657012238067
     FRM: 0.9
     FRV: 0.75
-    Ic: -0.0006429768280860508
+    Ic: -0.00016200596483882502
     Ig: 0.00046759322190204956
     Ix: 0.0004675932219020494
     Iy: 0.00046759322190204956
-    Kb: -18594.72979034095
+    Kb: -4685.17216952998
     Ke: 13522.67956365592
-    Ks: 7829.105073702203
+    Ks: 3479.6022549787567
     L: 1.0
     Lpl: 0.03
     Ls: 0.5
-    Mc: 63.021203735844786
+    Mc: 28.00942388259768
     Mu: 0.0
-    My: 44.66559716967971
+    My: 19.851376519857645
     N: 0.0
     P: 0.0
     Q: 4
     Vy: null
     alpha: '0.0055'
-    alpha_confinement: 3.7648781360940546
+    alpha_confinement: 3.682595309918911
     alpha_cyclic: 1
     alpha_postyield: 0.13
     alpha_slippage: 1
@@ -3819,8 +3938,8 @@ fems:
     bars_top: null
     bay: 1
     beta: 0.8357142857142857
-    betaJiangCheng: 0.039097033893198095
-    betaParkAng: 0.08690212419935495
+    betaJiangCheng: 0.039111930967796464
+    betaParkAng: 0.057300459473375774
     c: null
     category: structural
     cover: 0.03
@@ -3840,8 +3959,8 @@ fems:
     fy: 420000.0
     fyMPa: 420.0
     fyw: 420000.0
-    gammaJiangCheng: 25.577387858416927
-    gammaParkAng: 11.507198577861953
+    gammaJiangCheng: 25.567645862930384
+    gammaParkAng: 17.451867038948308
     h: 0.34414967634748445
     hidden: false
     i: 17
@@ -3859,18 +3978,19 @@ fems:
     node: 17
     nu: 0.0
     num_bars: null
-    p: 0.01726625790167121
-    pc: 0.008633128950835605
-    pcc: 0.03706885041920663
+    p: 0.007244600642038823
+    pc: 0.0036223003210194113
+    pcc: 0.015553400109970118
     pmax: null
     pmin: null
-    pt: 0.008633128950835605
+    pt: 0.0036223003210194113
     pw: 0.005157639602740177
     pweff: null
-    qc: 0.14462335678322893
-    qt: 0.14462335678322893
+    qc: 0.06068127033502604
+    qt: 0.06068127033502604
     radius: 0.17207483817374222
     recorder_ix: 4
+    residual_My: 0.01
     right: false
     rugged: false
     s: 0.2
@@ -3882,13 +4002,45 @@ fems:
     up: false
     x: null
     y: null
+  - category: structural
+    edp: null
+    floor: 1
+    hidden: false
+    icon: null
+    id: 80000000
+    length: 1.0
+    model: ConcreteElasticSlab
+    name: ConcreteSlabAsset
+    net_worth: 64.0
+    node: null
+    rugged: true
+    thickness: 0.08
+    type: slab
+    x: null
+    y: null
+  - category: structural
+    edp: null
+    floor: 2
+    hidden: false
+    icon: null
+    id: 170000000
+    length: 1.0
+    model: ConcreteElasticSlab
+    name: ConcreteSlabAsset
+    net_worth: 64.0
+    node: null
+    rugged: true
+    thickness: 0.08
+    type: slab
+    x: null
+    y: null
   extras:
     c_design: 0.09857288481141692
     column_design_moments:
     - 52.81773802890464
     - 29.77706477978647
     design_shears:
-    - 38.729833462074154
+    - 38.72983346207415
     - 29.58039891549807
   frequencies:
   - 2.906087764714352

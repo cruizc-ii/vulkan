@@ -131,6 +131,9 @@ class BeamColumn(FE, YamlMixin):
     category: str = "structural"
     CRACKED_INERTIA_FACTOR: float = 1.0
 
+    def __repr__(self) -> str:
+        return 'BeamColumn 1'
+
     def __post_init__(self):
         self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
         if self.Ix and not self.radius:
@@ -272,6 +275,9 @@ class ConcreteElasticSlab(YamlMixin, RiskAsset):
     length: float | None = None
     thickness: float = 0
 
+    def __repr__(self) -> str:
+        return f'ConcreteElasticSlab t={self.thickness:.2f}m'
+
     def __str__(self) -> str:
         # must return empty for OpenSees
         return ''
@@ -332,15 +338,18 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     imkMatTag: int | None = None
     elasticMatTag: int | None = None
     Vy: float | None = None
+    residual_My: float | None = 0.01
+    Ke_Ks_ratio: float | None = None
 
     def __repr__(self) -> str:
-        return f'IMKSpring My={self.My:.0f}'
+        return f'IMKSpring My={self.My:.0f} kNm'
 
     def __str__(self) -> str:
-        s = f"uniaxialMaterial Elastic {self.elasticMatTag} 1e9\n"
-        s += f"uniaxialMaterial ModIMKPeakOriented {self.imkMatTag} {self.Ks:.2f} {self.alpha_postyield} {self.alpha_postyield} {self.My:.2f} {-self.My:.2f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} 1. 1. 1. 1. {self.theta_cap_cyclic:.8f} {self.theta_cap_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.theta_pc_cyclic:.8f} 1e-6 1e-6 {self.theta_u_cyclic:.8f} {self.theta_u_cyclic:.8f} 1. 1.\n"
-        s += f"section Aggregator {self.secColTag} {self.elasticMatTag} P {self.imkMatTag} Mz\n"
-        s += f"element zeroLengthSection  {self.id}  {self.i} {self.j} {self.secColTag}\n"
+        # s = f"uniaxialMaterial Elastic {self.elasticMatTag} 1e9\n"
+        s = f"uniaxialMaterial ModIMKPeakOriented {self.imkMatTag} {self.Ks:.2f} {self.alpha_postyield} {self.alpha_postyield} {self.My:.2f} {-self.My:.2f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} 1. 1. 1. 1. {self.theta_cap_cyclic:.8f} {self.theta_cap_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.residual_My} {self.residual_My} {self.theta_u_cyclic:.8f} {self.theta_u_cyclic:.8f} 1. 1.\n"
+        # s += f"section Aggregator {self.secColTag} {self.elasticMatTag} P {self.imkMatTag} Mz\n"
+        # s += f"element zeroLengthSection  {self.id}  {self.i} {self.j} {self.secColTag}\n"
+        s += f"element zeroLength {self.id} {self.i} {self.j} -mat {self.imkMatTag} -dir 6\n"
         return s
 
     @classmethod
@@ -348,13 +357,13 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         Ix = data["Ix"]
         h = (12 * Ix / cls.ASPECT_RATIO_B_TO_H) ** 0.25
         b = h * cls.ASPECT_RATIO_B_TO_H
-        print(f'{b=:.2f}, {h=:.2f} {Ix=:.3f}, {data["My"]}')
         designed = False
         maxIter = 5
         i = 0
         while not designed:
             if i >= maxIter:
-                raise DesignException("Could not design even while making bigger")
+                print(f'{b=:.2f}, {h=:.2f} {Ix=:.3f}, My={data["My"]:.1f}')
+                raise DesignException(f"Section is too small for moment {data['My']:.1f}")
             try:
                 instance = cls(**{"h": h, "b": b, "EFFECTIVE_INERTIA_COEFF": 1, **data})
                 designed = True
@@ -375,6 +384,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self.Ke = 6 * self.E * self.Ix / self.length
         self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
         self.Ic = self.Kb * self.length / 6 / self.E
+        self.Ke_Ks_ratio = self.Ke/self.Ks
         self.secColTag = self.id + 100000
         self.imkMatTag = self.id + 200000
         self.elasticMatTag = self.id + 300000

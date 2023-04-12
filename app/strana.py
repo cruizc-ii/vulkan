@@ -402,10 +402,11 @@ class StructuralResultView(YamlMixin):
 
     def view_floor_accels(self) -> DataFrame:
         """
-        floor relative accelerations wrt ground motion are obtained by the analyses
-        absolute floor accelerations are obtained by summing record accel to results
+        floor relative accelerations wrt. ground motion are obtained by the analyses
+        absolute floor accelerations
+        
+        obtained by summing record accel to results
         a_abs = a_g + a(t)
-
         """
         self.__lazy_init__()
         filename = "mass-accel.csv"
@@ -415,6 +416,7 @@ class StructuralResultView(YamlMixin):
         accels = storey_accels.merge(
             ground_accel, how="outer", left_index=True, right_index=True
         )
+        print(accels)
         accels = accels.interpolate("cubic").fillna(0)
         return accels
 
@@ -507,7 +509,6 @@ class StructuralResultView(YamlMixin):
             SummaryEDP.peak_drifts.value: self.view_peak_drifts().to_list(),
             SummaryEDP.peak_floor_accels.value: accels,
             SummaryEDP.peak_floor_vels.value: self.view_peak_floor_vels().to_list(),
-            # "accel": accels,
         }
         return results
 
@@ -520,6 +521,7 @@ class StructuralResultView(YamlMixin):
         results["peak_drift"] = self.peak_drift
         results["pfv"] = self.pfv
         return results
+
 
 
 @dataclass
@@ -561,12 +563,12 @@ class Recorder:
         s = "constraints Transformation \n"
         s += "numberer RCM \n"
         s += "system BandGeneral \n"
-        s += "test NormDispIncr 1.0e-05 25 5 \n"
-        s += "algorithm Newton \n"
-        s += "integrator LoadControl 0.1 1 \n"
+        s += "test NormDispIncr 1.0e-08 100 \n"
+        s += "algorithm KrylovNewton \n"
+        s += "integrator LoadControl 0.01 1 \n"
         s += "analysis Static \n"
         s += "initialize \n"
-        s += "analyze 10 \n"
+        s += "analyze 100 \n" # We apply gravity slowly, if pushover fails this means probably that the beams failed due to gravity. this is bad.
         s += "remove recorders \n"
         s += "loadConst -time 0.0 \n"
         return s
@@ -625,9 +627,10 @@ class StaticRecorder(GravityRecorderMixin):
 
 @dataclass
 class PushoverRecorder(GravityRecorderMixin):
-    drift: float = 0.05
-    steps: int = 2000
-    tol: float = 1.0e-5
+    drift: float = 0.03
+    steps: int = 5000
+    tol: float = 1.0e-9
+    modal_vectors: list[float] | None = None
 
     def __str__(self) -> str:
         s = str(self.fem)
@@ -641,8 +644,12 @@ class PushoverRecorder(GravityRecorderMixin):
     @property
     def pushover_str(self) -> str:
         analysis_str = "pattern Plain 2 Linear {\n"
-        for load, node in enumerate(self.fem.mass_nodes, 1):
-            analysis_str += f"load {node.id} -{load} 0.0 0.0\n"
+        if self.modal_vectors is None:
+            for load, node in enumerate(self.fem.mass_nodes, 1):
+                analysis_str += f"load {node.id} -{load} 0.0 0.0\n"
+        else:
+            for load, node in zip(self.modal_vectors, self.fem.mass_nodes):
+                analysis_str += f"load {node.id} {-load/100} 0.0 0.0\n"
         analysis_str += "}\n"
         return analysis_str
 
@@ -658,39 +665,36 @@ class PushoverRecorder(GravityRecorderMixin):
     def pushover_solvers(self) -> str:
         maxU = self.drift * self.fem.height
         dU = maxU / self.steps
-        tol = self.tol * np.sqrt(len(self.fem.nodes))
+        # tol = self.tol * np.sqrt(len(self.fem.nodes))
         string = "constraints Transformation \n"
         string += "numberer RCM \n"
         string += "system BandGeneral \n"
-        string += f"test NormDispIncr {self.tol} 100\n"
-        string += "algorithm NewtonLineSearch \n"
-        string += f"integrator DisplacementControl {self.fem.roofID} 1 {dU:.10f}\n"
+        string += f"test NormDispIncr {self.tol} 100 2\n"
+        string += "algorithm KrylovNewton \n"
+        string += f"integrator DisplacementControl {self.fem.roofID} 1 {dU:.8f} 1000\n"
         string += "analysis Static \n"
-        string += f"set maxU {maxU}\n"
-        string += "set disp 0.0\n"
-        string += "set ok 0\n"
-        string += """
-while {$ok == 0 && $disp < $maxU} {
-    set ok [analyze 1]
-    set fail 0
-    while {$ok != 0} {
-        incr fail
-        test NormDispIncr %s 1000
-        set ok [analyze 1]
-        test NormDispIncr %s 100
-        if {$fail > 1} {
-            puts "pushover failed"
-            return 0
-        }
-    }
-    set disp [nodeDisp %d 1]
-}
-puts "pushover successful"
-        """ % (
-            tol,
-            tol,
-            self.fem.roofID,
-        )
+        string += f"analyze {self.steps}"
+#         string += f"set maxU {maxU}\n"
+#         string += "set disp 0.0\n"
+#         string += "set ok 0\n"
+#         string += """
+# while {$ok == 0 && $disp < $maxU} {
+#     set ok [analyze 1]
+#     set fail 0
+#     while {$ok != 0} {
+#         incr fail
+#         set ok [analyze 1]
+#         if {$fail > 1} {
+#             puts "pushover failed"
+#             return 0
+#         }
+#     }
+#     set disp [nodeDisp %d 1]
+# }
+# puts "pushover successful"
+#         """ % (
+#             self.fem.roofID,
+#         )
         return string
 
 
@@ -810,6 +814,60 @@ class TimehistoryRecorder(GravityRecorderMixin):
 
     @property
     def inelastic_subdivision_solver(self) -> str:
+        tol = 1e-8
+        s = self.fem.rayleigh_damping_string
+        s += """
+
+set tol %s
+set duration %s
+set record_dt %s
+constraints Transformation
+numberer RCM
+test NormDispIncr $tol 1000 2
+algorithm KrylovNewton
+# integrator Newmark 0.5 0.25
+# integrator HHT 0.6; #the smaller the alpha, the greater the numerical damping
+integrator TRBDF2
+system BandSPD
+analysis Transient
+
+set converged 0
+set num_subdivisions 10
+set max_subdivisions 3 ;# divide original timestep into 10^3 = 1000 steps
+set time [getTime]
+
+set break_outer 0
+
+while {$converged == 0 && $time <= $duration && !$break_outer} {
+    set retries 0
+    set tol $tol
+    set time [getTime]
+    set analysis_dt [expr {$record_dt}]
+    set converged [analyze 1 $analysis_dt]
+    while {$converged != 0} {
+        incr retries
+        set n [expr {$num_subdivisions ** $retries}]
+        set analysis_dt [expr {$record_dt/$n}]
+        set time [getTime]
+        puts "retries $retries n=$n  dt=$analysis_dt t=$time"
+        set converged [analyze $n $analysis_dt]
+        if {$retries >= $max_subdivisions} {
+            puts "Analysis did not converge."
+            set break_outer 1
+            break
+        }
+    }
+}
+        """ % (
+            tol,
+            self.record.duration + self.EXTRA_FREE_VIBRATION_SECONDS,
+            self.record.dt,
+        )
+        return s
+
+
+    @property
+    def inelastic_subdivision_solver_old(self) -> str:
         num_nodes = len(self.fem.nodes)
         tol = 1e-8 * num_nodes
         s = self.fem.rayleigh_damping_string
@@ -956,8 +1014,8 @@ class StructuralAnalysis:
         )
         return self.run(recorder=recorder)
 
-    def pushover(self, drift: float = 0.05):
-        recorder = PushoverRecorder(self.pushover_path, fem=self.fem, drift=drift)
+    def pushover(self, drift: float = 0.03, modal_vectors: list[float]|None = None):
+        recorder = PushoverRecorder(self.pushover_path, fem=self.fem, drift=drift, modal_vectors=modal_vectors)
         return self.run(recorder=recorder)
 
     def timehistory(
@@ -1024,8 +1082,8 @@ class IDA(NamedYamlMixin):
     _hazard: Hazard | None = None
     _design = None
     _intensities: np.ndarray | None = None
-    _COLLAPSE_DRIFT: float = 0.2  # dont change this unless you know what you're doing
-    _NUM_PARALLEL_RECORDS: int = 20
+    _COLLAPSE_DRIFT: float = 0.2  # dont change this unless you know what you're doing, most things are callibrated with this bad heuristic
+    _NUM_PARALLEL_RECORDS: int = 8
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
@@ -1113,8 +1171,10 @@ class IDA(NamedYamlMixin):
             run_id=run_id, results_path=results_dir, fem_ix=fem_ix, period_ix=period_ix
         )
         dataframe_records = []
-        views = []
+        views: list[StructuralResultView] = []
 
+        # import multiprocessing
+        # num_records_parallel  = multiprocessing.cpu_count() or self._NUM_PARALLEL_RECORDS
         for group in itertools_grouper(inputs, self._NUM_PARALLEL_RECORDS):
             cmds = []
             for g in group:
@@ -1131,9 +1191,13 @@ class IDA(NamedYamlMixin):
                 print(f"{code=}")
 
         for input, view in zip(inputs, views):
+            stats = self._design.fem.summary
+            Say_g = stats['cs [1]']
+            drift_yield = stats['drift_y [%]']
             results = view.get_and_set_timehistory_summary()
+            results['peak_drift/drift_yield'] = results['peak_drift'] / float(drift_yield/100)
+            results['Sa/Say_design'] = input['intensity'] / float(Say_g)
             collapse = self._design.fem.determine_collapse_from_results(results)
-
             row = {
                 "record": view.record.name,
                 "intensity_str": input["intensity_str_precision"],
@@ -1214,7 +1278,6 @@ class IDA(NamedYamlMixin):
 
     @property
     def summary(self) -> dict:
-        # TODO double check Sa_g and normalization
         # precompute collapse capacity, collapse intensity
         df = DataFrame.from_records(self.results)
         df2 = df.pivot(index="intensity", columns="record", values="peak_drift")
@@ -1269,6 +1332,35 @@ class IDA(NamedYamlMixin):
             # autosize=True,
             # responsive=True,
         )
+        return fig
+
+    def view_normalized_ida_curves(self) -> Figure:
+        df = DataFrame.from_records(self.results)
+        df["symbol"] = df["collapse"].apply(lambda c: "x" if c else "circle")
+        fig = px.line(
+            df,
+            y="Sa/Say_design",
+            x="peak_drift/drift_yield",
+            color="record",
+            symbol="symbol",
+            symbol_sequence=["circle", "x"],
+            markers=True,
+        )
+        # seems like figures are 100% of parent container
+        # can use_container_width=True
+        fig.update_layout(
+            yaxis_title="Sa/Say_design",
+            xaxis_title="peak_drift/drift_yield [1]",
+            title="IDA curves",
+            # marginal_x="histogram", marginal_y="rug",
+            # yaxis_range=[0.0, 0.3],
+            # xaxis_range=[0, 0.20],
+            # width=1100,
+            # height=600,
+            # autosize=True,
+            # responsive=True,
+        )
+
         return fig
 
 

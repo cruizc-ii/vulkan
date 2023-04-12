@@ -69,7 +69,7 @@ class FiniteElementModel(ABC, YamlMixin):
         h += "wipe\n"
         h += "model BasicBuilder -ndm 2 -ndf 3\n"
         t = f"geomTransf Linear {self._transf_beam}\n"
-        t += f"geomTransf PDelta {self._transf_col}\n"
+        t += f"geomTransf Linear {self._transf_col}\n"
         return h + t + self.nodes_str + self.elements_str
 
     @property
@@ -106,7 +106,6 @@ class FiniteElementModel(ABC, YamlMixin):
             self._pushover_view = StructuralResultView(
                 abs_folder=self.pushover_abs_path
             )
-        print(self.elements)
         self.validate()
 
     @classmethod
@@ -154,7 +153,6 @@ class FiniteElementModel(ABC, YamlMixin):
             if len(self.periods) > 0
             else ""
         )
-
         stats = {
             "net worth [$]": self.total_net_worth,
             "elements net worth [$]": self.elements_net_worth,
@@ -428,12 +426,17 @@ class FiniteElementModel(ABC, YamlMixin):
         view = strana.static(forces_per_storey=forces_per_storey)
         return view
 
-    def pushover(self, results_path: Path, drift: float = 0.05):
+    def pushover(self, results_path: Path, drift: float = 0.03, mode: int|None = 1):
         from app.strana import StructuralAnalysis
         from app.utils import AnalysisTypes
-
+        vectors = None
+        if mode is not None:
+            if self.vectors is None:
+                results = self.get_and_set_eigen_results()
+            vecs = np.array(self.vectors).T
+            vectors = vecs[mode-1]
         strana = StructuralAnalysis(results_path, fem=self)
-        view = strana.pushover(drift=drift)
+        view = strana.pushover(drift=drift, modal_vectors=vectors)
         self.pushover_abs_path = str(results_path / AnalysisTypes.PUSHOVER.value)
         self._pushover_view = view
         return view
@@ -452,7 +455,7 @@ class FiniteElementModel(ABC, YamlMixin):
         cols = df[df.columns.difference(["u"])].columns
         fig = df.plot(x="u", y=cols)
         fig.update_layout(
-            xaxis_title="roof u (m)", yaxis_title="Vb (kN)", title_text=f"Pushover"
+            xaxis_title="roof u (m)", yaxis_title="Vb (kN)", title_text=f"1st mode pushover"
         )
         normalized_fig = ndf.plot(x="u", y=cols)
         normalized_fig.update_layout(
@@ -477,7 +480,6 @@ class FiniteElementModel(ABC, YamlMixin):
         ndf = cs.join(roof_drifts)
         return df, ndf
 
-    @property
     def pushover_stats(self) -> dict:
         df, normalized_df = self.pushover_dfs
         Vy = df["sum"].max()
@@ -495,6 +497,7 @@ class FiniteElementModel(ABC, YamlMixin):
             "Vy_error": f"{100*Vy_error:.2f} %",
             "uy": f"{uy:.3f} [m]",
             "cs": f"{cs:.3f} [1]",
+            "Sa_y_g": f"{cs:.3f} [g]",
             "drift_y": f"{100*drift_y:.2f} %",
             "c_design": f"{c_design:.3f} [1]",
             "design_error": f"{100*c_design_error:.2f} %",
@@ -1291,7 +1294,7 @@ class IMKFrame(FiniteElementModel):
                     radius=imk1.radius,
                     i=imk_i,
                     j=imk_j,
-                    Ix=Ic,
+                    Ix=elem.Ix,
                     E=elem.E,
                     type=elem.type,
                     storey=st,

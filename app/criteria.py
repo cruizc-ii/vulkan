@@ -14,7 +14,7 @@ from app.fem import (
     PlainFEM,
     IMKFrame,
 )
-from app.elements import ElasticBeamColumn
+from app.elements import ElasticBeamColumn, BilinBeamColumn
 from pathlib import Path
 from functools import partial
 
@@ -88,8 +88,9 @@ class CodeMassesPre(DesignCriterion):
     therefore mass will be sigma*area since this frame is taking the totality the board's mass
     """
 
-    CODE_UNIFORM_LOADS_kPA = 9.81  # 1 t/m2
-    SLAB_AREA_PERCENTAGE = 1  # part of the slab mass goes to this frame's beams
+    CODE_UNIFORM_LOADS_kPA = 9.81 # 1 t/m2
+    SLAB_AREA_PERCENTAGE = 1  # part of the slab mass that goes to this frame's beams A=Lx * Lz = c Lx**2
+    # in other words, the coefficient of perpendicular contribution
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = PlainFEM.from_spec(self.specification)
@@ -259,7 +260,7 @@ class ShearRSA(DesignCriterion):
 @dataclass
 class CDMX2017Q1(DesignCriterion):
     Q: int = 1
-    column_to_beam_resistance_ratio: float = 1.5  # strong-column/weak-beam criterion
+    beam_to_column_resistance_ratio: float = 1.0/1.5  # strong-column/weak-beam criterion
     column_to_beam_inertia_ratio: float = 1.5**4  # proportional to 1.5^4 radius
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
@@ -288,21 +289,21 @@ class CDMX2017Q1(DesignCriterion):
                 data = col.to_dict
                 data["Ix"] = new_Ix
                 data["radius"] = None
-                ele = ElasticBeamColumn(**data)
+                ele = BilinBeamColumn(**data)
                 new_elements.append(ele)
 
             for beam in beams_fem:
                 data = beam.to_dict
                 data["Ix"] = new_Ix / self.column_to_beam_inertia_ratio
                 data["radius"] = None
-                ele = ElasticBeamColumn(**data)
+                ele = BilinBeamColumn(**data)
                 new_elements.append(ele)
 
         fem.elements = new_elements
         fem = BilinFrame.from_elastic(
             fem=fem,
             design_moments=design_moments,
-            beam_column_ratio=self.column_to_beam_resistance_ratio,
+            beam_column_ratio=self.beam_to_column_resistance_ratio,
             Q=self.Q,
         )
         slabs = fem.build_and_place_slabs()
