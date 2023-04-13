@@ -742,6 +742,7 @@ class EigenRecorder(Recorder):
         )
         eigen_values_path = (self.path / "eigen_values.csv").resolve()
         eigen_vectors_path = (self.path / "eigen_vectors.csv").resolve()
+        periods_path = (self.path / "periods.csv").resolve()
         s += f'set eigen_values_file [open {eigen_values_path} "w"]\n'
         s += "puts $eigen_values_file $eigenvalues \n"
         s += "close $eigen_values_file \n"
@@ -758,6 +759,16 @@ class EigenRecorder(Recorder):
         s += "  }\n"
         s += "  puts $eigen_vectors_file $eigenvector($mode)\n"
         s += "}\n"
+        s += "set Ts {}\n"
+        s += f'set periods_file [open {periods_path} "w" ]\n'
+        s += """foreach val $eigenvalues {
+set w [expr {sqrt($val)}]
+set period [expr {2*3.1416/$w}]
+lappend Ts $period
+}
+puts $periods_file $Ts
+close $periods_file\n
+"""
         return s
 
 

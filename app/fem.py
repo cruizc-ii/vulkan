@@ -426,13 +426,13 @@ class FiniteElementModel(ABC, YamlMixin):
         view = strana.static(forces_per_storey=forces_per_storey)
         return view
 
-    def pushover(self, results_path: Path, drift: float = 0.03, mode: int|None = 1):
+    def pushover(self, results_path: Path, drift: float = 0.03, mode: int | None = 1):
         from app.strana import StructuralAnalysis
         from app.utils import AnalysisTypes
         vectors = None
         if mode is not None:
             if self.vectors is None:
-                results = self.get_and_set_eigen_results()
+                results = self.get_and_set_eigen_results(results_path=results_path)
             vecs = np.array(self.vectors).T
             vectors = vecs[mode-1]
         strana = StructuralAnalysis(results_path, fem=self)
