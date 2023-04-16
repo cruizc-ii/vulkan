@@ -362,6 +362,13 @@ class FiniteElementModel(ABC, YamlMixin):
         upper bound on collapse, if any column is in DS==Collapse
         """
         collapse = False
+        return collapse
+        """
+        collapse_elwood = determine_collapse_elwood()
+        collapse_residual = 
+        return collapse_damage or collapse_residual or collapse_elwood
+        """
+        
         for st, columns in enumerate(self.columns_by_storey):
             column = columns[0]
             x = results[SummaryEDP.peak_drifts.value][st]
@@ -432,7 +439,7 @@ class FiniteElementModel(ABC, YamlMixin):
         vectors = None
         if mode is not None:
             if self.vectors is None:
-                results = self.get_and_set_eigen_results(results_path=results_path)
+                self.get_and_set_eigen_results(results_path=results_path)
             vecs = np.array(self.vectors).T
             vectors = vecs[mode-1]
         strana = StructuralAnalysis(results_path, fem=self)

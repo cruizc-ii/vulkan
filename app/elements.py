@@ -377,14 +377,17 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     def __post_init__(self):
         from app.strana import EDP
 
-        super().__post_init__()
         self.model = self.__class__.__name__
-        self.radius = self.h / 2
-        self.Ks = self.My / self.theta_y
         self.Ke = 6 * self.E * self.Ix / self.length
-        self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
-        self.Ic = self.Kb * self.length / 6 / self.E
+        # n = 10
+        # self.Ks = n*self.Ke
+        # self.theta_y = self.My / self.Ks
+        # self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
+        # self.Ic = self.Kb * self.length / 6 / self.E
+        super().__post_init__()
+        # self.Ks = self.My / self.theta_y
         self.Ke_Ks_ratio = self.Ke/self.Ks
+        self.radius = self.h / 2
         self.secColTag = self.id + 100000
         self.imkMatTag = self.id + 200000
         self.elasticMatTag = self.id + 300000
@@ -394,7 +397,6 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
 
     def losses(self, xs: list[pd.DataFrame]) -> list[float]:
         costs = [self.park_ang_kunnath(df) for df in xs]
-        print(costs)
         return costs
 
     def dollars(self, *, strana_results_df):

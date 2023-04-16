@@ -357,7 +357,7 @@ with st.sidebar:
             )
             run = st.button("run IDA", help="run with chosen Sa")
             standard = st.button(
-                "run standard", help="means that Sa are chosen for you"
+                "run hazard", help="uses the hazard points only"
             )
             delete = st.button("🗑️", help="delete this analysis")
             if delete:
@@ -704,7 +704,7 @@ if state.module == 1:
 
             st.header('Element properties')
             sdf = design.fem.structural_elements_breakdown()
-            desired_columns = 'name model type storey bay My Ix Iy Ig Ic Mc b h radius theta_y Ks Ke Ke_Ks_ratio edp p s'.split(' ')
+            desired_columns = 'name model type storey bay My Ix Iy Ig Ic Mc b h radius theta_y theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s'.split(' ')
             desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]
             sorted_unique_columns = sorted(list(set(sdf.columns.tolist()) - set(desired_columns)))
             columns = desired_columns + sorted_unique_columns

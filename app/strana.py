@@ -22,7 +22,7 @@ from numpy.linalg import inv
 from pathlib import Path
 import os
 import subprocess
-from shortuuid import uuid
+from human_id import generate_id as uuid
 from app.codes import BuildingCode
 from app.utils import ROOT_DIR
 from subprocess import Popen
@@ -503,21 +503,21 @@ class StructuralResultView(YamlMixin):
         return envs.tolist()
 
     def view_timehistory_summary(self) -> dict:
-        accels = self.view_peak_absolute_floor_accelerations_in_g()
+        # accels = self.view_peak_absolute_floor_accelerations_in_g()
         results = {
             "path": self.abs_folder,  # DONT REMOVE. frontend relies on this to load results.
             SummaryEDP.peak_drifts.value: self.view_peak_drifts().to_list(),
-            SummaryEDP.peak_floor_accels.value: accels,
             SummaryEDP.peak_floor_vels.value: self.view_peak_floor_vels().to_list(),
+            # SummaryEDP.peak_floor_accels.value: accels,
         }
         return results
 
     def get_and_set_timehistory_summary(self) -> dict:
         results = self.view_timehistory_summary()
-        self.pfa = results[SummaryEDP.peak_floor_accels.value]
+        # self.pfa = results[SummaryEDP.peak_floor_accels.value]
         self.peak_drift = max(results[SummaryEDP.peak_drifts.value])
         self.pfv = max(results[SummaryEDP.peak_floor_vels.value])
-        results["pfa"] = self.pfa
+        # results["pfa"] = self.pfa
         results["peak_drift"] = self.peak_drift
         results["pfv"] = self.pfv
         return results
@@ -820,7 +820,15 @@ class TimehistoryRecorder(GravityRecorderMixin):
     ) -> str:
         self.dt_subdivision = 1
         self.max_retries = 1
-        s = self.inelastic_subdivision_solver
+        s = self.imk_convergence_solver
+        return s
+
+    @property
+    def imk_convergence_solver(self) -> str:
+        s = f"set duration {self.record.duration}\n"
+        s += f"set record_dt {self.record.dt}\n"
+        s += f"set results_dir $abspath\n"
+        s += "source /Users/carlo/vulkan/dynamic_integrator_crazy.tcl\n"
         return s
 
     @property
@@ -950,12 +958,15 @@ class StructuralAnalysis:
         self.modal_recorder = EigenRecorder(self.modal_path, fem=self.fem)
 
     def async_run(self, recorder: Recorder) -> tuple[str, StructuralResultView]:
-        """expects to be called by a parallel process and then the view used later"""
+        """
+        returns a string to run the process and a handler to be called later to view the results
+        """
         results_path = recorder.path / "model.tcl"
         with open(results_path, "w") as f:
             f.write(recorder.tcl_string)
         os.chmod(results_path, 0o777)
-        return str(results_path.resolve()), recorder.view
+        cmd_string = str(results_path.resolve())
+        return cmd_string, recorder.view
 
     def run(self, recorder: Recorder) -> StructuralResultView:
         results_path = recorder.path / "model.tcl"
@@ -1058,10 +1069,10 @@ class StructuralAnalysis:
     def async_timehistory(
         self,
         record: Record,
-        scale=None,
+        scale = None,
         a0: float = None,
         a1: float = None,
-        gravity_loads=True,
+        gravity_loads = True,
     ) -> tuple[str, StructuralResultView]:
         if a0 is None or a1 is None:
             self.fem.get_and_set_eigen_results(self.modal_path)
@@ -1093,8 +1104,7 @@ class IDA(NamedYamlMixin):
     _hazard: Hazard | None = None
     _design = None
     _intensities: np.ndarray | None = None
-    _COLLAPSE_DRIFT: float = 0.2  # dont change this unless you know what you're doing, most things are callibrated with this bad heuristic
-    _NUM_PARALLEL_RECORDS: int = 8
+    _NUM_PARALLEL_RUNS: int = 4
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
@@ -1120,16 +1130,16 @@ class IDA(NamedYamlMixin):
                 linspace - self.step / 2,
             )
 
-    def generate_input_strings(
+    def generate_run_dicts(
         self,
         *,
         run_id: str,
         results_path: Path = None,
         fem_ix: int = -1,
         period_ix: int = -1,
-    ) -> list[str]:
+    ) -> list[dict]:
         """
-        does the standard record, intensity run for the default fem design
+        returns a set of inputs for running IDAs in parallel.
         """
         fem = self._design.fems[fem_ix]
         modal_view = fem.get_and_set_eigen_results(results_path)
@@ -1178,49 +1188,50 @@ class IDA(NamedYamlMixin):
         if not run_id:
             run_id = str(uuid())
 
-        inputs = self.generate_input_strings(
+        input_dicts = self.generate_run_dicts(
             run_id=run_id, results_path=results_dir, fem_ix=fem_ix, period_ix=period_ix
         )
         dataframe_records = []
         views: list[StructuralResultView] = []
 
-        # import multiprocessing
-        # num_records_parallel  = multiprocessing.cpu_count() or self._NUM_PARALLEL_RECORDS
-        for group in itertools_grouper(inputs, self._NUM_PARALLEL_RECORDS):
+        import multiprocessing
+        num_runs_parallel  = multiprocessing.cpu_count() or self._NUM_PARALLEL_RUNS
+        for group in itertools_grouper(input_dicts, num_runs_parallel):
             cmds = []
             for g in group:
                 record: Record = g["record"]
                 strana = StructuralAnalysis(g["outdir"], fem=g["fem"])
-                cmd, view = strana.async_timehistory(
+                cmd_string, view_handler = strana.async_timehistory(
                     record=record, scale=g["scale_factor"]
                 )
-                views.append(view)
-                cmds.append(cmd)
+                views.append(view_handler)
+                cmds.append(cmd_string)
             procs = [Popen(cmd, shell=True) for cmd in cmds]
             for proc in procs:
                 code = proc.wait(timeout=600)
                 print(f"{code=}")
 
-        for input, view in zip(inputs, views):
+        for input, view_handler in zip(input_dicts, views):
             stats = self._design.fem.summary
             Say_g = stats['cs [1]']
             drift_yield = stats['drift_y [%]']
-            results = view.get_and_set_timehistory_summary()
+            results = view_handler.get_and_set_timehistory_summary()
             results['peak_drift/drift_yield'] = results['peak_drift'] / float(drift_yield/100)
             results['Sa/Say_design'] = input['intensity'] / float(Say_g)
             collapse = self._design.fem.determine_collapse_from_results(results)
             row = {
-                "record": view.record.name,
+                "record": view_handler.record.name,
                 "intensity_str": input["intensity_str_precision"],
                 "intensity": input["intensity"],
                 "sup": input["sup"],
                 "inf": input["inf"],
                 "freq": input["freq"],
                 "collapse": collapse,
+                # **input,
                 **results,
             }
             dataframe_records.append(row)
-            view.to_file()
+            view_handler.to_file()
 
         results_df = DataFrame(dataframe_records)
         results_df.to_csv(STRANA_DIR / f"{run_id}.csv")
@@ -1337,9 +1348,9 @@ class IDA(NamedYamlMixin):
             title="IDA curves",
             # marginal_x="histogram", marginal_y="rug",
             # yaxis_range=[0.0, 0.3],
-            # xaxis_range=[0, 0.20],
-            # width=1100,
-            # height=600,
+            xaxis_range=[0, 0.20],
+            width=1100,
+            height=600,
             # autosize=True,
             # responsive=True,
         )
@@ -1365,9 +1376,9 @@ class IDA(NamedYamlMixin):
             title="IDA curves",
             # marginal_x="histogram", marginal_y="rug",
             # yaxis_range=[0.0, 0.3],
-            # xaxis_range=[0, 0.20],
-            # width=1100,
-            # height=600,
+            xaxis_range=[0, 12],
+            width=1100,
+            height=600,
             # autosize=True,
             # responsive=True,
         )

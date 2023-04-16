@@ -15,6 +15,9 @@ black:
 	python3 -m black .
 .PHONY: ci
 ci: black test
+.PHONY: clean-results
+clean-results:
+	rm -rf results/**;
 .PHONY: clean
 clean:
 	rm -rf models/design/**;

@@ -385,7 +385,7 @@ set stable {self.stable}
                 * self.fyMPa
                 / ((self.d - self.dp) * self.fpcMPa**0.5)
             )
-        )
+        ) if self.theta_y is None else self.theta_y
         self.theta_pc = 0.76 * 0.031**self.nu * (0.02 + 40 * self.pw) ** 1.02
         self.theta_pc = self.theta_pc if self.theta_pc < 0.10 else 0.10
         self.theta_pc_cyclic = 0.5 * self.theta_pc
@@ -403,9 +403,9 @@ set stable {self.stable}
             self.theta_y + self.theta_cap_cyclic + self.theta_pc_cyclic
         )
         self.ductility_cyclic = (self.theta_y + self.theta_cap_cyclic) / self.theta_y
-        self.Ke = self.My / self.theta_y
+        self.Ks = self.My / self.theta_y
         self.Mc = (
-            self.My + self.alpha_postyield * self.Ke * self.theta_cap_cyclic
+            self.My + self.alpha_postyield * self.Ks * self.theta_cap_cyclic
         )  # My + delta M
 
     def __set_advanced_properties(self):

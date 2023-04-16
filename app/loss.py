@@ -4,7 +4,7 @@ from random import randrange, uniform
 import numpy as np
 from dataclasses import dataclass, asdict, field
 import pandas as pd
-from shortuuid import uuid
+from human_id import generate_id as uuid
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line
 from app.assets import Asset, LossResultsDataFrame
 from app.hazard import HazardCurve, TimeHistorySeries
