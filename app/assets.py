@@ -324,7 +324,7 @@ class RiskAsset(Asset):
         views = {}
         for path in paths:
             if not isinstance(path, str) and np.any(np.isnan(path)):
-                print("WARNING, path not set! is this collapse?")
+                print("WARNING, path not set! TODO: is this collapse?")
                 x = 1e9
                 xs.append(x)
                 continue
@@ -332,7 +332,7 @@ class RiskAsset(Asset):
             if not x:
                 view = StructuralResultView.from_file(Path(path))
                 x = view.view_result_by_edp_and_node(
-                    edp=self._risk.edp, node=self.node, **kwargs
+                    edp=self._risk.edp, node=self.node, path=path, **kwargs
                 )
                 views[path] = x
             xs.append(x)

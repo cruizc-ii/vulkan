@@ -230,8 +230,8 @@ class ForceBasedPre(DesignCriterion):
             instance: DesignCriterion = _class(
                 specification=self.specification, fem=fem
             )
-            filepath = results_path / _class.__name__
-            fem = instance.run(results_path=filepath, *args, **kwargs)
+            instance_path = results_path / instance.__class__.__name__
+            fem = instance.run(results_path=instance_path, *args, **kwargs)
         return fem
 
 
@@ -277,7 +277,7 @@ class CDMX2017Q1(DesignCriterion):
 
         code = CDMXBuildingCode(Q=self.Q)
         strana = RSA(results_path=results_path, fem=shear_fem, code=code)
-        design_moments, peak_shears, cs = strana.srss()
+        design_moments, peak_shears, cs = strana.srss_moment_shear_correction()
 
         new_elements = []
         for columns_shear_model, beams_fem, columns_fem in zip(
@@ -325,6 +325,7 @@ class CDMX2017Q1IMK(CDMX2017Q1):
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = super().run(results_path=results_path, *args, **kwargs)
         fem = IMKFrame(**fem.to_dict)
+        fem.get_and_set_eigen_results(results_path=results_path)
         return fem
 
 
@@ -333,6 +334,7 @@ class CDMX2017Q4IMK(CDMX2017Q4):
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = super().run(results_path=results_path, *args, **kwargs)
         fem = IMKFrame(**fem.to_dict)
+        fem.get_and_set_eigen_results(results_path=results_path)
         return fem
 
 

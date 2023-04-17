@@ -212,6 +212,8 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         self,
         results_path: Path,
         seed_class: FiniteElementModel | None = None,
+        *args,
+        **kwargs
     ) -> list[FiniteElementModel]:
         fem = None
         if seed_class is not None:
@@ -219,7 +221,8 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         elif len(self.fems) > 0:
             fem = self.fem
         self.fems = self.design(
-            results_path=results_path, criteria=self._design_criteria, fem=fem
+            results_path=results_path, criteria=self._design_criteria, fem=fem,
+            *args, **kwargs
         )
         return self.fems
 
@@ -242,8 +245,8 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         fems = []
         for _class in criteria:
             instance: DesignCriterion = _class(specification=self, fem=fem)
-            filepath = results_path / instance.__class__.__name__
-            fem = instance.run(results_path=filepath, *args, **kwargs)
+            instance_path = results_path / instance.__class__.__name__
+            fem = instance.run(results_path=instance_path, *args, **kwargs)
             fems.append(fem)
 
         return fems

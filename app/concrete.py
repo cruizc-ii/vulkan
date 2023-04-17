@@ -581,6 +581,7 @@ set stable {self.stable}
         df: MomentRotationDataFrame,
         moment_col: str = "M",
         rotation_col: str = "r",
+        **kwargs,
     ) -> tuple[float, str]:
         area = -trapezoid(df[moment_col], x=df[rotation_col])
         theta_max = max(abs(df[rotation_col]))

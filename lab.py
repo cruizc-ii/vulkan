@@ -667,7 +667,7 @@ if state.module == 1:
         with st.expander("capacity"):
             # path = DESIGN_DIR / design.name
             # fig, nfig = design.fem.pushover_figs(path)
-            fig, nfig = design.fem.pushover_figs
+            fig, nfig = design.fem.pushover_figs()
             col1, col2 = st.columns(2)
             col1.plotly_chart(fig)
             col2.plotly_chart(nfig)
@@ -738,8 +738,8 @@ if state.module == 3:
         st.plotly_chart(fig, container_width=True)
         st.dataframe(pd.DataFrame.from_records(ida.stats), height=800)
         if selected_ix is not None:
-            filepath = ida.results[selected_ix]["path"]
-            view = StructuralResultView.from_file(filepath)
+            instance_path = ida.results[selected_ix]["path"]
+            view = StructuralResultView.from_file(instance_path)
             figures = view.timehistory_figures
             for fig in figures:
                 st.plotly_chart(fig)

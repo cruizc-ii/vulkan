@@ -136,16 +136,19 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @property
     def period(self) -> float:
+        # this should break when we call it without running modal first.
         return self.periods[0]
 
     @property
     def summary(self) -> dict:
-        df, ndf = self.pushover_dfs
+        df, ndf = self.pushover_dfs()
         Vy = df["sum"].max()
         ix = df["sum"].idxmax()
         cs = ndf["sum"].max()
         uy = df.loc[ix]["u"]
+        uy = uy.values[0] if not isinstance(uy, float) else uy
         drift_y = ndf.loc[ix]["u"]
+        drift_y = drift_y.values[0] if not isinstance(drift_y, float) else drift_y
         period = self.periods[0] if len(self.periods) > 0 else 0
         period_error = (
             (self.periods[0] - self.miranda_fundamental_period)
@@ -397,7 +400,7 @@ class FiniteElementModel(ABC, YamlMixin):
     def get_and_set_eigen_results(self, results_path: Path):
         from app.strana import StructuralAnalysis
 
-        strana = StructuralAnalysis(results_path, fem=self)
+        strana = StructuralAnalysis(results_path=results_path, fem=self)
         view = strana.modal()
         self.periods = view.periods
         self.frequencies = view.frequencies
@@ -448,7 +451,6 @@ class FiniteElementModel(ABC, YamlMixin):
         self._pushover_view = view
         return view
 
-    @property
     def pushover_figs(
         self,
         # results_path: Path,
@@ -458,7 +460,7 @@ class FiniteElementModel(ABC, YamlMixin):
         # if force or not self._pushover_view:
         #     self.pushover(results_path=results_path, drift=drift)
 
-        df, ndf = self.pushover_dfs
+        df, ndf = self.pushover_dfs()
         cols = df[df.columns.difference(["u"])].columns
         fig = df.plot(x="u", y=cols)
         fig.update_layout(
@@ -472,7 +474,6 @@ class FiniteElementModel(ABC, YamlMixin):
         )
         return fig, normalized_fig
 
-    @property
     def pushover_dfs(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         # if not self._pushover_view:
         #     raise Exception("You must run a pushover first!")
@@ -488,12 +489,15 @@ class FiniteElementModel(ABC, YamlMixin):
         return df, ndf
 
     def pushover_stats(self) -> dict:
-        df, normalized_df = self.pushover_dfs
+        df, normalized_df = self.pushover_dfs()
         Vy = df["sum"].max()
         ix = df["sum"].idxmax()
         cs = normalized_df["sum"].max()
         uy = df.loc[ix]["u"]
+        print(ix, uy)
+        uy = uy.values[0] if not isinstance(uy, float) else uy
         drift_y = normalized_df.loc[ix]["u"]
+        drift_y = drift_y.values[0] if not isinstance(drift_y, float) else drift_y
         c_design = self.extras.get("c_design")
         c_design_error = (cs - c_design) / c_design
         Vy_design = c_design * self.weight
@@ -864,9 +868,9 @@ class FiniteElementModel(ABC, YamlMixin):
             s += f"recorder NodeEnvelope    -file $abspath/{reaction}-envelope.csv -node {fixed_nodes} -dof {dof} reaction\n"
 
         s += f"recorder Node            -file $abspath/roof-displacements.csv -time -node {self.roofID} -dof 1 disp\n"
-        s += f"recorder NodeEnvelope            -file $abspath/roof-displacements-env.csv -time -node {self.roofID} -dof 1 disp\n"
+        s += f"recorder NodeEnvelope    -file $abspath/roof-displacements-env.csv -time -node {self.roofID} -dof 1 disp\n"
         s += f"recorder Node            -file $abspath/roof-accels.csv -time -node {self.roofID} -dof 1 accel\n"
-        s += f"recorder NodeEnvelope            -file $abspath/roof-accels-env.csv -time -node {self.roofID} -dof 1 accel\n"
+        s += f"recorder NodeEnvelope    -file $abspath/roof-accels-env.csv -time -node {self.roofID} -dof 1 accel\n"
 
         storey_node_ids = self.mass_nodes
         iNodes = "0 " + Node.string_ids_for_list(
@@ -1332,13 +1336,13 @@ class IMKFrame(FiniteElementModel):
         s = f"region 1 -ele {self.spring_columns_ids_str}\n"
         s += f"recorder Element         -file $abspath/columns-M.csv -time      -region 1 -dof 3 force\n"
         s += f"recorder EnvelopeElement -file $abspath/columns-M-envelope.csv   -region 1 -dof 3 force\n"
-        s += f"recorder Element         -file $abspath/columns-rot.csv -time    -region 1 -dof 2 deformation\n"
-        s += f"recorder EnvelopeElement -file $abspath/columns-rot-envelope.csv -region 1 -dof 2 deformation\n"
+        s += f"recorder Element         -file $abspath/columns-rot.csv -time    -region 1 deformation\n"
+        s += f"recorder EnvelopeElement -file $abspath/columns-rot-envelope.csv -region 1 deformation\n"
         s += f"region 2 -ele {self.spring_beams_ids_str}\n"
         s += f"recorder Element         -file $abspath/beams-M.csv -time      -region 2 -dof 3 force\n"
         s += f"recorder EnvelopeElement -file $abspath/beams-M-envelope.csv   -region 2 -dof 3 force\n"
-        s += f"recorder Element         -file $abspath/beams-rot.csv -time    -region 2 -dof 2 deformation\n"
-        s += f"recorder EnvelopeElement -file $abspath/beams-rot-envelope.csv -region 2 -dof 2 deformation\n"
+        s += f"recorder Element         -file $abspath/beams-rot.csv -time    -region 2 deformation\n"
+        s += f"recorder EnvelopeElement -file $abspath/beams-rot-envelope.csv -region 2 deformation\n"
         return s
 
     def determine_collapse_from_results(self, results: dict):

@@ -155,7 +155,6 @@ class StructuralResultView(YamlMixin):
         #  skiprows=[0, 1])
 
     def _read_timehistory(self, filename: Union[Path, str], names=None) -> DataFrame:
-        """return absmax() response"""
         path = self._path / filename
         return read_csv(path, header=None, sep="\s+", index_col=0, names=names)
 
@@ -216,7 +215,7 @@ class StructuralResultView(YamlMixin):
         disp = self._read_timehistory("roof-displacements.csv", names=["u"])
         return disp
 
-    def view_rotations_envelope(self, node: int) -> DataFrame:
+    def view_rotations_envelope(self, node: int, **kwargs) -> DataFrame:
         return self.view_displacements_envelope(node, 3)
 
     def _view_column_forces(self, envelope=False) -> DataFrame:
@@ -387,13 +386,16 @@ class StructuralResultView(YamlMixin):
         return rotations
 
     def view_spring_moment_rotation_th(
-        self, *, ele_type: str, node: int, ix: int
+        self, *, ele_type: str, node: int, ix: int, **kwargs
     ) -> DataFrame:
         moments = self.view_springs_moments()[ele_type]
         rotations = self.view_springs_rotations()[ele_type]
         M = moments[ix].values.flatten()
         r = rotations[ix].values.flatten()
         df = DataFrame(dict(M=M, r=r), index=moments.index)
+        fig = df.plot(x='r', y='M')
+        path = kwargs.get('path', '').split('/')[-3:]
+        fig.write_image(f'/Users/carlo/Desktop/moment-rotation-{ix}-{path}.png', engine='kaleido')
         return df
 
     def view_drifts(self) -> DataFrame:
@@ -1227,7 +1229,7 @@ class IDA(NamedYamlMixin):
                 "inf": input["inf"],
                 "freq": input["freq"],
                 "collapse": collapse,
-                # **input,
+                # **input, # doesn't work because input has non-hashable objects
                 **results,
             }
             dataframe_records.append(row)
@@ -1346,9 +1348,10 @@ class IDA(NamedYamlMixin):
             yaxis_title="accel (g)",
             xaxis_title="peak drift any storey [1]",
             title="IDA curves",
-            # marginal_x="histogram", marginal_y="rug",
+            # marginal_x="histogram",
+            # marginal_y="rug",
             # yaxis_range=[0.0, 0.3],
-            xaxis_range=[0, 0.20],
+            xaxis_range=[0, 0.10],
             width=1100,
             height=600,
             # autosize=True,
@@ -1412,3 +1415,22 @@ class RSA(StructuralAnalysis):
         peak_moments = np.sqrt(np.sum(M**2, axis=1))
         peak_shears = np.sqrt(np.sum(shears**2, axis=1))
         return peak_moments.tolist(), peak_shears.tolist(), float(cs)
+
+    def srss_moment_shear_correction(self, maximum_variation_pct: float = 0.1) -> tuple[list, list, list]:
+        """
+        moment and shear distribution along height can vary wildly e.g. 1000, 400, 100
+        this corrects moments/shears with respecto to the base shears such that the difference between successive forces doesn't exceed some pct
+        """
+        moments, shears, cs = self.srss()
+        corrected_moments = []
+        corrected_shears = shears
+        prev = moments[0]
+        for cur in moments:
+            if abs(prev-cur)/prev > maximum_variation_pct:
+                cur = prev*(1-maximum_variation_pct)
+            corrected_moments.append(cur)
+            prev = cur
+        # prev = shears[0]
+        print(corrected_moments, moments)
+        return corrected_moments, corrected_shears, cs
+
