@@ -89,7 +89,7 @@ class CodeMassesPre(DesignCriterion):
     """
 
     CODE_UNIFORM_LOADS_kPA = 9.81 # 1 t/m2
-    SLAB_AREA_PERCENTAGE = 1  # part of the slab mass that goes to this frame's beams A=Lx * Lz = c Lx**2
+    SLAB_AREA_PERCENTAGE = 0.25  # part of the slab mass that goes to this frame's beams A=Lx * Lz = c Lx**2
     # in other words, the coefficient of perpendicular contribution
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
@@ -171,7 +171,7 @@ class ShearStiffnessRetryPre(DesignCriterion):
     9 storey building has only 3 groups of inertias
     """
 
-    PERIOD_TOLERANCE_PCT: float = 0.1
+    PERIOD_TOLERANCE_PCT: float = 0.05
     MAX_ITERATIONS = 20
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:

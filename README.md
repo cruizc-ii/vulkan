@@ -20,7 +20,7 @@ Set a `breakpoint()` anywhere
 
 ## TODO
 - deploy to streamlit see how it works
-- [ ] push with 1st mode, plot modes of vibration
+- [x] push with 1st mode, plot modes of vibration
 - [ ] fix pushover stats, merge everything on a single call
 - [ ] callibrate str-elems+slabs cost
 - [ ] Compute Vy, uy correctly from pushover curve as 10% of original stiffness
@@ -42,7 +42,7 @@ Set a `breakpoint()` anywhere
 - [x] gravity loads are too big, our moments for design are too small, yes, this has been fixed
 - [x] Some computation is incorrect so IMK numbers are wrong. models are unstable, yes models are unstable.
 - [x] numerical rayleigh damping is incorrect ? not in bilin. check, rayleigh damping is correct.
-- [ ] crazy strategy of forcing convergence actually works, is there an explanation for this??
+- [x] crazy strategy of forcing convergence actually works, is there an explanation for this, yes.
 - [x] Model is fundamentally wrong with negative inertias.
 - [x] Kb, Ic computation to make it match is wrong., yes.
 - [ ] Leave Ic as is, if it doesn't work, try out the n=10 method.

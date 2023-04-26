@@ -652,7 +652,7 @@ if state.module == 1:
             df
 
         with st.expander("summary"):
-            st.dataframe(pd.DataFrame([design.summary]))
+            st.dataframe(pd.DataFrame([design.fem.pushover_stats()]))
 
         with st.expander("assets"):
             pass
@@ -674,9 +674,9 @@ if state.module == 1:
             stats = design.fem.pushover_stats()
             design_c_error = stats["design_error"]
             c_design = stats["c_design"]
-            design_period_error = design.fem.summary["period_error"]
-            period = design.fem.summary["period [s]"]
-            miranda_period = design.fem.summary["miranda period [s]"]
+            design_period_error = stats["period_error"]
+            period = stats["period [s]"]
+            miranda_period = stats["miranda period [s]"]
             cs = stats['cs']
             Vy_design = stats['Vy_design']
             Vy = stats['Vy']

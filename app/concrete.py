@@ -191,6 +191,7 @@ class RectangularConcreteColumn:
     gammaJiangCheng: float | None = None
     Et: float | None = None  # energy capacity
     theta_y: float | None = None
+    theta_y_fardis: float | None = None
     theta_u: float | None = None
     theta_pc_cyclic: float | None = None
     theta_cap_cyclic: float | None = None
@@ -374,7 +375,7 @@ set stable {self.stable}
             self.L / 2
         )  # shear span is M/V but for double curvature, member shear is constant and equal to 2M/L
 
-        self.theta_y = (
+        self.theta_y_fardis = (
             self.phi_y * self.Ls / 3
             + 0.0025
             + self.alpha_slippage
@@ -385,7 +386,8 @@ set stable {self.stable}
                 * self.fyMPa
                 / ((self.d - self.dp) * self.fpcMPa**0.5)
             )
-        ) if self.theta_y is None else self.theta_y
+        )
+        self.theta_y = self.theta_y_fardis if self.theta_y is None else self.theta_y
         self.theta_pc = 0.76 * 0.031**self.nu * (0.02 + 40 * self.pw) ** 1.02
         self.theta_pc = self.theta_pc if self.theta_pc < 0.10 else 0.10
         self.theta_pc_cyclic = 0.5 * self.theta_pc

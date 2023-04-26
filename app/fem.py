@@ -62,6 +62,7 @@ class FiniteElementModel(ABC, YamlMixin):
     chopra_fundamental_period_plus1sigma: float | None = None
     miranda_fundamental_period: float | None = None
     uniform_beam_loads_by_mass: list[float] | None = None
+    _YIELD_TANGENT_PCT: float = 0.2 # less than this we consider structure to have yielded. when curr_tangent < PCT*initial tangent
 
     def __str__(self) -> str:
         h = "#!/usr/local/bin/opensees\n"
@@ -139,16 +140,15 @@ class FiniteElementModel(ABC, YamlMixin):
         # this should break when we call it without running modal first.
         return self.periods[0]
 
-    @property
-    def summary(self) -> dict:
+    def pushover_stats(self) -> dict:
         df, ndf = self.pushover_dfs()
-        Vy = df["sum"].max()
-        ix = df["sum"].idxmax()
-        cs = ndf["sum"].max()
-        uy = df.loc[ix]["u"]
-        uy = uy.values[0] if not isinstance(uy, float) else uy
-        drift_y = ndf.loc[ix]["u"]
-        drift_y = drift_y.values[0] if not isinstance(drift_y, float) else drift_y
+        Vy, uy = self.pushover_yield(df)
+        cs = Vy / self.weight
+        drift_y = uy/self.height
+        c_design = self.extras.get("c_design")
+        c_design_error = (cs - c_design) / c_design
+        Vy_design = c_design * self.weight
+        Vy_error = (Vy-Vy_design)/Vy_design
         period = self.periods[0] if len(self.periods) > 0 else 0
         period_error = (
             (self.periods[0] - self.miranda_fundamental_period)
@@ -167,6 +167,15 @@ class FiniteElementModel(ABC, YamlMixin):
             "drift_y [%]": 100 * drift_y,
             "c_design [1]": self.extras.get("c_design"),
             "period [s]": f"{period:.2f} s",
+            "Vy": f"{Vy:.1f} kN",
+            "Vy_design": f"{Vy_design:.1f} kN",
+            "Vy_error": f"{100*Vy_error:.2f} %",
+            "uy": f"{uy:.3f} [m]",
+            "cs": f"{cs:.3f} [1]",
+            "Sa_y_g": f"{cs:.3f} [g]",
+            "drift_y": f"{100*drift_y:.2f} %",
+            "c_design": f"{c_design:.3f} [1]",
+            "design_error": f"{100*c_design_error:.2f} %",
             "miranda period [s]": f"{self.miranda_fundamental_period:.2f} s",
             "period_error": f"{100*period_error:.1f} %",
             "_pushover_x": df["u"].to_list(),
@@ -175,6 +184,7 @@ class FiniteElementModel(ABC, YamlMixin):
             "_norm_pushover_y": ndf["sum"].to_list(),
         }
         return stats
+
 
     @property
     def elements_assets(self) -> list["Asset"]:
@@ -488,32 +498,21 @@ class FiniteElementModel(ABC, YamlMixin):
         ndf = cs.join(roof_drifts)
         return df, ndf
 
-    def pushover_stats(self) -> dict:
-        df, normalized_df = self.pushover_dfs()
-        Vy = df["sum"].max()
-        ix = df["sum"].idxmax()
-        cs = normalized_df["sum"].max()
-        uy = df.loc[ix]["u"]
-        print(ix, uy)
-        uy = uy.values[0] if not isinstance(uy, float) else uy
-        drift_y = normalized_df.loc[ix]["u"]
-        drift_y = drift_y.values[0] if not isinstance(drift_y, float) else drift_y
-        c_design = self.extras.get("c_design")
-        c_design_error = (cs - c_design) / c_design
-        Vy_design = c_design * self.weight
-        Vy_error = (Vy-Vy_design)/Vy_design
-        stats = {
-            "Vy": f"{Vy:.1f} kN",
-            "Vy_design": f"{Vy_design:.1f} kN",
-            "Vy_error": f"{100*Vy_error:.2f} %",
-            "uy": f"{uy:.3f} [m]",
-            "cs": f"{cs:.3f} [1]",
-            "Sa_y_g": f"{cs:.3f} [g]",
-            "drift_y": f"{100*drift_y:.2f} %",
-            "c_design": f"{c_design:.3f} [1]",
-            "design_error": f"{100*c_design_error:.2f} %",
-        }
-        return stats
+    def pushover_yield(self, df: pd.DataFrame) -> tuple[float, float]:
+        df = df.reset_index()
+        df2 = df.diff(1)
+        df2['fp'] = df2['sum']/df2['u'] # an idea might be to use a better approximation of derivative as f(x+e)-f(x-e)/2e. will need an applymap.
+        K = df2['fp'].iloc[:10].mean()
+        tol = -1e-2
+        possible_pts = np.where(df2.diff(1, axis=0) < -tol)[0] # where next tangent is smaller than previous by a small negative tolerance
+        df3 = df2.iloc[possible_pts]
+        indices = df3['fp'][df3['fp'] < self._YIELD_TANGENT_PCT*K].index
+        print(indices)
+        if len(indices) == 0:
+            return df['sum'].max(), 0
+        yield_point = indices[0]
+        Vy, uy = df[['sum', 'u']].iloc[yield_point]
+        return Vy, uy
 
     @property
     def uniform_area_loads_kPa(self) -> list[float]:
@@ -1088,9 +1087,11 @@ class BilinFrame(FiniteElementModel):
             col_moments, fem.columns_by_storey, beam_moments, fem.beams_by_storey
         ):
             for c in cols:
+                # c.My = cm/fem.num_cols
                 c.My = cm
                 c.Q = Q
             for b in beams:
+                # b.My = bm/fem.num_cols
                 b.My = bm
                 b.Q = Q
 

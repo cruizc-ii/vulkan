@@ -40,3 +40,13 @@ records:
   name: 12_ROM140995NS.csv
   path: /Users/carlo/vulkan/records/12_ROM140995NS.csv
   scale: 1.0
+- dt: 0.005
+  kind: acc
+  name: 27_CA250489NS.csv
+  path: /Users/carlo/vulkan/records/27_CA250489NS.csv
+  scale: 1.0
+- dt: 0.005
+  kind: acc
+  name: 22_JA140995EW.csv
+  path: /Users/carlo/vulkan/records/22_JA140995EW.csv
+  scale: 1.0

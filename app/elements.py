@@ -82,7 +82,6 @@ class Node(FE, YamlMixin):
 
         if self.zerolen is not None:
             s += f"equalDOF {self.zerolen} {self.id} 1 2\n"
-
         return s
 
 
@@ -376,15 +375,15 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
 
     def __post_init__(self):
         from app.strana import EDP
-
         self.model = self.__class__.__name__
         self.Ke = 6 * self.E * self.Ix / self.length
         # n = 10
         # self.Ks = n*self.Ke
         # self.theta_y = self.My / self.Ks
+        super().__post_init__()
         # self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
         # self.Ic = self.Kb * self.length / 6 / self.E
-        super().__post_init__()
+        # self.Ic = self.Ks * self.length / 6 / self.E / n
         # self.Ks = self.My / self.theta_y
         self.Ke_Ks_ratio = self.Ke/self.Ks
         self.radius = self.h / 2

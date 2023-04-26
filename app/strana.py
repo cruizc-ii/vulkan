@@ -630,7 +630,7 @@ class StaticRecorder(GravityRecorderMixin):
 @dataclass
 class PushoverRecorder(GravityRecorderMixin):
     drift: float = 0.03
-    steps: int = 5000
+    steps: int = 500
     tol: float = 1.0e-9
     modal_vectors: list[float] | None = None
 
@@ -1214,7 +1214,7 @@ class IDA(NamedYamlMixin):
                 print(f"{code=}")
 
         for input, view_handler in zip(input_dicts, views):
-            stats = self._design.fem.summary
+            stats = self._design.fem.pushover_stats()
             Say_g = stats['cs [1]']
             drift_yield = stats['drift_y [%]']
             results = view_handler.get_and_set_timehistory_summary()
@@ -1431,6 +1431,5 @@ class RSA(StructuralAnalysis):
             corrected_moments.append(cur)
             prev = cur
         # prev = shears[0]
-        print(corrected_moments, moments)
         return corrected_moments, corrected_shears, cs
 
