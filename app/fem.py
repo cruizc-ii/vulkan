@@ -29,7 +29,7 @@ from app.elements import (
     ElasticBeamColumn,
     FEMValidationException,
     ElementTypes,
-    ConcreteElasticSlab
+    ConcreteElasticSlab,
 )
 
 
@@ -62,7 +62,7 @@ class FiniteElementModel(ABC, YamlMixin):
     chopra_fundamental_period_plus1sigma: float | None = None
     miranda_fundamental_period: float | None = None
     uniform_beam_loads_by_mass: list[float] | None = None
-    _YIELD_TANGENT_PCT: float = 0.2 # less than this we consider structure to have yielded. when curr_tangent < PCT*initial tangent
+    _YIELD_TANGENT_PCT: float = 0.2  # less than this we consider structure to have yielded. when curr_tangent < PCT*initial tangent
 
     def __str__(self) -> str:
         h = "#!/usr/local/bin/opensees\n"
@@ -104,6 +104,7 @@ class FiniteElementModel(ABC, YamlMixin):
 
         if self.pushover_abs_path:
             from app.strana import StructuralResultView
+
             self._pushover_view = StructuralResultView(
                 abs_folder=self.pushover_abs_path
             )
@@ -144,11 +145,11 @@ class FiniteElementModel(ABC, YamlMixin):
         df, ndf = self.pushover_dfs()
         Vy, uy = self.pushover_yield(df)
         cs = Vy / self.weight
-        drift_y = uy/self.height
+        drift_y = uy / self.height
         c_design = self.extras.get("c_design")
         c_design_error = (cs - c_design) / c_design
         Vy_design = c_design * self.weight
-        Vy_error = (Vy-Vy_design)/Vy_design
+        Vy_error = (Vy - Vy_design) / Vy_design
         period = self.periods[0] if len(self.periods) > 0 else 0
         period_error = (
             (self.periods[0] - self.miranda_fundamental_period)
@@ -185,7 +186,6 @@ class FiniteElementModel(ABC, YamlMixin):
         }
         return stats
 
-
     @property
     def elements_assets(self) -> list["Asset"]:
         # here we count only the elements that are indeed Assets
@@ -196,6 +196,10 @@ class FiniteElementModel(ABC, YamlMixin):
     @property
     def assets(self) -> list["Asset"]:
         return self.elements_assets + self.nonstructural_elements + self.contents
+
+    @property
+    def slabs(self):
+        return [s for s in self.elements if s.type == ElementTypes.SLAB.value]
 
     def _update_masses_in_place(
         self, new_masses: list[float] | np.ndarray[float]
@@ -208,7 +212,11 @@ class FiniteElementModel(ABC, YamlMixin):
         slabs = []
         for floor, beams in enumerate(self.beams_by_storey, 1):
             for beam in beams:
-                id = beam.id * 10000000 # hack to avoid having duplicate ids, each beam is tied to a slab via an ID.
+                id = (
+                    beam.id * 10000000
+                )  # hack to avoid having duplicate ids, each beam is tied to a slab via an ID.
+                print("findme")
+                print(beam.length)
                 slab = ConcreteElasticSlab(id=id, length=beam.length, floor=floor)
                 slabs.append(slab)
         for asset in slabs:
@@ -221,7 +229,9 @@ class FiniteElementModel(ABC, YamlMixin):
 
         occupancy = BuildingOccupancy(fem=self, model_str=self.occupancy)
         nonstructural_and_contents = occupancy.build()
-        nonstructural = [a for a in nonstructural_and_contents if a.category == "nonstructural"] # categories can be any string but we should ideally filter by ENUM
+        nonstructural = [
+            a for a in nonstructural_and_contents if a.category == "nonstructural"
+        ]  # categories can be any string but we should ideally filter by ENUM
         for asset in nonstructural:
             if asset.net_worth:
                 asset.net_worth = self.num_frames * asset.net_worth
@@ -230,9 +240,13 @@ class FiniteElementModel(ABC, YamlMixin):
     def build_contents(self) -> list[Asset]:
         from app.occupancy import BuildingOccupancy
 
+        return []
+
         occupancy = BuildingOccupancy(fem=self, model_str=self.occupancy)
         nonstructural_and_contents = occupancy.build()
-        contents = [a for a in nonstructural_and_contents if a.category == "contents"] # categories can be any string but we should ideally filter by ENUM
+        contents = [
+            a for a in nonstructural_and_contents if a.category == "contents"
+        ]  # categories can be any string but we should ideally filter by ENUM
         for asset in contents:
             if asset.net_worth:
                 asset.net_worth = self.num_frames * asset.net_worth
@@ -241,13 +255,13 @@ class FiniteElementModel(ABC, YamlMixin):
     @property
     def readable_total_net_worth(self) -> str:
         total = self.total_net_worth
-        s = '$ '
+        s = "$ "
         if total >= 1000:
-            s += f'{total/1000:.2f} M'
+            s += f"{total/1000:.2f} M"
         else:
-            s += f'{total:.0f} k'
-        return s + ' USD'
-    
+            s += f"{total:.0f} k"
+        return s + " USD"
+
     @property
     def total_net_worth(self) -> float:
         return (
@@ -381,7 +395,7 @@ class FiniteElementModel(ABC, YamlMixin):
         collapse_residual = 
         return collapse_damage or collapse_residual or collapse_elwood
         """
-        
+
         for st, columns in enumerate(self.columns_by_storey):
             column = columns[0]
             x = results[SummaryEDP.peak_drifts.value][st]
@@ -449,12 +463,13 @@ class FiniteElementModel(ABC, YamlMixin):
     def pushover(self, results_path: Path, drift: float = 0.03, mode: int | None = 1):
         from app.strana import StructuralAnalysis
         from app.utils import AnalysisTypes
+
         vectors = None
         if mode is not None:
             if self.vectors is None:
                 self.get_and_set_eigen_results(results_path=results_path)
             vecs = np.array(self.vectors).T
-            vectors = vecs[mode-1]
+            vectors = vecs[mode - 1]
         strana = StructuralAnalysis(results_path, fem=self)
         view = strana.pushover(drift=drift, modal_vectors=vectors)
         self.pushover_abs_path = str(results_path / AnalysisTypes.PUSHOVER.value)
@@ -474,7 +489,9 @@ class FiniteElementModel(ABC, YamlMixin):
         cols = df[df.columns.difference(["u"])].columns
         fig = df.plot(x="u", y=cols)
         fig.update_layout(
-            xaxis_title="roof u (m)", yaxis_title="Vb (kN)", title_text=f"1st mode pushover"
+            xaxis_title="roof u (m)",
+            yaxis_title="Vb (kN)",
+            title_text=f"1st mode pushover",
         )
         normalized_fig = ndf.plot(x="u", y=cols)
         normalized_fig.update_layout(
@@ -501,17 +518,21 @@ class FiniteElementModel(ABC, YamlMixin):
     def pushover_yield(self, df: pd.DataFrame) -> tuple[float, float]:
         df = df.reset_index()
         df2 = df.diff(1)
-        df2['fp'] = df2['sum']/df2['u'] # an idea might be to use a better approximation of derivative as f(x+e)-f(x-e)/2e. will need an applymap.
-        K = df2['fp'].iloc[:10].mean()
+        df2["fp"] = (
+            df2["sum"] / df2["u"]
+        )  # an idea might be to use a better approximation of derivative as f(x+e)-f(x-e)/2e. will need an applymap.
+        K = df2["fp"].iloc[:10].mean()
         tol = -1e-2
-        possible_pts = np.where(df2.diff(1, axis=0) < -tol)[0] # where next tangent is smaller than previous by a small negative tolerance
+        possible_pts = np.where(df2.diff(1, axis=0) < -tol)[
+            0
+        ]  # where next tangent is smaller than previous by a small negative tolerance
         df3 = df2.iloc[possible_pts]
-        indices = df3['fp'][df3['fp'] < self._YIELD_TANGENT_PCT*K].index
+        indices = df3["fp"][df3["fp"] < self._YIELD_TANGENT_PCT * K].index
         print(indices)
         if len(indices) == 0:
-            return df['sum'].max(), 0
+            return df["sum"].max(), 0
         yield_point = indices[0]
-        Vy, uy = df[['sum', 'u']].iloc[yield_point]
+        Vy, uy = df[["sum", "u"]].iloc[yield_point]
         return Vy, uy
 
     @property
@@ -571,7 +592,8 @@ class FiniteElementModel(ABC, YamlMixin):
                     "r": 2 * SCALE * e.radius,
                 }
             }
-            for e in self.elements if (e.type != ElementTypes.SLAB.value)
+            for e in self.elements
+            if (e.type != ElementTypes.SLAB.value)
         ]
         fig += [
             {
@@ -913,6 +935,7 @@ class FiniteElementModel(ABC, YamlMixin):
 class PlainFEM(FiniteElementModel):
     model: str = "PlainFEM"
 
+
 @dataclass
 class ShearModel(FiniteElementModel):
     """
@@ -1069,7 +1092,6 @@ class BilinFrame(FiniteElementModel):
         # else:
         #     self.elements = [BilinBeamColumn(**elem.to_dict) for elem in self.elements]
 
-
     @classmethod
     def from_elastic(
         cls,
@@ -1101,7 +1123,8 @@ class BilinFrame(FiniteElementModel):
     @property
     def elements_str(self) -> str:
         """this is a really dumb limitation of opensees, every E in Domain
-        must have a non-null ID.. so we have to do gymnastics here to fill in the sections"""
+        must have a non-null ID.. so we have to do gymnastics here to fill in the sections
+        """
 
         import re
 
@@ -1224,6 +1247,7 @@ class IMKFrame(FiniteElementModel):
     def __post_init__(self):
         self.model = self.__class__.__name__
         super().__post_init__()
+        slabs = self.slabs
         if not self.done:
             nodes = []
             next_id = self.nodes[-1].id + 1
@@ -1271,7 +1295,14 @@ class IMKFrame(FiniteElementModel):
                 ElementTypes.SPRING_COLUMN.value: 1,
                 ElementTypes.SPRING_BEAM.value: 1,
             }
-            beams_and_columns = [e for e in self.elements if (e.type == ElementTypes.BEAM.value or e.type == ElementTypes.COLUMN.value)]
+            beams_and_columns = [
+                e
+                for e in self.elements
+                if (
+                    e.type == ElementTypes.BEAM.value
+                    or e.type == ElementTypes.COLUMN.value
+                )
+            ]
             for elem in beams_and_columns:
                 i, j, bay, st, fl = elem.i, elem.j, elem.bay, elem.storey, elem.floor
                 if elem.type == ElementTypes.BEAM.value:
@@ -1328,7 +1359,6 @@ class IMKFrame(FiniteElementModel):
                 elements.append(imk2)
                 elem_id += 1
             self.elements = elements
-            slabs = self.build_and_place_slabs()
             self.elements = self.elements + slabs
             self.done = True
 

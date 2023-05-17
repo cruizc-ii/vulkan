@@ -88,7 +88,7 @@ class CodeMassesPre(DesignCriterion):
     therefore mass will be sigma*area since this frame is taking the totality the board's mass
     """
 
-    CODE_UNIFORM_LOADS_kPA = 9.81 # 1 t/m2
+    CODE_UNIFORM_LOADS_kPA = 9.81  # 1 t/m2
     SLAB_AREA_PERCENTAGE = 0.25  # part of the slab mass that goes to this frame's beams A=Lx * Lz = c Lx**2
     # in other words, the coefficient of perpendicular contribution
 
@@ -260,7 +260,9 @@ class ShearRSA(DesignCriterion):
 @dataclass
 class CDMX2017Q1(DesignCriterion):
     Q: int = 1
-    beam_to_column_resistance_ratio: float = 1.0/1.5  # strong-column/weak-beam criterion
+    beam_to_column_resistance_ratio: float = (
+        1.0 / 1.5
+    )  # strong-column/weak-beam criterion
     column_to_beam_inertia_ratio: float = 1.5**4  # proportional to 1.5^4 radius
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
@@ -280,6 +282,7 @@ class CDMX2017Q1(DesignCriterion):
         design_moments, peak_shears, cs = strana.srss_moment_shear_correction()
 
         new_elements = []
+
         for columns_shear_model, beams_fem, columns_fem in zip(
             shear_fem.columns_by_storey, fem.beams_by_storey, fem.columns_by_storey
         ):
@@ -306,6 +309,7 @@ class CDMX2017Q1(DesignCriterion):
             beam_column_ratio=self.beam_to_column_resistance_ratio,
             Q=self.Q,
         )
+
         slabs = fem.build_and_place_slabs()
         fem.elements = fem.elements + slabs
         fem.get_and_set_eigen_results(results_path=results_path)

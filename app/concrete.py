@@ -466,8 +466,7 @@ set stable {self.stable}
         drift = drift if drift >= 0.01 else 0.01
         return drift
 
-    @property
-    def cost(self) -> float:
+    def get_cost(self) -> float:
         # normalized by 1k dollars
         STEEL_DENSITY_TON = 7.85
         STEEL_TON_UNIT_COST = 920
@@ -490,7 +489,9 @@ set stable {self.stable}
         work = 0.722 * num_stirrups**2 * WORK_UNIT_COST
         print(f"{steel=} {concrete=} {work=}")
         dollars = steel + concrete + work
-        return dollars / 1000
+        inflation = 2.0
+        dollars = inflation * dollars / 1e3 ## there are two IMK springs, so this will only be half the cost.
+        return dollars
 
     def analyze(self, As: float | None = None, *, Ast=0, Asc=0, P=0, tol=5, iter=20):
         P = P or self.P

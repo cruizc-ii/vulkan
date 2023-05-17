@@ -357,7 +357,7 @@ with st.sidebar:
             )
             run = st.button("run IDA", help="run with chosen Sa")
             standard = st.button(
-                "run hazard", help="uses the hazard points only"
+                "run with hazard", help="uses the hazard points only"
             )
             delete = st.button("🗑️", help="delete this analysis")
             if delete:

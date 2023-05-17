@@ -393,9 +393,11 @@ class StructuralResultView(YamlMixin):
         M = moments[ix].values.flatten()
         r = rotations[ix].values.flatten()
         df = DataFrame(dict(M=M, r=r), index=moments.index)
-        fig = df.plot(x='r', y='M')
-        path = kwargs.get('path', '').split('/')[-3:]
-        fig.write_image(f'/Users/carlo/Desktop/moment-rotation-{ix}-{path}.png', engine='kaleido')
+        fig = df.plot(x="r", y="M")
+        path = kwargs.get("path", "").split("/")[-3:]
+        fig.write_image(
+            f"/Users/carlo/Desktop/moment-rotation-{ix}-{path}.png", engine="kaleido"
+        )
         return df
 
     def view_drifts(self) -> DataFrame:
@@ -406,7 +408,7 @@ class StructuralResultView(YamlMixin):
         """
         floor relative accelerations wrt. ground motion are obtained by the analyses
         absolute floor accelerations
-        
+
         obtained by summing record accel to results
         a_abs = a_g + a(t)
         """
@@ -525,7 +527,6 @@ class StructuralResultView(YamlMixin):
         return results
 
 
-
 @dataclass
 class Recorder:
     path: Path
@@ -570,7 +571,7 @@ class Recorder:
         s += "integrator LoadControl 0.01 1 \n"
         s += "analysis Static \n"
         s += "initialize \n"
-        s += "analyze 100 \n" # We apply gravity slowly, if pushover fails this means probably that the beams failed due to gravity. this is bad.
+        s += "analyze 100 \n"  # We apply gravity slowly, if pushover fails this means probably that the beams failed due to gravity. this is bad.
         s += "remove recorders \n"
         s += "loadConst -time 0.0 \n"
         return s
@@ -671,32 +672,33 @@ class PushoverRecorder(GravityRecorderMixin):
         string = "constraints Transformation \n"
         string += "numberer RCM \n"
         string += "system BandGeneral \n"
-        string += f"test NormDispIncr {self.tol} 100 2\n"
+        # string += f"test NormDispIncr {self.tol} 100 2\n"
+        string += f"test NormDispIncr {self.tol} 100\n"
         string += "algorithm KrylovNewton \n"
         string += f"integrator DisplacementControl {self.fem.roofID} 1 {dU:.8f} 1000\n"
         string += "analysis Static \n"
         string += f"analyze {self.steps}"
-#         string += f"set maxU {maxU}\n"
-#         string += "set disp 0.0\n"
-#         string += "set ok 0\n"
-#         string += """
-# while {$ok == 0 && $disp < $maxU} {
-#     set ok [analyze 1]
-#     set fail 0
-#     while {$ok != 0} {
-#         incr fail
-#         set ok [analyze 1]
-#         if {$fail > 1} {
-#             puts "pushover failed"
-#             return 0
-#         }
-#     }
-#     set disp [nodeDisp %d 1]
-# }
-# puts "pushover successful"
-#         """ % (
-#             self.fem.roofID,
-#         )
+        #         string += f"set maxU {maxU}\n"
+        #         string += "set disp 0.0\n"
+        #         string += "set ok 0\n"
+        #         string += """
+        # while {$ok == 0 && $disp < $maxU} {
+        #     set ok [analyze 1]
+        #     set fail 0
+        #     while {$ok != 0} {
+        #         incr fail
+        #         set ok [analyze 1]
+        #         if {$fail > 1} {
+        #             puts "pushover failed"
+        #             return 0
+        #         }
+        #     }
+        #     set disp [nodeDisp %d 1]
+        # }
+        # puts "pushover successful"
+        #         """ % (
+        #             self.fem.roofID,
+        #         )
         return string
 
 
@@ -886,7 +888,6 @@ while {$converged == 0 && $time <= $duration && !$break_outer} {
         )
         return s
 
-
     @property
     def inelastic_subdivision_solver_old(self) -> str:
         num_nodes = len(self.fem.nodes)
@@ -1038,8 +1039,10 @@ class StructuralAnalysis:
         )
         return self.run(recorder=recorder)
 
-    def pushover(self, drift: float = 0.03, modal_vectors: list[float]|None = None):
-        recorder = PushoverRecorder(self.pushover_path, fem=self.fem, drift=drift, modal_vectors=modal_vectors)
+    def pushover(self, drift: float = 0.03, modal_vectors: list[float] | None = None):
+        recorder = PushoverRecorder(
+            self.pushover_path, fem=self.fem, drift=drift, modal_vectors=modal_vectors
+        )
         return self.run(recorder=recorder)
 
     def timehistory(
@@ -1071,10 +1074,10 @@ class StructuralAnalysis:
     def async_timehistory(
         self,
         record: Record,
-        scale = None,
+        scale=None,
         a0: float = None,
         a1: float = None,
-        gravity_loads = True,
+        gravity_loads=True,
     ) -> tuple[str, StructuralResultView]:
         if a0 is None or a1 is None:
             self.fem.get_and_set_eigen_results(self.modal_path)
@@ -1197,7 +1200,8 @@ class IDA(NamedYamlMixin):
         views: list[StructuralResultView] = []
 
         import multiprocessing
-        num_runs_parallel  = multiprocessing.cpu_count() or self._NUM_PARALLEL_RUNS
+
+        num_runs_parallel = multiprocessing.cpu_count() or self._NUM_PARALLEL_RUNS
         for group in itertools_grouper(input_dicts, num_runs_parallel):
             cmds = []
             for g in group:
@@ -1215,11 +1219,13 @@ class IDA(NamedYamlMixin):
 
         for input, view_handler in zip(input_dicts, views):
             stats = self._design.fem.pushover_stats()
-            Say_g = stats['cs [1]']
-            drift_yield = stats['drift_y [%]']
+            Say_g = stats["cs [1]"]
+            drift_yield = stats["drift_y [%]"]
             results = view_handler.get_and_set_timehistory_summary()
-            results['peak_drift/drift_yield'] = results['peak_drift'] / float(drift_yield/100)
-            results['Sa/Say_design'] = input['intensity'] / float(Say_g)
+            results["peak_drift/drift_yield"] = results["peak_drift"] / float(
+                drift_yield / 100
+            )
+            results["Sa/Say_design"] = input["intensity"] / float(Say_g)
             collapse = self._design.fem.determine_collapse_from_results(results)
             row = {
                 "record": view_handler.record.name,
@@ -1416,7 +1422,9 @@ class RSA(StructuralAnalysis):
         peak_shears = np.sqrt(np.sum(shears**2, axis=1))
         return peak_moments.tolist(), peak_shears.tolist(), float(cs)
 
-    def srss_moment_shear_correction(self, maximum_variation_pct: float = 0.1) -> tuple[list, list, list]:
+    def srss_moment_shear_correction(
+        self, maximum_variation_pct: float = 0.1
+    ) -> tuple[list, list, list]:
         """
         moment and shear distribution along height can vary wildly e.g. 1000, 400, 100
         this corrects moments/shears with respecto to the base shears such that the difference between successive forces doesn't exceed some pct
@@ -1426,10 +1434,9 @@ class RSA(StructuralAnalysis):
         corrected_shears = shears
         prev = moments[0]
         for cur in moments:
-            if abs(prev-cur)/prev > maximum_variation_pct:
-                cur = prev*(1-maximum_variation_pct)
+            if abs(prev - cur) / prev > maximum_variation_pct:
+                cur = prev * (1 - maximum_variation_pct)
             corrected_moments.append(cur)
             prev = cur
         # prev = shears[0]
         return corrected_moments, corrected_shears, cs
-

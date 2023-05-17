@@ -26,7 +26,7 @@ class ElementTypes(Enum):
     COLUMN = "column"
     SPRING_BEAM = "spring_beam"
     SPRING_COLUMN = "spring_column"
-    SLAB = 'slab'
+    SLAB = "slab"
 
 
 class FEMValidationException(Exception):
@@ -131,7 +131,7 @@ class BeamColumn(FE, YamlMixin):
     CRACKED_INERTIA_FACTOR: float = 1.0
 
     def __repr__(self) -> str:
-        return 'BeamColumn 1'
+        return f"BeamColumn Ix={self.Ix:.3f}"
 
     def __post_init__(self):
         self.transf = 1 if self.type == ElementTypes.BEAM.value else 2
@@ -165,7 +165,7 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
     Q: float = 1.0
 
     def __repr__(self) -> str:
-        return 'ElasticBeamColumn 1'
+        return f"ElasticBeamColumn {self.length:.1f}m"
 
     def __post_init__(self):
         if self.E <= 0 or self.Ix <= 0:
@@ -265,6 +265,7 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
             for i, j, props in adjacency
         ]
 
+
 @dataclass
 class ConcreteElasticSlab(YamlMixin, RiskAsset):
     id: int | None = None
@@ -273,24 +274,34 @@ class ConcreteElasticSlab(YamlMixin, RiskAsset):
     model: str = "ConcreteElasticSlab"
     length: float | None = None
     thickness: float = 0
+    area: float | None = None
 
     def __repr__(self) -> str:
-        return f'ConcreteElasticSlab t={self.thickness:.2f}m'
+        return f"ConcreteElasticSlab t={self.thickness:.2f}m"
 
     def __str__(self) -> str:
-        # must return empty for OpenSees
-        return ''
+        # must return empty for OpenSees, as this is a virtual element
+        return ""
 
     def __post_init__(self):
-        if self.thickness < 0.08:
-            self.thickness = 0.08
-        if self.thickness > 0.30:
-            self.thickness = 0.30
-        area = self.length**2
-        self.net_worth = area * (40 + 3 * 100*self.thickness)  # lstsq regression on median prices
-        # self.net_worth = self.net_worth / 1000 # in 1k usd
         self.type = ElementTypes.SLAB.value
+        if self.net_worth is None:
+            if self.thickness < 0.08:
+                self.thickness = 0.08
+            if self.thickness > 0.30:
+                self.thickness = 0.30
+            from app.criteria import CodeMassesPre
+
+            area = CodeMassesPre.SLAB_AREA_PERCENTAGE * self.length**2
+            self.area = area
+            cost_per_unit_area = (
+                20 + 2.54 * 100 * self.thickness
+            )  # lstsq regression on median prices GUÍA DE REFERENCIA PARA FORMULAR EL CATÁLOGO DE CONCEPTOS DEL PRESUPUESTO BASE DE OBRA PÚBLICA. veracruz
+            inflation = 2.0
+            self.net_worth = inflation * cost_per_unit_area * area
+            self.net_worth = self.net_worth / 1000  # in 1k usd
         return super().__post_init__()
+
 
 @dataclass
 class BilinBeamColumn(ElasticBeamColumn):
@@ -298,7 +309,7 @@ class BilinBeamColumn(ElasticBeamColumn):
     Vy: float | None = None
 
     def __repr__(self) -> str:
-        return 'BilinBeamColumn My={self.My:.0f}'
+        return "BilinBeamColumn My={self.My:.0f}"
 
     def __post_init__(self):
         self.model = self.__class__.__name__
@@ -341,7 +352,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     Ke_Ks_ratio: float | None = None
 
     def __repr__(self) -> str:
-        return f'IMKSpring My={self.My:.0f} kNm'
+        return f"IMKSpring My={self.My:.0f} kNm"
 
     def __str__(self) -> str:
         # s = f"uniaxialMaterial Elastic {self.elasticMatTag} 1e9\n"
@@ -362,7 +373,9 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         while not designed:
             if i >= maxIter:
                 print(f'{b=:.2f}, {h=:.2f} {Ix=:.3f}, My={data["My"]:.1f}')
-                raise DesignException(f"Section is too small for moment {data['My']:.1f}")
+                raise DesignException(
+                    f"Section is too small for moment {data['My']:.1f}"
+                )
             try:
                 instance = cls(**{"h": h, "b": b, "EFFECTIVE_INERTIA_COEFF": 1, **data})
                 designed = True
@@ -375,6 +388,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
 
     def __post_init__(self):
         from app.strana import EDP
+
         self.model = self.__class__.__name__
         self.Ke = 6 * self.E * self.Ix / self.length
         # n = 10
@@ -385,12 +399,14 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         # self.Ic = self.Kb * self.length / 6 / self.E
         # self.Ic = self.Ks * self.length / 6 / self.E / n
         # self.Ks = self.My / self.theta_y
-        self.Ke_Ks_ratio = self.Ke/self.Ks
+        self.Ke_Ks_ratio = self.Ke / self.Ks
         self.radius = self.h / 2
         self.secColTag = self.id + 100000
         self.imkMatTag = self.id + 200000
         self.elasticMatTag = self.id + 300000
-        self.net_worth = self.net_worth if self.net_worth is not None else self.cost
+        self.net_worth = (
+            self.net_worth if self.net_worth is not None else self.get_cost()
+        )
         self._risk.edp = EDP.spring_moment_rotation_th.value
         self._risk.losses = self.losses
 

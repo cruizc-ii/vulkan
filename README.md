@@ -21,18 +21,18 @@ Set a `breakpoint()` anywhere
 ## TODO
 - deploy to streamlit see how it works
 - [x] push with 1st mode, plot modes of vibration
-- [ ] fix pushover stats, merge everything on a single call
+- [x] fix pushover stats, merge everything on a single call
 - [ ] callibrate str-elems+slabs cost
-- [ ] Compute Vy, uy correctly from pushover curve as 10% of original stiffness
+- [x] Compute Vy, uy correctly from pushover curve as 10% of original stiffness
+- [ ] aim for lower period in design procedure to account for more flexibility in real model
 - [ ] for collapse, when analysis doesn't converge at the last subdivision, create an empty file called collapse.csv with drifts, printA, etc, then process into results.yml with info about the collapse
-- [ ] design with a smaller period, so the extra flexibility doesn't hurt as much
-- [ ] change theta_y -> theta_y2 (Fardis)
+- [ ] design with a smaller period, so the extra flexibility doesn't hurt as much!
+- [x] change theta_y -> theta_y2 (Fardis)
 
 ### Design
 - [x] fix deselecting model.yml when clicking 'run'
 - [ ] introduce PDelta.
 - [ ] include more tests for CDMX design
-- [ ] aim for lower period in design procedure to account for more flexibility in real model
 - [x] check mass and weight are correctly set
 - [x] check gravity applying is correct.
 - [x] check damping is correctly set
@@ -45,7 +45,7 @@ Set a `breakpoint()` anywhere
 - [x] crazy strategy of forcing convergence actually works, is there an explanation for this, yes.
 - [x] Model is fundamentally wrong with negative inertias.
 - [x] Kb, Ic computation to make it match is wrong., yes.
-- [ ] Leave Ic as is, if it doesn't work, try out the n=10 method.
+- [x] Leave Ic as is, if it doesn't work, try out the n=10 method.
 - [x] Opensees binary is wrong (unlikely), upgrade to a newer version to test out.
 - [x] area too big, numerical instability (unlikely)
 
@@ -76,3 +76,7 @@ AttributeError: can't set attribute
 ```
 
 Happens when overriding @properties, check that the definition of dataclasses is not duplicating properties
+
+## No columns to parse from file
+This error means pushover failed. Usually this means the model is wrong.
+It's good that this is raised.
