@@ -20,6 +20,7 @@ RESULTS_DIR = ROOT_DIR / "results"
 ASSETS_PATH = "https://vulkan1.s3.amazonaws.com/"
 GRAVITY = 9.81
 METERS_TO_FEET = 1 / 0.3048
+INFLATION = 1.0
 
 
 class DesignException(Exception):

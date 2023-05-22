@@ -215,8 +215,6 @@ class FiniteElementModel(ABC, YamlMixin):
                 id = (
                     beam.id * 10000000
                 )  # hack to avoid having duplicate ids, each beam is tied to a slab via an ID.
-                print("findme")
-                print(beam.length)
                 slab = ConcreteElasticSlab(id=id, length=beam.length, floor=floor)
                 slabs.append(slab)
         for asset in slabs:

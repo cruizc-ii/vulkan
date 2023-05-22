@@ -10,6 +10,7 @@ from app.utils import (
     OPENSEES_ELEMENT_EDPs,
     OPENSEES_EDPs,
     OPENSEES_REACTION_EDPs,
+    INFLATION,
 )
 from dataclasses import dataclass, field
 import numpy as np
@@ -297,8 +298,7 @@ class ConcreteElasticSlab(YamlMixin, RiskAsset):
             cost_per_unit_area = (
                 20 + 2.54 * 100 * self.thickness
             )  # lstsq regression on median prices GUÍA DE REFERENCIA PARA FORMULAR EL CATÁLOGO DE CONCEPTOS DEL PRESUPUESTO BASE DE OBRA PÚBLICA. veracruz
-            inflation = 2.0
-            self.net_worth = inflation * cost_per_unit_area * area
+            self.net_worth = INFLATION * cost_per_unit_area * area
             self.net_worth = self.net_worth / 1000  # in 1k usd
         return super().__post_init__()
 
@@ -404,14 +404,15 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self.secColTag = self.id + 100000
         self.imkMatTag = self.id + 200000
         self.elasticMatTag = self.id + 300000
-        self.net_worth = (
-            self.net_worth if self.net_worth is not None else self.get_cost()
-        )
+        # self.net_worth = (
+        #     self.net_worth if self.net_worth is not None else self.get_cost()
+        # )
+        self.net_worth = self.get_cost()
         self._risk.edp = EDP.spring_moment_rotation_th.value
         self._risk.losses = self.losses
 
     def losses(self, xs: list[pd.DataFrame]) -> list[float]:
-        costs = [self.park_ang_kunnath(df) for df in xs]
+        costs = [self.net_worth * self.park_ang_kunnath(df) for df in xs]
         return costs
 
     def dollars(self, *, strana_results_df):

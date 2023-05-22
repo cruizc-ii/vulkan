@@ -10,6 +10,7 @@ from app.utils import (
     NegativeSignException,
     PositiveSignException,
     DesignException,
+    INFLATION,
 )
 
 kPA_TO_KSI = 0.000145038
@@ -198,7 +199,7 @@ class RectangularConcreteColumn:
     theta_u_cyclic: float | None = None
 
     def __repr__(self):
-        return f'RectangularConcreteColumn {self.b=:.2f} {self.h=:.2f}'
+        return f"RectangularConcreteColumn {self.b=:.2f} {self.h=:.2f}"
 
     def __str__(self):
         s = f"""
@@ -489,8 +490,10 @@ set stable {self.stable}
         work = 0.722 * num_stirrups**2 * WORK_UNIT_COST
         print(f"{steel=} {concrete=} {work=}")
         dollars = steel + concrete + work
-        inflation = 2.0
-        dollars = inflation * dollars / 1e3 ## there are two IMK springs, so this will only be half the cost.
+        dollars = INFLATION * dollars / 1e3
+        # dollars = (
+        #     dollars / 2
+        # )  ## there are two IMK springs, so this will only be half the cost. not sure why this gives low values for elements compares to slabs
         return dollars
 
     def analyze(self, As: float | None = None, *, Ast=0, Asc=0, P=0, tol=5, iter=20):
@@ -585,14 +588,13 @@ set stable {self.stable}
         moment_col: str = "M",
         rotation_col: str = "r",
         **kwargs,
-    ) -> tuple[float, str]:
+    ) -> float:
         area = -trapezoid(df[moment_col], x=df[rotation_col])
         theta_max = max(abs(df[rotation_col]))
         mono = max([theta_max - self.theta_y, 0]) / (self.theta_u_cyclic - self.theta_y)
         cyclic = area / self.Et
         DS = min([mono + cyclic, 1])
         cap = 100 * area / self.Et
-        total_cost = DS * self.cost
-        title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f} {total_cost=:.2f}"
+        title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f}"
         print(title)
-        return total_cost
+        return DS

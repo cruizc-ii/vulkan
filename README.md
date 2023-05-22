@@ -22,17 +22,17 @@ Set a `breakpoint()` anywhere
 - deploy to streamlit see how it works
 - [x] push with 1st mode, plot modes of vibration
 - [x] fix pushover stats, merge everything on a single call
-- [ ] callibrate str-elems+slabs cost
+- [x] callibrate str-elems+slabs cost
 - [x] Compute Vy, uy correctly from pushover curve as 10% of original stiffness
+- [x] change theta_y -> theta_y2 (Fardis)
 - [ ] aim for lower period in design procedure to account for more flexibility in real model
 - [ ] for collapse, when analysis doesn't converge at the last subdivision, create an empty file called collapse.csv with drifts, printA, etc, then process into results.yml with info about the collapse
 - [ ] design with a smaller period, so the extra flexibility doesn't hurt as much!
-- [x] change theta_y -> theta_y2 (Fardis)
 
 ### Design
 - [x] fix deselecting model.yml when clicking 'run'
 - [ ] introduce PDelta.
-- [ ] include more tests for CDMX design
+- [x] include more tests for CDMX design
 - [x] check mass and weight are correctly set
 - [x] check gravity applying is correct.
 - [x] check damping is correctly set
