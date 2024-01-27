@@ -160,10 +160,10 @@ class Record:
             return str(self.path.resolve())
         return self.path
 
-    def figure(self, normalize_g: bool=False):
+    def figure(self, normalize_g: bool = False):
         df = self._df
         x, y = df.index, df.values
-        y = y / 100 # from gals to m/s/s
+        y = y / 100  # from gals to m/s/s
         y = y / GRAVITY if normalize_g else y
         fig = px.line(df, x=x, y=y)
         fig.update_traces(line=dict(width=1.0, color="Black"))
@@ -174,17 +174,17 @@ class Record:
         )
         return fig
 
-    def spectra(self, normalize_g: bool=False):
+    def spectra(self, normalize_g: bool = False):
         df = self._spectra
         x, y = df.index, df.Sa
-        y = y / 100 # from gals to m/s/s
+        y = y / 100  # from gals to m/s/s
         y = y / GRAVITY if normalize_g else y
         fig = px.line(df, x=x, y=y)
         fig.update_traces(line=dict(width=1.0, color="Black"))
         fig.update_layout(
             xaxis_title="T (s)",
             yaxis_title="a (g)" if normalize_g else "a (m/s/s)",
-            title_text=f"Sa 5% spectra"
+            title_text=f"Sa 5% spectra",
         )
         return fig
 
@@ -257,7 +257,9 @@ class Hazard(NamedYamlMixin):
     def record_names(self) -> list[str]:
         return [r.name for r in self.records if r.name]
 
-    def rate_figure(self, normalize_g:bool=True, logx:bool=True, logy:bool=True):
+    def rate_figure(
+        self, normalize_g: bool = True, logx: bool = True, logy: bool = True
+    ):
         return self._curve.figure(normalize_g=normalize_g, logx=logx, logy=logy)
 
 
@@ -275,7 +277,7 @@ class HazardCurve(ABC, YamlMixin):
     y: list | None = None
     v0: float | None = None
     _df: DataFrame = field(default_factory=DataFrame)
-    _IDA_LINSPACE_BINS: int = 10
+    _IDA_LINSPACE_BINS: int = 20
 
     def __str__(self) -> str:
         return str(self._df)
@@ -299,7 +301,7 @@ class HazardCurve(ABC, YamlMixin):
         """
         pass
 
-    def figure(self, normalize_g:bool=True, logx=True, logy=True):
+    def figure(self, normalize_g: bool = True, logx=True, logy=True):
         fig = Figure()
         x, y = self.x, self.y
         x, y = np.array(x), np.array(y)
@@ -307,7 +309,7 @@ class HazardCurve(ABC, YamlMixin):
         trace = Scattergl(x=x, y=y, marker=dict(color="LightSkyBlue"))
         fig.add_trace(trace)
         fig.update_layout(
-            xaxis_title="Sa (g)" if normalize_g else 'Sa m/s/s',
+            xaxis_title="Sa (g)" if normalize_g else "Sa m/s/s",
             yaxis_title="1/yr",
             title_text="annual rate of exceedance.",
             # xaxis_type="log",

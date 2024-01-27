@@ -25,7 +25,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     bays: list[float] = field(default_factory=lambda: [8.0])
     masses: list[float] = field(default_factory=list)
     damping: float = 0.05
-    num_frames: int = 1
+    num_frames: int = 2
     design_criteria: list[str] = field(
         default_factory=DesignCriterionFactory.public_options
     )
@@ -42,11 +42,15 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     width: float | None = None
     chopra_fundamental_period_plus1sigma: float | None = None
     miranda_fundamental_period: float | None = None
+    cdmx_fundamental_period: float | None = None
 
     num_storeys: float | None = None
     num_floors: float | None = None
     num_bays: float | None = None
     num_cols: float | None = None
+    depth: float | None = None
+    storey_area: float | None = None
+    total_area: float | None = None
 
     occupancy: str | None = None
     fems: list[FiniteElementModel] = field(default_factory=list)
@@ -74,10 +78,18 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         self.columns = [0.0] + self.bays
         self.height = sum(self.storeys)
         self.width = sum(self.bays)
+
+        self.depth = sum(self.bays[: self.num_frames - 1])
+        self.storey_area = self.width * self.depth
+        self.total_area = self.num_storeys * self.storey_area
+
         self.chopra_fundamental_period_plus1sigma = (
             0.023 * (self.height * METERS_TO_FEET) ** 0.9
         )
         self.miranda_fundamental_period = self.num_storeys / 8
+        self.cdmx_fundamental_period = (
+            self.num_storeys / 4
+        )  # intentionally more flexible
 
         if self.occupancy is None:
             from app.occupancy import BuildingOccupancy
@@ -213,7 +225,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         results_path: Path,
         seed_class: FiniteElementModel | None = None,
         *args,
-        **kwargs
+        **kwargs,
     ) -> list[FiniteElementModel]:
         fem = None
         if seed_class is not None:
@@ -221,8 +233,11 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         elif len(self.fems) > 0:
             fem = self.fem
         self.fems = self.design(
-            results_path=results_path, criteria=self._design_criteria, fem=fem,
-            *args, **kwargs
+            results_path=results_path,
+            criteria=self._design_criteria,
+            fem=fem,
+            *args,
+            **kwargs,
         )
         return self.fems
 

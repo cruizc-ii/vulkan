@@ -91,15 +91,15 @@ class RectangularConcreteColumn:
     a beam is a special case of a column where P = 0
     simple bernoulli flexure theory
 
-    a simplification of a column where steel is cumpled to the top and bottom of the section
+    a simplification of a column where steel is clumped to the top and bottom of the section
     this means no stirrups passing through the middle of the section
     if stirrup spacing varies of height of column, s should reflect spacing in hinge region
 
 
     X-section is considered constant accross the length of the member
 
-    same reinforcement steel quality fy = fyc = fy
-    fyw can be different
+    same reinforcement steel quality compression/tension fy = fyc = fy
+    fyw can be different but all of them are 420 MPa by default
 
     compression/tension are so defined in the case of positive moment (natural bending of beams)
     thetas = rotation
@@ -467,7 +467,11 @@ set stable {self.stable}
         drift = drift if drift >= 0.01 else 0.01
         return drift
 
-    def get_cost(self) -> float:
+    def get_and_set_net_worth(self) -> float:
+        # required to override the elasticbeamcolumn method
+        pass
+
+    def compute_net_worth(self) -> float:
         # normalized by 1k dollars
         STEEL_DENSITY_TON = 7.85
         STEEL_TON_UNIT_COST = 920
@@ -488,12 +492,13 @@ set stable {self.stable}
         # there is more work involved when stirrup spacing is smaller i.e. when concrete is more confined
         # when unions/overlapping with beams are stricter it is more work
         work = 0.722 * num_stirrups**2 * WORK_UNIT_COST
-        print(f"{steel=} {concrete=} {work=}")
+        # print(f"{steel=} {concrete=} {work=}")
         dollars = steel + concrete + work
         dollars = INFLATION * dollars / 1e3
         # dollars = (
         #     dollars / 2
         # )  ## there are two IMK springs, so this will only be half the cost. not sure why this gives low values for elements compares to slabs
+        print(f"{dollars=}")
         return dollars
 
     def analyze(self, As: float | None = None, *, Ast=0, Asc=0, P=0, tol=5, iter=20):
@@ -582,19 +587,39 @@ set stable {self.stable}
             raise DesignException(f"p > pmax ({pi:.3f} > pmax {self.pmax:.3f})")
         return area
 
-    def park_ang_kunnath(
+    def park_ang_kunnath_DS(
         self,
-        df: MomentRotationDataFrame,
+        df_or_x: MomentRotationDataFrame | float,
         moment_col: str = "M",
         rotation_col: str = "r",
         **kwargs,
     ) -> float:
-        area = -trapezoid(df[moment_col], x=df[rotation_col])
-        theta_max = max(abs(df[rotation_col]))
-        mono = max([theta_max - self.theta_y, 0]) / (self.theta_u_cyclic - self.theta_y)
-        cyclic = area / self.Et
-        DS = min([mono + cyclic, 1])
-        cap = 100 * area / self.Et
-        title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f}"
-        print(title)
+        if isinstance(df_or_x, float):
+            DS = 1
+        else:
+            area = -trapezoid(df_or_x[moment_col], x=df_or_x[rotation_col])
+            theta_max = max(abs(df_or_x[rotation_col]))
+            mono = max([theta_max - self.theta_y, 0]) / (
+                self.theta_u_cyclic - self.theta_y
+            )
+            cyclic = area / self.Et
+            DS = min([mono + cyclic, 1])
+            cap = 100 * area / self.Et
+            title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f}"
         return DS
+
+    def elwood_shear_capacity(
+        self, shear_force: float = 0.0, axial_force: float = 0.0
+    ) -> float:
+        """
+        at every instant, the combination of shear/axial may change the capacity
+        usually we consider P=constant.
+        """
+        cap = max(
+            3.0 / 100
+            + 4 * self.pw
+            - 1.0 / 40 * shear_force / 1000 / self.Ag / self.fcMPa**0.5
+            - 1.0 / 40 * axial_force / 1000 / self.Ag / self.fcMPa
+            , 0.01
+        )
+        return cap

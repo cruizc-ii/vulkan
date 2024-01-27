@@ -11,6 +11,7 @@ from app.utils import (
     OPENSEES_EDPs,
     OPENSEES_REACTION_EDPs,
     INFLATION,
+    CollapseTypes,
 )
 from dataclasses import dataclass, field
 import numpy as np
@@ -128,7 +129,7 @@ class BeamColumn(FE, YamlMixin):
     bay: str | None = None  # 0 for first column
     transf: int = 1
     length: float = 1.0
-    category: str = "structural"
+    category: str | None = "structural"
     CRACKED_INERTIA_FACTOR: float = 1.0
 
     def __repr__(self) -> str:
@@ -189,30 +190,37 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
             self.get_and_set_net_worth()
         self.node = self.i
 
-    def dollars(self, *, strana_results_df):
+    def dollars(self, *, strana_results_df, views_by_path: dict, **kwargs):
         print(f"Structural element {self.name=} {self.node=} {self.rugged=}")
         strana_results_df["collapse_losses"] = (
             strana_results_df["collapse"]
-            .apply(lambda r: self.net_worth if r else 0)
+            .apply(lambda r: self.net_worth if r != CollapseTypes.NONE.value else 0)
             .values
         )
         if self.type == ElementTypes.COLUMN.value:
             strana_results_df = self.dollars_for_storey(
-                strana_results_df=strana_results_df
+                strana_results_df=strana_results_df,
+                views_by_path=views_by_path,
+                **kwargs,
             )
         elif self.type == ElementTypes.BEAM.value:
             self.node = self.j
-            dollars_for_j = self.dollars_for_node(strana_results_df=strana_results_df)[
-                "losses"
-            ].values
+            dollars_for_j = self.dollars_for_node(
+                strana_results_df=strana_results_df,
+                views_by_path=views_by_path,
+                **kwargs,
+            )
             self.node = self.i
-            dollars_for_i = self.dollars_for_node(strana_results_df=strana_results_df)[
-                "losses"
-            ].values
+            dollars_for_i = self.dollars_for_node(
+                strana_results_df=strana_results_df,
+                views_by_path=views_by_path,
+                **kwargs,
+            )
             df = pd.DataFrame(dict(i=dollars_for_i, j=dollars_for_j))
             df["peak"] = df.apply(max, axis=1)
             strana_results_df["losses"] = df.peak.values
         losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
+        strana_results_df.drop("collapse_losses", axis=1, inplace=True)
         return losses
 
     @property
@@ -335,6 +343,7 @@ class BilinBeamColumn(ElasticBeamColumn):
 class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     recorder_ix: int = 0
     model: str = "IMKSpring"
+    name: str = "ConcreteBeamColumnIMK"
     ASPECT_RATIO_B_TO_H: float = 0.4  # b = kappa * h, h = (12 Ix / kappa )**(1/4)
     left: bool = False
     right: bool = False
@@ -356,7 +365,8 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
 
     def __str__(self) -> str:
         # s = f"uniaxialMaterial Elastic {self.elasticMatTag} 1e9\n"
-        s = f"uniaxialMaterial ModIMKPeakOriented {self.imkMatTag} {self.Ks:.2f} {self.alpha_postyield} {self.alpha_postyield} {self.My:.2f} {-self.My:.2f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} 1. 1. 1. 1. {self.theta_cap_cyclic:.8f} {self.theta_cap_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.residual_My} {self.residual_My} {self.theta_u_cyclic:.8f} {self.theta_u_cyclic:.8f} 1. 1.\n"
+        s = ""
+        s += f"uniaxialMaterial ModIMKPeakOriented {self.imkMatTag} {self.Ks:.2f} {self.alpha_postyield} {self.alpha_postyield} {self.My:.2f} {-self.My:.2f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} 1. 1. 1. 1. {self.theta_cap_cyclic:.8f} {self.theta_cap_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.residual_My} {self.residual_My} {self.theta_u_cyclic:.8f} {self.theta_u_cyclic:.8f} 1. 1.\n"
         # s += f"section Aggregator {self.secColTag} {self.elasticMatTag} P {self.imkMatTag} Mz\n"
         # s += f"element zeroLengthSection  {self.id}  {self.i} {self.j} {self.secColTag}\n"
         s += f"element zeroLength {self.id} {self.i} {self.j} -mat {self.imkMatTag} -dir 6\n"
@@ -384,16 +394,24 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
                 h = h * 1.1
                 b = b * 1.1
                 i += 1
+        instance.net_worth = instance.compute_net_worth()
         return instance
 
     def __post_init__(self):
         from app.strana import EDP
 
+        if (
+            self.type == ElementTypes.SPRING_COLUMN
+            and self.Q is not None
+            and self.Q == 4
+        ):
+            # indirectly take into account recommendations for ductile design from BCs
+            self.s = min([0.1, self.b / 4, self.h / 4])
         self.model = self.__class__.__name__
         self.Ke = 6 * self.E * self.Ix / self.length
-        # n = 10
-        # self.Ks = n*self.Ke
-        # self.theta_y = self.My / self.Ks
+        n = 1
+        self.Ks = n * self.Ke
+        self.theta_y = self.My / self.Ks
         super().__post_init__()
         # self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
         # self.Ic = self.Kb * self.length / 6 / self.E
@@ -404,35 +422,26 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self.secColTag = self.id + 100000
         self.imkMatTag = self.id + 200000
         self.elasticMatTag = self.id + 300000
-        # self.net_worth = (
-        #     self.net_worth if self.net_worth is not None else self.get_cost()
-        # )
-        self.net_worth = self.get_cost()
         self._risk.edp = EDP.spring_moment_rotation_th.value
         self._risk.losses = self.losses
 
     def losses(self, xs: list[pd.DataFrame]) -> list[float]:
-        costs = [self.net_worth * self.park_ang_kunnath(df) for df in xs]
+        costs = [self.park_ang_kunnath_DS(df) for df in xs]
         return costs
 
-    def dollars(self, *, strana_results_df):
-        print(f"Structural element {self.name=} {self.node=} {self.rugged=}")
-        strana_results_df["collapse_losses"] = (
-            strana_results_df["collapse"]
-            .apply(lambda r: self.net_worth if r else 0)
-            .values
-        )
-        # treat columns differently regarding shear collapse
+    def dollars(self, *, strana_results_df, views_by_path: dict, **kwargs):
+        # print(f"IMKSpring.dollars {self.name=} {self.node=} {self.rugged=}")
+        # TODO: treat columns differently regarding shear collapse
         # if self.type == ElementTypes.COLUMN.value:
         #     strana_results_df = self.dollars_for_storey(
         #         strana_results_df=strana_results_df
         #     )
-        # elif self.type == ElementTypes.BEAM.value:
-        dollars = self.dollars_for_node(
+        losses = self.dollars_for_node(
             strana_results_df=strana_results_df,
+            views_by_path=views_by_path,
             ix=self.recorder_ix,
             ele_type=self.type,
-        )["losses"].values
-        strana_results_df["losses"] = dollars
-        losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
+            **kwargs,
+        )
+        strana_results_df["losses"] = losses
         return losses

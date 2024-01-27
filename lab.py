@@ -11,7 +11,15 @@ from app.strana import (
     StructuralResultView,
 )
 from app.loss import LossAggregator, IDANotFoundException, LossModel
-from app.utils import DESIGN_DIR, HAZARD_DIR, RESULTS_DIR, find_files, COMPARE_DIR, GRAVITY
+from app.utils import (
+    DESIGN_DIR,
+    HAZARD_DIR,
+    RESULTS_DIR,
+    find_files,
+    COMPARE_DIR,
+    GRAVITY,
+    LossModelsResultsDataFrame,
+)
 from app.occupancy import BuildingOccupancy
 from app.compare import IDACompare
 import pandas as pd
@@ -83,7 +91,7 @@ with st.sidebar:
     b1, b2, b3, b4, b5 = st.columns(5)
     b1.button("des", on_click=partial(goto_module, 1))
     b2.button("haz", on_click=partial(goto_module, 2))
-    b3.button("str", on_click=partial(goto_module, 3))
+    b3.button("ida", on_click=partial(goto_module, 3))
     b4.button("loss", on_click=partial(goto_module, 4))
     b5.button("com", on_click=partial(goto_module, 5))
     st.header(title[state.module - 1])
@@ -97,23 +105,14 @@ with st.sidebar:
             "give it a name",
             value=file.split(".")[0] if file else "",
         )
-        if file:
-            state.design_abspath = DESIGN_DIR / file
+        if state.design_abspath and not state.first_render:
             design = ReinforcedConcreteFrame.from_file(state.design_abspath)
-        elif state.design_abspath:
+        elif file:
+            state.design_abspath = DESIGN_DIR / file
             design = ReinforcedConcreteFrame.from_file(state.design_abspath)
         else:
             design = ReinforcedConcreteFrame(name=name)
 
-        num_frames = st.number_input(
-            "num frames",
-            min_value=1,
-            step=1,
-            max_value=50,
-            value=design.num_frames,
-            format="%d",
-            help="number of identical perpendicular frames",
-        )
         col1, col2 = st.columns(2)
         damping = col1.number_input(
             r"% damping",
@@ -141,7 +140,7 @@ with st.sidebar:
         storeys = [float(s) for s in storeys_input.split(",")]
         np.array(storeys).cumsum().tolist()
         cumstoreys = "sum: " + ",".join(
-            [f'{b:.2f}' for b in np.array(storeys).cumsum().tolist()]
+            [f"{b:.2f}" for b in np.array(storeys).cumsum().tolist()]
         )
         cumstoreys
         bays_input = st.text_input(
@@ -150,8 +149,19 @@ with st.sidebar:
             help="widths in meters separated by comma",
         )
         bays = [float(s) for s in bays_input.split(",")]
-        cumbays = "sum: " + ",".join([f'{b:.2f}' for b in np.array(bays).cumsum().tolist()])
+        cumbays = "sum: " + ",".join(
+            [f"{b:.2f}" for b in np.array(bays).cumsum().tolist()]
+        )
         cumbays
+        num_frames = st.number_input(
+            "num frames",
+            min_value=2,
+            step=1,
+            max_value=len(bays) + 1,
+            value=design.num_frames,
+            format="%d",
+            help="number of identical perpendicular frames, they will follow bay spacing.",
+        )
         occupancy = st.selectbox(
             "occupancy class",
             BuildingOccupancy.options(),
@@ -219,7 +229,7 @@ with st.sidebar:
         name = st.text_input(
             "give it a name",
             value=file.split(".")[0] if file else "",
-            help="to save just add or remove records",
+            help="add or remove records to save",
         )
         hazard.name = name
         hazard._curve.html(st)
@@ -230,9 +240,9 @@ with st.sidebar:
         )
         st.subheader(f"Records ({len(hazard.records)})")
         record_files = find_files(RECORDS_DIR, only_yml=False, only_csv=True)
-        record_files = ['add a record'] + record_files
+        record_files = ["add a record"] + record_files
         record_name = st.selectbox("add a record", options=record_files)
-        if record_name != 'add a record':
+        if record_name != "add a record":
             record_path = str((RECORDS_DIR / record_name).resolve())
             record = Record(record_path)
             hazard.add_record(record)
@@ -245,6 +255,8 @@ with st.sidebar:
                 untouched = [r for r in record_files if r not in hazard.record_names]
                 samples = random.sample(untouched, 3)
                 for path in samples:
+                    if path == "add a record":
+                        continue
                     record_path = str((RECORDS_DIR / path).resolve())
                     record = Record(record_path)
                     hazard.add_record(record)
@@ -264,6 +276,8 @@ with st.sidebar:
             with st.spinner("adding..."):
                 time.sleep(2)
                 for path in record_files:
+                    if path == "add a record":
+                        continue
                     record_path = str((RECORDS_DIR / path).resolve())
                     record = Record(record_path)
                     hazard.add_record(record)
@@ -277,7 +291,7 @@ with st.sidebar:
                 view_record = c2.button("view", key=f"record{ix}")
                 if view_record:
                     selected_ix = ix
-                rm = c3.button("🗑️", key=f"record{ix}")
+                rm = c3.button("🗑️", key=f"rm_record{ix}")
                 if rm:
                     rec = hazard.records[ix]
                     record_path = str((RECORDS_DIR / rec.name).resolve())
@@ -299,9 +313,9 @@ with st.sidebar:
         name = st.text_input(
             "give it a name",
             value=file.split(".")[0] if file else "default ida",
-            help="to save just run",
+            help="click run to save",
         )
-        "file:", file
+        # "file:", file
         try:
             if file:
                 ida = IDA.from_file(STRANA_DIR / file)
@@ -326,40 +340,42 @@ with st.sidebar:
             design_missing = True
 
         if file and not (design_missing or hazard_missing):
-            "design:", state.design_abspath
-            "hazard:", state.hazard_abspath
-            start = st.number_input(
-                r"start Sa (g)",
-                value=ida.start,
-                min_value=0.0,
-                step=ida.step,
-                max_value=10.0,
-                format="%g",
-                help="starting Sa (g)",
-            )
-            stop = st.number_input(
-                r"stop Sa (g)",
-                value=ida.stop,
-                min_value=0.0,
-                step=ida.step,
-                max_value=10.0,
-                format="%g",
-                help="stop Sa (g)",
-            )
-            step = st.number_input(
-                r"step Sa (g)",
-                value=ida.step,
-                min_value=0.005,
-                step=0.1,
-                max_value=10.0,
-                format="%g",
-                help="step Sa (g)",
-            )
-            run = st.button("run IDA", help="run with chosen Sa")
-            standard = st.button(
-                "run with hazard", help="uses the hazard points only"
-            )
+            # "design:", state.design_abspath
+            # "hazard:", state.hazard_abspath
+            standard = st.button("run for hazard", help="uses the hazard points only")
             delete = st.button("🗑️", help="delete this analysis")
+            with st.expander("manual ida"):
+                st.warning(
+                    "BETA: this might give wrong loss results for Sa>a in hazard"
+                )
+                start = st.number_input(
+                    r"start Sa (g)",
+                    value=ida.start,
+                    min_value=0.0,
+                    step=ida.step,
+                    max_value=10.0,
+                    format="%g",
+                    help="starting Sa (g)",
+                )
+                stop = st.number_input(
+                    r"stop Sa (g)",
+                    value=ida.stop,
+                    min_value=0.0,
+                    step=ida.step,
+                    max_value=10.0,
+                    format="%g",
+                    help="stop Sa (g)",
+                )
+                step = st.number_input(
+                    r"step Sa (g)",
+                    value=ida.step,
+                    min_value=0.005,
+                    step=0.1,
+                    max_value=10.0,
+                    format="%g",
+                    help="step Sa (g)",
+                )
+                run = st.button("run IDA", help="run with chosen Sa")
             if delete:
                 with st.spinner("deleting analysis"):
                     time.sleep(2)
@@ -397,14 +413,14 @@ with st.sidebar:
                             selected_ix = ix
 
     if state.module == 4:
-        'ida path:', state.ida_abspath
+        "ida path:", state.ida_abspath
         losses = find_files(LOSS_MODELS_DIR)
         ida_missing = False
         file = st.selectbox("select a loss file", options=losses)
         name = st.text_input(
             "give it a name",
             value=file.split(".")[0] if file else "default loss",
-            help="to save just run",
+            help="click run to save",
         )
         loss = None
         try:
@@ -434,6 +450,7 @@ with st.sidebar:
                 )
                 loss.run()
                 loss.to_file(LOSS_MODELS_DIR)
+                state.loss_abspath = LOSS_MODELS_DIR / loss.name_yml
             st.success("success")
 
         rm = right.button("🗑️", help="delete")
@@ -471,7 +488,9 @@ with st.sidebar:
             )
 
             all_names = sorted(list(set([lm["name"] for lm in assets])))
-            selected_names = st.multiselect("Name", options=all_names, default=all_names)
+            selected_names = st.multiselect(
+                "Name", options=all_names, default=all_names
+            )
 
             st.header("View")
             selected_ix = None
@@ -492,7 +511,7 @@ with st.sidebar:
         name = st.text_input(
             "give it a name",
             value=compare_file.split(".")[0] if compare_file else "default compare",
-            help="to save just run",
+            help="click run to save",
         )
         hazard_abspath = str(state.hazard_abspath)
         hazard_missing = False
@@ -515,7 +534,14 @@ with st.sidebar:
             hazard = Hazard.from_file(HAZARD_DIR / hazard_file)
 
         "num records:", len(hazard.records)
-        # not sure why this floats like crazy below every element
+        left, right = st.columns(2)
+        discount_factor = left.number_input(
+            "discount factor", min_value=0.0, max_value=1.0, value=0.05, step=0.01
+        )
+        secondary_loss = right.number_input(
+            "secondary losses", min_value=0.0, max_value=100.0, value=0.0, step=1.0
+        )
+        # not sure why this floats below every element
         # left, right = st.columns(2)
         # logx = left.checkbox("log x", value=True)
         # logy = right.checkbox("log y", value=True)
@@ -524,8 +550,10 @@ with st.sidebar:
         # st.plotly_chart(hazard_fig, use_container_width=True)
 
         design_files = find_files(DESIGN_DIR, only_yml=True)
+        design_files = ["add a design"] + design_files
         design_name = st.selectbox("add a design", options=design_files)
-        if design_name and not state.first_render:
+
+        if design_name and not state.first_render and design_name != "add a design":
             design_path = str((DESIGN_DIR / design_name).resolve())
             compare.add_design(design_path)
             compare.to_file(COMPARE_DIR)
@@ -535,15 +563,17 @@ with st.sidebar:
             with st.container():
                 _c1.write(comp.design_abspath.split("/")[-1])
                 go_strana = _c2.button(
-                    "ida", help="perform ida", key=f"compare-design-{ix}"
+                    "ida", help="perform ida", key=f"ida-compare-design-{ix}"
                 )
                 go_loss = _c3.button(
-                    "loss", help="perform loss computation", key=f"compare-design-{ix}"
+                    "loss",
+                    help="perform loss computation",
+                    key=f"loss-compare-design-{ix}",
                 )
                 go_complete = _c4.button(
-                    "all", help="perform ida then loss", key=f"compare-design-{ix}"
+                    "all", help="perform ida then loss", key=f"all-compare-design-{ix}"
                 )
-                rm = _c5.button("🗑️", key=f"compare-design-{ix}")
+                rm = _c5.button("🗑️", key=f"rm-compare-design-{ix}")
                 if go_strana:
                     comp.run(strana=True)
                 if go_loss:
@@ -614,8 +644,10 @@ if state.module == 1:
         col1, col2, col3, col4, col5 = st.columns(5)
         col1.metric("Net worth", design.fem.readable_total_net_worth)
         col2.metric("fundamental period", f"{design.fem.period:.2f} s")
-        col3.metric("height", f"{design.height:.1f} m")
-        col4.metric("width", f"{design.width:.1f} m")
+        col3.metric("total area", f"{design.total_area:.1f} m²")
+        col4.metric(
+            "cost per unit area", f"{design.fem.cost_per_unit_area:.1f} k USD/m²"
+        )
         col5.metric("weight", f"{design.weight_str} kN")
 
         with st.expander("costs"):
@@ -626,29 +658,37 @@ if state.module == 1:
             )
             col3.metric("Contents", f"$ {design.fem.contents_net_worth:.0f} k ")
             fig = design.fem.assets_pie_fig
-            st.header('summary')
+            st.header("summary")
             st.plotly_chart(fig)
             asset_records = [a.to_dict for a in design.fem.assets]
             df = pd.DataFrame.from_records(asset_records)
-            columns = 'name category edp net_worth hidden bay storey floor rugged x node'.split(' ')
+            columns = "name category edp net_worth hidden bay storey floor rugged x node".split(
+                " "
+            )
             df = df[columns]
-            df2 = df[df.category == 'structural'].groupby('name').sum()
-            df2['name'] = df2.index
-            structural_pie_fig = px.pie(df2, names='name', values='net_worth', height=400)
-            st.header('structural')
+            df2 = df[df.category == "structural"].groupby("name").sum()
+            df2["name"] = df2.index
+            structural_pie_fig = px.pie(
+                df2, names="name", values="net_worth", height=400
+            )
+            st.header("structural")
             st.plotly_chart(structural_pie_fig)
 
-            df3 = df[df.category == 'nonstructural'].groupby('name').sum()
-            df3['name'] = df3.index
-            nonstructural_pie_fig = px.pie(df3, names='name', values='net_worth', height=400)
-            st.header('non structural')
+            df3 = df[df.category == "nonstructural"].groupby("name").sum()
+            df3["name"] = df3.index
+            nonstructural_pie_fig = px.pie(
+                df3, names="name", values="net_worth", height=400
+            )
+            st.header("non structural")
             st.plotly_chart(nonstructural_pie_fig)
 
-            df4 = df[df.category == 'contents'].groupby('name').sum()
-            df4['name'] = df4.index
-            contents_pie_fig = px.pie(df4, names='name', values='net_worth', height=400)
-            st.header('contents')
-            st.plotly_chart(contents_pie_fig, )
+            df4 = df[df.category == "contents"].groupby("name").sum()
+            df4["name"] = df4.index
+            contents_pie_fig = px.pie(df4, names="name", values="net_worth", height=400)
+            st.header("contents")
+            st.plotly_chart(
+                contents_pie_fig,
+            )
             df
 
         with st.expander("summary"):
@@ -677,39 +717,54 @@ if state.module == 1:
             design_period_error = stats["period_error"]
             period = stats["period [s]"]
             miranda_period = stats["miranda period [s]"]
-            cs = stats['cs']
-            Vy_design = stats['Vy_design']
-            Vy = stats['Vy']
-            Vy_error = stats['Vy_error']
-            uy = stats['uy']
-            drift_y = stats['drift_y']
+            cs = stats["cs"]
+            Vy_design = stats["Vy_design"]
+            Vy = stats["Vy"]
+            Vy_error = stats["Vy_error"]
+            uy = stats["uy"]
+            drift_y = stats["drift_y"]
             col1, col2, col3 = st.columns(3)
-            col1.header('Design values')
+            col1.header("Design values")
             col1.metric(
-                label="period T0", value=miranda_period,
+                label="period T0",
+                value=miranda_period,
             )
-            col1.metric(label="seismic coeff Cs", value=c_design, )
-            col1.metric(label="Vy base shear", value=Vy_design, )
+            col1.metric(
+                label="seismic coeff Cs",
+                value=c_design,
+            )
+            col1.metric(
+                label="Vy base shear",
+                value=Vy_design,
+            )
 
-            col2.header('Empirical (measured)')
-            col2.metric(
-                label="period T0", value=period, delta=design_period_error
-            )
+            col2.header("Empirical (measured)")
+            col2.metric(label="period T0", value=period, delta=design_period_error)
             col2.metric(label="Vy base shear", value=Vy, delta=Vy_error)
             col2.metric(label="Say_g, cs (g)", value=cs, delta=design_c_error)
-            col2.metric(label="drift yield", value=drift_y, )
-            col2.metric(label="roof disp yield", value=uy, )
-            col3.header('Moments and shears')
+            col2.metric(
+                label="drift yield",
+                value=drift_y,
+            )
+            col2.metric(
+                label="roof disp yield",
+                value=uy,
+            )
+            col3.header("Moments and shears")
             col3.dataframe(design.fem.extras)
 
-            st.header('Element properties')
+            st.header("Element properties")
             sdf = design.fem.structural_elements_breakdown()
-            desired_columns = 'name model type storey bay My Ix Iy Ig Ic Mc b h radius theta_y theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s'.split(' ')
+            desired_columns = "name model type storey bay My Ix Iy Ig Ic Mc b h radius theta_y theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s".split(
+                " "
+            )
             desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]
-            sorted_unique_columns = sorted(list(set(sdf.columns.tolist()) - set(desired_columns)))
+            sorted_unique_columns = sorted(
+                list(set(sdf.columns.tolist()) - set(desired_columns))
+            )
             columns = desired_columns + sorted_unique_columns
             sdf = sdf[columns]
-            sdf = sdf.sort_values(['storey', 'bay'])
+            sdf = sdf.sort_values(["storey", "bay"])
             st.dataframe(sdf, height=1000)
 
 if state.module == 2:
@@ -721,7 +776,11 @@ if state.module == 2:
         fig = hazard.rate_figure(normalize_g=normalize_g, logx=logx, logy=logy)
         st.plotly_chart(fig)
         if len(hazard.records) > 0:
-            record = hazard.records[selected_ix] if selected_ix is not None else hazard.records[0]
+            record = (
+                hazard.records[selected_ix]
+                if selected_ix is not None
+                else hazard.records[0]
+            )
             st.plotly_chart(record.figure(normalize_g=normalize_g))
             st.plotly_chart(record.spectra(normalize_g=normalize_g))
 
@@ -753,7 +812,7 @@ if state.module == 4:
     left, right = st.columns(2)
     normalize = left.checkbox("Normalize")
     # WIP normalization
-    asset = loss
+    asset: LossAggregator = loss
     # if not view_all or selected_ix is None:
     #     st.header("please run loss")
     if view_asset or selected_ix is not None:
@@ -763,7 +822,7 @@ if state.module == 4:
     if normalize:
         normalization = asset.net_worth
 
-    normalize_wrt_building = right.checkbox("Normalize to building cost")
+    normalize_wrt_building = right.checkbox("Normalize to building cost", True)
 
     if normalize_wrt_building:
         normalization = loss.net_worth
@@ -804,49 +863,49 @@ if state.module == 4:
                 )
                 st.plotly_chart(fig)
         elif agg_key_1 and selected_ix is None:
-            df = loss.loss_models_df
+            df: LossModelsResultsDataFrame = loss.loss_models_df
             df = loss.filter_src_df(
                 df,
                 category_filter=selected_categories,
                 name_filter=selected_names,
                 storey_filter=selected_floors,
             )
-            fig = loss.multiple_rates_of_exceedance_fig(df, key=agg_key_1)
-            st.plotly_chart(fig)
-
+            # fig = loss.multiple_rates_of_exceedance_fig(df, key=agg_key_1)
+            # st.plotly_chart(fig)
             df = loss.aggregate_src_df(df, key=agg_key_1)
             df = df * 1.0 / normalization
             fig = loss.aggregated_expected_loss_and_variance_fig(df)
+            fig.update_layout(width=800, height=600)
             st.plotly_chart(fig)
-
             fig = asset.scatter_fig(
                 category_filter=selected_categories,
                 name_filter=selected_names,
                 floor_filter=selected_floors,
             )
             st.plotly_chart(fig)
-            agg_key_2 = st.selectbox(
-                "2nd deaggregator",
-                options=[
-                    k
-                    for k in ["", "name", "category", "floor", "collapse"]
-                    if k != agg_key_1
-                ],
-                format_func=lambda x: "Select an option" if x == "" else x,
-                help="display heatmap broken down by agg1 x agg2",
-            )
-            if agg_key_2:
-                df2 = pd.DataFrame.copy(loss.loss_models_df, deep=True)
-                df2 = pd.pivot_table(
-                    df2,
-                    values="expected_loss",
-                    index=agg_key_2,
-                    columns=agg_key_1,
-                    aggfunc=sum,
+            if agg_key_1 != "collapse":
+                agg_key_2 = st.selectbox(
+                    "2nd deaggregator",
+                    options=[
+                        k
+                        for k in ["", "name", "category", "floor", "collapse"]
+                        if k != agg_key_1
+                    ],
+                    format_func=lambda x: "Select an option" if x == "" else x,
+                    help="display heatmap broken down by agg1 x agg2",
                 )
-                df2 = df2 * 1.0 / normalization
-                fig = px.imshow(df2)
-                st.plotly_chart(fig)
+                if agg_key_2:
+                    df2 = pd.DataFrame.copy(loss.loss_models_df, deep=True)
+                    df2 = pd.pivot_table(
+                        df2,
+                        values="expected_loss",
+                        index=agg_key_2,
+                        columns=agg_key_1,
+                        aggfunc=sum,
+                    )
+                    df2 = df2 * 1.0 / normalization
+                    fig = px.imshow(df2)
+                    st.plotly_chart(fig)
 
 if state.module == 5:
     if hazard_missing:
@@ -860,6 +919,13 @@ if state.module == 5:
         norm_ida_figs = compare.normalized_ida_figs
         st.plotly_chart(norm_ida_figs)
 
+        rate_figs = compare.rate_figs
+        st.plotly_chart(rate_figs)
+
+        risk_figs = compare.risk_figs
+        st.plotly_chart(risk_figs)
+
+        st.subheader("Summary")
         df = compare.summary_df
         st.dataframe(df)
     else:
@@ -869,12 +935,21 @@ if state.module == 5:
         ida_fig = compare.ida_figs
         st.plotly_chart(ida_fig)
 
+        rate_figs = compare.rate_figs
+        st.plotly_chart(rate_figs)
+
+        risk_figs = compare.risk_figs
+        st.plotly_chart(risk_figs)
+
         df = compare.summary_df
+        st.subheader("Summary")
         st.dataframe(df)
 
+    st.header("Compare point values")
     stat = st.selectbox("select", options=df.columns)
     if stat:
-        fig = df[stat].plot()
+        # fig = df[stat].plot()
+        fig = px.scatter(df, x="design name", y=stat)
         st.plotly_chart(fig)
 
     for ix, comp in enumerate(compare.comparisons):
@@ -888,6 +963,12 @@ if state.module == 5:
                 st.warning("No loss")
             st.header(comp.summary.get("design name"))
             col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Net worth $", comp.summary.get("net worth $"))
-            col2.metric("period s", comp.summary.get("period [s]"))
+            initial_cost = comp.summary.get("net worth $")
+            aal = comp.summary.get("AAL $")
+            pvl = (1 + secondary_loss) * aal / discount_factor
+            risk = initial_cost + pvl
+            col1.metric("Initial cost $", f"{initial_cost:.1f}")
+            col2.metric("AAL $", f"{aal:.1f}")
+            col3.metric("PVL $", f"{pvl:.1f}")
+            col4.metric("Risk $", f"{risk:.1f}")
             st.dataframe(comp.summary_df)

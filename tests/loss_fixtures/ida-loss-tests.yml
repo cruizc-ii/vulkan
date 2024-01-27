@@ -8,15 +8,15 @@ results:
   intensity: 0.1
   intensity_str: '0.10000000'
   path: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/__single_run/98_SCT190985NS.csv/0.10000000/timehistory
-  peak_drift: 0.00793451
+  peak_drift: 0.0269735
   peak_drifts:
-  - 0.00268482
-  - 0.00793451
+  - 0.00866598
+  - 0.0269735
   pfa:
-  - 0.08097534617010309
-  - 0.12476813385635598
+  - 0.190124630598444
+  - 0.42447328371331805
   - 0.061392345884195426
-  pfv: 0.166015
+  pfv: 0.735097
   record: 98_SCT190985NS.csv
   sup: 0.15000000000000002
 - collapse: false
@@ -25,15 +25,15 @@ results:
   intensity: 0.2
   intensity_str: '0.20000000'
   path: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/__single_run/98_SCT190985NS.csv/0.20000000/timehistory
-  peak_drift: 0.015869
+  peak_drift: 0.053947
   peak_drifts:
-  - 0.00536964
-  - 0.015869
+  - 0.017332
+  - 0.053947
   pfa:
-  - 0.16195059040340698
-  - 0.24953667545990865
+  - 0.380249261196888
+  - 0.8489465674266361
   - 0.12278469176839085
-  pfv: 0.33203
+  pfv: 1.47019
   record: 98_SCT190985NS.csv
   sup: 0.25
 - collapse: false
@@ -42,15 +42,15 @@ results:
   intensity: 0.1
   intensity_str: '0.10000000'
   path: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/__single_run/6_JA241093EW.csv/0.10000000/timehistory
-  peak_drift: 0.00716412
+  peak_drift: 0.0134392
   peak_drifts:
-  - 0.0020256
-  - 0.00716412
+  - 0.00508949
+  - 0.0134392
   pfa:
-  - 0.056291005738714234
-  - 0.11277001512687526
-  - 0.03796400162354717
-  pfv: 0.221963
+  - 0.18488966812326482
+  - 0.21216313500783762
+  - 0.03538847903979671
+  pfv: 0.353953
   record: 6_JA241093EW.csv
   sup: 0.15000000000000002
 - collapse: false
@@ -59,15 +59,15 @@ results:
   intensity: 0.2
   intensity_str: '0.20000000'
   path: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/__single_run/6_JA241093EW.csv/0.20000000/timehistory
-  peak_drift: 0.0143282
+  peak_drift: 0.0268784
   peak_drifts:
-  - 0.0040512
-  - 0.0143282
+  - 0.010179
+  - 0.0268784
   pfa:
-  - 0.11258211341422765
-  - 0.22554104962174237
-  - 0.07592800324709434
-  pfv: 0.443925
+  - 0.36977933624652964
+  - 0.42432525064768345
+  - 0.07077695807959342
+  pfv: 0.707906
   record: 6_JA241093EW.csv
   sup: 0.25
 standard: false

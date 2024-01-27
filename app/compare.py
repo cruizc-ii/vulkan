@@ -95,6 +95,7 @@ class IDACompare(CompareInterface):
             yaxis_title="Sa [g]",
             xaxis_title="drift [1]",
             title="IDA curves",
+            xaxis_range=[0, 0.10],
             # autosize=True,
             # responsive=True,
         )
@@ -107,8 +108,45 @@ class IDACompare(CompareInterface):
             fig.add_trace(comp.normalized_ida_trace)
         fig.update_layout(
             yaxis_title="Sa/Sa_design [1]",
-            xaxis_title="drift [1]",
+            xaxis_title="drift/drift_yield [1]",
             title="Normalized ida curves",
+            xaxis_range=[0.0, 8.0],
+            # autosize=True,
+            # responsive=True,
+        )
+        return fig
+
+    @property
+    def rate_figs(self):
+        fig = Figure()
+        for comp in self.comparisons:
+            fig.add_trace(comp.rate_trace)
+        fig.update_layout(
+            yaxis_title="v($) 1/yr",
+            xaxis_title="Loss $",
+            title="Rate of exceedance of loss",
+            # xaxis_type="log",
+            yaxis_type="log",
+            # xaxis_range=[-2, 3],
+            yaxis_range=[-5, 0],
+            # autosize=True,
+            # responsive=True,
+        )
+        return fig
+
+    @property
+    def risk_figs(self):
+        fig = Figure()
+        for comp in self.comparisons:
+            fig.add_trace(comp.risk_trace)
+        fig.update_layout(
+            yaxis_title="Cost $",
+            xaxis_title="discount factor [1]",
+            title="Risk",
+            # xaxis_type="log",
+            # yaxis_type="log",
+            # xaxis_range=[-2, 3],
+            # yaxis_range=[-5, 0],
             # autosize=True,
             # responsive=True,
         )
@@ -209,6 +247,25 @@ class DesignComparison(YamlMixin):
         return trace
 
     @property
+    def rate_trace(self) -> Figure:
+        x, y = self.summary.get("_rate_x", []), self.summary.get("_rate_y", [])
+        name = self.summary.get("design name", "")
+        trace = Scattergl(x=x, y=y, name=name)
+        return trace
+
+    @property
+    def risk_trace(self) -> Figure:
+        xs = np.linspace(0.01, 0.10, 100)
+        discount_factor = xs
+        initial_cost = self.summary.get("net worth $")
+        # initial_cost = 0
+        aal = self.summary.get("AAL $")
+        ys = initial_cost + aal / discount_factor
+        name = self.summary.get("design name", "")
+        trace = Scattergl(x=xs, y=ys, name=name)
+        return trace
+
+    @property
     def summary_df(self) -> pd.DataFrame:
         # this does not work because some keys are themselves arrays, confusing the constructor
         # df = pd.DataFrame.from_dict(self.summary, orient="columns")
@@ -220,7 +277,7 @@ class DesignComparison(YamlMixin):
     def get_summary(self) -> dict:
         design_summary = self._design_model.summary if self._design_model else {}
         fem_summary = (
-            self._design_model.fem.summary
+            self._design_model.fem.pushover_stats()
             if self._design_model and self._design_model.fem
             else {}
         )
@@ -249,8 +306,8 @@ class DesignComparison(YamlMixin):
 
         name = name if name else str(uuid())
         ida_name = f"{name}-{self._design_model.name}-{self._hazard_model.name}"
-        strana_abspath = str((STRANA_DIR / f"{ida_name}.yml").resolve())
         if strana:
+            strana_abspath = str((STRANA_DIR / f"{ida_name}.yml").resolve())
             ida = IDA(
                 name=ida_name,
                 hazard_abspath=self.hazard_abspath,
@@ -261,14 +318,19 @@ class DesignComparison(YamlMixin):
             ida.to_file(STRANA_DIR)
             self._strana_model = ida
             self.strana_abspath = strana_abspath
+        else:
+            ida = IDA.from_file(self.strana_abspath)
+            self._strana_model = ida
+            strana_abspath = self.strana_abspath
 
         if loss and self._strana_model is not None:
             loss_name = ida_name
             agg = LossAggregator(name=loss_name, ida_model_path=strana_abspath)
             loss_abspath = str((LOSS_DIR / f"{ida_name}.yml").resolve())
             self._loss_model = agg
+            agg.run()
             agg.to_file(LOSS_DIR)
             self.loss_abspath = loss_abspath
 
-        self.summary = self.get_summary()
+        self.summary = {**self.summary, **self.get_summary()}
         return True

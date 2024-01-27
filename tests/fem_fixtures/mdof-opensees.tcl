@@ -3,7 +3,7 @@
 wipe
 model BasicBuilder -ndm 2 -ndf 3
 geomTransf Linear 1
-geomTransf Linear 2
+geomTransf PDelta 2
 node 0 0.0 0.0
 fix 0 1 1 1
 node 2 0.0 1.0 -mass 1.0000 1e-9 1e-9

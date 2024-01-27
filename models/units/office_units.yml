@@ -1,5 +1,5 @@
 - name: two_cubicles
-  dx: 2.0
+  dx: 3.0
   assets:
     - Chair
     - FaxMachine
@@ -15,13 +15,15 @@
     - MediumShelf
     - NonStructuralGenericRoofTilings
     - NonStructuralGenericRoofTilings
+    - NonStructuralGenericRoofTilings
     - NonStructuralGenericFloorFinishes
     - NonStructuralGenericFloorFinishes
+    - NonStructuralGenericWallFinishes
     - NonStructuralGenericWallFinishes
     - NonStructuralGenericWallFinishes
     - Radio
 - name: printing_station
-  dx: 2.0
+  dx: 3.0
   assets:
     - Minicomponent
     - 60inPlotter
@@ -35,13 +37,18 @@
     - DigitalCamera
     - DigitalCamera
     - NonStructuralGenericElectric
+    - NonStructuralGenericElectric
     - NonStructuralGenericRoofTilings
+    - NonStructuralGenericRoofTilings
+    - NonStructuralGenericRoofTilings
+    - NonStructuralGenericWallFinishes
+    - NonStructuralGenericWallFinishes
     - NonStructuralGenericWallFinishes
     - SlimJar
     - MediumTable
     - MediumTable
 - name: small_kitchen
-  dx: 1.0
+  dx: 3.0
   assets:
     - Microwave
     - CoffeeMachine
@@ -61,8 +68,13 @@
     - MediumTable
     - MediumTable
     - NonStructuralGenericRoofTilings
+    - NonStructuralGenericRoofTilings
+    - NonStructuralGenericRoofTilings
+    - NonStructuralGenericFloorFinishes
     - NonStructuralGenericFloorFinishes
     - NonStructuralGenericPlumbing
+    - NonStructuralGenericPlumbing
+    - NonStructuralGenericWallFinishes
     - NonStructuralGenericWallFinishes
 - name: cubicle
   dx: 1.5
@@ -76,11 +88,14 @@
     - SlimJar
     - NonStructuralGenericRoofTilings
     - NonStructuralGenericElectric
+    - NonStructuralGenericElectric
     - NonStructuralGenericFloorFinishes
+    - NonStructuralGenericFloorFinishes
+    - NonStructuralGenericWallFinishes
     - NonStructuralGenericWallFinishes
     - Radio
 - name: meeting_room
-  dx: 2.0
+  dx: 5.0
   assets:
     - FlowerVase
     - Projector
@@ -120,7 +135,7 @@
     - NonStructuralGenericWallFinishes
     - NonStructuralGenericSecurity
 - name: waiting_room
-  dx: 2.0
+  dx: 4.0
   assets:
     - FlowerVase
     - FlowerVase

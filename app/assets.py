@@ -7,13 +7,12 @@ from app.utils import (
     AccelHazardSeries,
     IDAResultsDataFrame,
     YamlMixin,
+    CollapseTypes,
     find_files,
 )
 from abc import abstractmethod, ABC
 from pathlib import Path
 from scipy.stats import lognorm
-from collections import Counter
-from typing import Optional
 
 LOSS_MODELS_DIR = Path(__file__).resolve().parent.parent / "models" / "loss"
 RISK_MODELS_DIR = Path(__file__).resolve().parent.parent / "models" / "risk"
@@ -40,7 +39,7 @@ class Lognormal:
     i.e. median drift of 0.10, when plotted look for the 50th percentile.
 
     and that the std of the logarithm of the values is numerically close to the
-    coefficient of variation (Ordaz) so it should be in the numerical range
+    coefficient of variation (personal communication Ordaz) so it should be in the numerical range
     of about 0 to around 1.0
     """
 
@@ -61,8 +60,8 @@ class LognormalRisk(YamlMixin):
     net_worth: float | None = None
     icon: str | None = None
     vulnerabilities: list[Lognormal] = field(default_factory=list)
-    frag_dict: dict| None = None
-    vuln_dict: dict| None = None
+    frag_dict: dict | None = None
+    vuln_dict: dict | None = None
     frag_pdf_df: pd.DataFrame | None = None
     frag_cdf_df: pd.DataFrame | None = None
     vuln_pdf_df: pd.DataFrame | None = None
@@ -253,6 +252,8 @@ class Asset(ABC):
         self,
         *,
         strana_results_df: IDAResultsDataFrame,
+        views_by_path: dict,
+        **kwargs,
     ) -> np.ndarray:
         """
         this method reduces strana_results_df indexed by accels
@@ -263,12 +264,10 @@ class Asset(ABC):
 
 @dataclass
 class RiskAsset(Asset):
-    _risk: Optional[
-        LognormalRisk
-    ] = None  # done this way to be able to have NormalRisk or GammaRisk using different functions..
-    # though it is bad.. it should be agnostic to the class of the _risk... think about this more.
+    _risk: LognormalRisk | None = None  # an asset can implement NormalRisk or GammaRisk using different functions.
     # the separation of risk/asset is probably artificial maybe they can be the same class
-    # it is better that it inherits a risk object instead of creating one.
+    # it is better to inherit a risk object instead of creating one.
+    # or to create an interface and Lognormal risk is just the implementation
 
     def __post_init__(self):
         self._risk: LognormalRisk = RiskModelFactory(self.name)
@@ -291,62 +290,68 @@ class RiskAsset(Asset):
         self,
         *,
         strana_results_df: IDAResultsDataFrame,
+        views_by_path: dict,
+        **kwargs,
     ) -> np.ndarray:
-        print(f"processing {self.name=} {self.node=} {self.rugged=} {self.category=}")
-        strana_results_df["collapse_losses"] = (
-            strana_results_df["collapse"]
-            .apply(lambda r: self.net_worth if r else 0)
-            .values
-        )
+        print(f"Processing {self.name=} {self.node=} {self.rugged=} {self.category=}")
+
         if self.rugged:
-            strana_results_df["losses"] = (
-                strana_results_df["collapse"].apply(lambda r: 0).values
+            losses = (
+                strana_results_df["collapse"]
+                .apply(lambda r: self.net_worth if r != CollapseTypes.NONE.value else 0)
+                .values
             )
         elif self.node is not None:
-            strana_results_df = self.dollars_for_node(
-                strana_results_df=strana_results_df
+            losses = self.dollars_for_node(
+                strana_results_df=strana_results_df,
+                views_by_path=views_by_path,
+                **kwargs,
             )
         else:
-            strana_results_df = self.dollars_for_storey(
-                strana_results_df=strana_results_df
+            losses = self.dollars_for_storey(
+                strana_results_df=strana_results_df,
+                views_by_path=views_by_path,
+                **kwargs,
             )
-        # print(strana_results_df[['collapse_losses', 'losses']].head())
-        losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
         return losses
 
     def dollars_for_node(
-        self, *, strana_results_df: IDAResultsDataFrame, **kwargs
+        self, *, strana_results_df: IDAResultsDataFrame, views_by_path: dict, **kwargs
     ) -> np.ndarray:
         from app.strana import StructuralResultView
+        from app.utils import CollapseTypes
 
         paths = strana_results_df["path"].values
-        xs = []
-        views = {}
-        for path in paths:
-            if not isinstance(path, str) and np.any(np.isnan(path)):
-                print("WARNING, path not set! TODO: is this collapse?")
+        collapse = strana_results_df["collapse"].values
+        xs: list[float | pd.DataFrame] = []
+        for path, collapse_type in zip(paths, collapse):
+            if collapse_type != CollapseTypes.NONE.value:
                 x = 1e9
-                xs.append(x)
-                continue
-            x = views.get(path)
-            if not x:
-                view = StructuralResultView.from_file(Path(path))
+            else:
+                view: StructuralResultView = views_by_path.get(path)
+                if view is None:
+                    view = StructuralResultView.from_file(Path(path))
+                    views_by_path[path] = view
                 x = view.view_result_by_edp_and_node(
                     edp=self._risk.edp, node=self.node, path=path, **kwargs
                 )
-                views[path] = x
             xs.append(x)
-        losses = self.net_worth * np.array(self._risk.losses(xs))
-        strana_results_df["losses"] = losses
-        return strana_results_df
+        damage_states_pct = np.array(self._risk.losses(xs))
+        losses = self.net_worth * damage_states_pct
+        return losses
 
     def dollars_for_storey(
-        self, *, strana_results_df: IDAResultsDataFrame
+        self, *, strana_results_df: IDAResultsDataFrame, views_by_path: dict, **kwargs
     ) -> np.ndarray:
         """
-        collapse is taken implicitly as a disproportionate response
+        collapse is taken implicitly as a disproportionate response in EDP to an infinitesimal increase in IM i.e. flatline
         the asset must return complete loss to a big value of edp
         """
+        strana_results_df["collapse_losses"] = (
+            strana_results_df["collapse"]
+            .apply(lambda r: self.net_worth if r != CollapseTypes.NONE.value else 0)
+            .values
+        )
 
         def get_edp_by_floor(row: list[float]) -> float:
             try:
@@ -368,7 +373,9 @@ class RiskAsset(Asset):
         xs = strana_results_df[summary_edp].apply(get_edp_by_floor).values
         losses = self.net_worth * np.array(self._risk.losses(xs))
         strana_results_df["losses"] = losses
-        return strana_results_df
+        losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
+        strana_results_df.drop("collapse_losses", axis=1, inplace=True)
+        return losses
 
     @property
     def fragility_figure(self):

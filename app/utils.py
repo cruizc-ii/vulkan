@@ -20,7 +20,7 @@ RESULTS_DIR = ROOT_DIR / "results"
 ASSETS_PATH = "https://vulkan1.s3.amazonaws.com/"
 GRAVITY = 9.81
 METERS_TO_FEET = 1 / 0.3048
-INFLATION = 1.0
+INFLATION = 3.0
 
 
 class DesignException(Exception):
@@ -87,6 +87,16 @@ class AnalysisTypes(Enum):
         return list(map(lambda c: c.value, cls))
 
 
+class CollapseTypes(Enum):
+    NONE = "none"
+    INSTABILITY = "instability"
+    SHEAR = "shear"
+
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
+
 class SummaryEDP(Enum):
     """these are the summarized versions
     or some computed value from .csvs
@@ -131,10 +141,33 @@ class IM(Enum):
     pseudo_vel = "Sv"
 
 
+"""
+there must be a better way to explain what each DataFrame contains, with a schema. pa.
+"""
 IDAResultsDataFrame = pd.DataFrame
+"""
+the table in IDA tab, one row per run, with columns like: path, inf, sup, collapse, etc
+"""
+
 AccelHazardSeries = pd.Series
-ResultsDataFrame = pd.DataFrame
-SummaryResultsDataFrame = pd.DataFrame
+ScatterResultsDataFrame = pd.DataFrame
+"""
+contains the most detail, one row per run
+    Sa/Say_design collapse      freq       inf  intensity  intensity_str                                               path    peak_drift  peak_drift/drift_yield  ...                                                pfa           pfv              record       sup    losses      loss                        name    category floor
+0        0.234366     none  0.091351 -0.025031   0.081549       0.081549  /Users/carlo/vulkan/results/feel-dark-end-peop...  2.765400e-03            1.630461e-01  ...  [0.05571289856331682, 0.06990166648710937, 0.0...  1.196510e-01  12_ROM140995NS.csv  0.188130  1.870356  1.870356  FragileConcreteColumnAsset  structural     1
+1        0.846973     none  0.017918  0.188130   0.294711       0.294711  /Users/carlo/vulkan/results/feel-dark-end-peop...  8.350470e-03            4.923381e-01  ...  [0.3720300551733989, 0.3680519440272985, 0.397...  5.160730e-01  12_ROM140995NS.csv  0.401291  1.870356  1.870356  FragileConcreteColumnAsset  structural     1
+2        1.459580    shear  0.003366  0.401291   0.507872       0.507872  /Users/carlo/vulkan/results/feel-dark-end-peop...  2.836150e+12            1.672175e+14  ...  [10989500509684.016, 9747543323139.633, 382054...  2.381120e+13  12_ROM140995NS.csv  0.614452  1.870356  1.870356  FragileConcreteColumnAsset  structural     1
+3        2.072187    shear  0.000699  0.614452   0.721033       0.721033  /Users/carlo/vulkan/results/feel-dark-end-peop...  2.836150e+12            1.672175e+14  ...  [10989500509684.016, 9747543323139.633, 382054...  2.381120e+13  12_ROM140995NS.csv  0.827614  1.870356  1.870356  FragileConcreteColumnAsset  structural     1
+4        2.684793    shear  0.000187  0.827614   0.934194       0.934194  /Users/carlo/vulkan/results/feel-dark-end-peop...  2.836150e+12            1.672175e+14  ...  [10989500509684.016, 9747543323139.633, 382054...  2.381120e+13  12_ROM140995NS.csv  1.040775  1.870356  1.870356  FragileConcreteColumnAsset  structural     1
+5        3.297400    shear  0.000030  1.040775   1.147355       1.147355  /Users/carlo/vulkan/results/feel-dark-end-peop...  2.836150e+12            1.672175e+14  ...  [10989500509684.016, 9747543323139.633, 382054...  2.381120e+13  12_ROM140995NS.csv  1.253936  1.870356  1.870356  FragileConcreteColumnAsset  structural     1
+6        3.910007    shear  0.000030  1.253936   1.360516       1.360516  /Users/carlo/vulkan/results/feel-dark-end-peop...  2.836150e+12            1.672175e+14  ...  [10989500509684.016, 9747543323139.633, 382054...  2.381120e+13  12_ROM140995NS.csv  1.467097  1.870356  1.870356  FragileConcreteColumnAsset  structural     1
+7        4.522614    shear  0.000049  1.467097   1.573678       1.573678  /Users/carlo/vulkan/results/feel-dark-end-peop...  2.836150e+12            1.672175e+14  ...  [10989500509684.016, 9747543323139.633, 382054...  2.381120e+13  12_ROM140995NS.csv  1.680258  1.870356  1.870356  FragileConcreteColumnAsset  structural     1
+"""
+
+LossModelsResultsDataFrame = pd.DataFrame
+"""
+filtered src with one row per asset per run
+"""
 
 OPENSEES_EDPs: tuple = ("disp", "vel", "accel", "reaction")
 OPENSEES_ELEMENT_EDPs: tuple = (

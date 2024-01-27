@@ -42,6 +42,7 @@ class Group:
     priority: float = 0
     pct: float = 0
     dx: float = 0
+    dy: float = 1
     x: float = 0
     unique: bool = False
     floor: int = None
@@ -231,10 +232,7 @@ class OccupancyModel(YamlMixin):
         for g in self.sorted_groups:
             floor = int(((TOTAL_LENGTH - WIDTH) * g.pct) // WIDTH + 1)
             g.floor = floor
-        """
-        todo@improvement: actually it is always a cyclical algorithm, (like the second part)
-        lots of improvements that can be made. like priorities etc. leave that for postdoc.
-        """
+
         remaining_groups = list(self.sorted_groups)
         has_space_left = True
         while has_space_left and len(remaining_groups) > 0:
@@ -272,7 +270,9 @@ class OccupancyModel(YamlMixin):
         placed_groups = sorted(placed_groups, key=attrgetter("floor", "x"))
         return placed_groups
 
-    def _generate_assets_from_groups(self, gs: list[Group]) -> list[Asset]:
+    def _generate_assets_from_groups(
+        self, gs: list[Group], fem: FiniteElementModel
+    ) -> list[Asset]:
         assets = []
         summary_edps = SummaryEDP.list()
         try:
@@ -287,6 +287,8 @@ class OccupancyModel(YamlMixin):
                     asset: RiskAsset = AssetFactory(
                         floor=g.floor, name=asset_str, x=float(x)
                     )
+                    DEPTH_FACTOR = fem.depth / g.dy
+                    asset.net_worth = DEPTH_FACTOR * asset.net_worth
                     assets.append(asset)
                     if asset.edp not in summary_edps:
                         asset.node = g.closest_node_id
@@ -296,7 +298,7 @@ class OccupancyModel(YamlMixin):
 
     def build(self, fem: FiniteElementModel) -> list[Asset]:
         groups = self._build_groups(fem)
-        assets = self._generate_assets_from_groups(groups)
+        assets = self._generate_assets_from_groups(groups, fem)
         return assets
 
     def random_build(self, fem: FiniteElementModel) -> list[Asset]:

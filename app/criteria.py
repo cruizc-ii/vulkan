@@ -90,7 +90,7 @@ class CodeMassesPre(DesignCriterion):
 
     CODE_UNIFORM_LOADS_kPA = 9.81  # 1 t/m2
     SLAB_AREA_PERCENTAGE = 0.25  # part of the slab mass that goes to this frame's beams A=Lx * Lz = c Lx**2
-    # in other words, the coefficient of perpendicular contribution
+    # i.e, the coefficient of perpendicular contribution
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         fem = PlainFEM.from_spec(self.specification)
@@ -171,11 +171,11 @@ class ShearStiffnessRetryPre(DesignCriterion):
     9 storey building has only 3 groups of inertias
     """
 
-    PERIOD_TOLERANCE_PCT: float = 0.05
-    MAX_ITERATIONS = 20
+    PERIOD_TOLERANCE_PCT: float = 0.2
+    MAX_ITERATIONS = 10
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
-        target_period = self.specification.miranda_fundamental_period
+        target_period = self.specification.cdmx_fundamental_period
         ns = self.specification.num_storeys
         chunk_size = np.floor(np.sqrt(ns))
         summed_column_Ixs_by_storey = np.array(
@@ -359,7 +359,7 @@ class DesignCriterionFactory:
 
     public_seeds = {
         CDMX2017Q1.__name__: CDMX2017Q1,
-        CDMX2017Q4.__name__: CDMX2017Q4,
+        # CDMX2017Q4.__name__: CDMX2017Q4,
         CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
         CDMX2017Q4IMK.__name__: CDMX2017Q4IMK,
     }

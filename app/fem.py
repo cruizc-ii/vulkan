@@ -39,11 +39,13 @@ class FiniteElementModel(ABC, YamlMixin):
     elements: list[FE]
     damping: float = 0.05
     model: str = "ABC"
-    num_frames: int = 1
+    num_frames: int = 2
     num_storeys: float | None = None
     num_floors: float | None = None
     num_bays: float | None = None
     num_cols: float | None = None
+    total_area: float | None = None
+    depth: float | None = None
     occupancy: str | None = None
     periods: list = field(default_factory=list)
     frequencies: list = field(default_factory=list)
@@ -61,6 +63,7 @@ class FiniteElementModel(ABC, YamlMixin):
     _pushover_view = None
     chopra_fundamental_period_plus1sigma: float | None = None
     miranda_fundamental_period: float | None = None
+    cdmx_fundamental_period: float | None = None
     uniform_beam_loads_by_mass: list[float] | None = None
     _YIELD_TANGENT_PCT: float = 0.2  # less than this we consider structure to have yielded. when curr_tangent < PCT*initial tangent
 
@@ -70,7 +73,7 @@ class FiniteElementModel(ABC, YamlMixin):
         h += "wipe\n"
         h += "model BasicBuilder -ndm 2 -ndf 3\n"
         t = f"geomTransf Linear {self._transf_beam}\n"
-        t += f"geomTransf Linear {self._transf_col}\n"
+        t += f"geomTransf PDelta {self._transf_col}\n"
         return h + t + self.nodes_str + self.elements_str
 
     @property
@@ -129,8 +132,11 @@ class FiniteElementModel(ABC, YamlMixin):
             num_bays=spec.num_bays,
             num_floors=spec.num_floors,
             num_storeys=spec.num_storeys,
+            total_area=spec.total_area,
+            depth=spec.depth,
             chopra_fundamental_period_plus1sigma=spec.chopra_fundamental_period_plus1sigma,
             miranda_fundamental_period=spec.miranda_fundamental_period,
+            cdmx_fundamental_period=spec.cdmx_fundamental_period,
             *args,
             **kwargs,
         )
@@ -151,9 +157,9 @@ class FiniteElementModel(ABC, YamlMixin):
         Vy_design = c_design * self.weight
         Vy_error = (Vy - Vy_design) / Vy_design
         period = self.periods[0] if len(self.periods) > 0 else 0
+        chosen_period_formulae = self.cdmx_fundamental_period
         period_error = (
-            (self.periods[0] - self.miranda_fundamental_period)
-            / self.miranda_fundamental_period
+            (self.periods[0] - chosen_period_formulae) / chosen_period_formulae
             if len(self.periods) > 0
             else ""
         )
@@ -175,9 +181,10 @@ class FiniteElementModel(ABC, YamlMixin):
             "cs": f"{cs:.3f} [1]",
             "Sa_y_g": f"{cs:.3f} [g]",
             "drift_y": f"{100*drift_y:.2f} %",
+            "drift_y [1]": drift_y,
             "c_design": f"{c_design:.3f} [1]",
             "design_error": f"{100*c_design_error:.2f} %",
-            "miranda period [s]": f"{self.miranda_fundamental_period:.2f} s",
+            "miranda period [s]": f"{chosen_period_formulae:.2f} s",
             "period_error": f"{100*period_error:.1f} %",
             "_pushover_x": df["u"].to_list(),
             "_pushover_y": df["sum"].to_list(),
@@ -219,7 +226,7 @@ class FiniteElementModel(ABC, YamlMixin):
                 slabs.append(slab)
         for asset in slabs:
             if asset.net_worth:
-                asset.net_worth = self.num_frames * asset.net_worth
+                asset.net_worth = (self.num_frames - 1) * asset.net_worth
         return slabs
 
     def build_nonstructural_elements(self) -> list[Asset]:
@@ -230,24 +237,24 @@ class FiniteElementModel(ABC, YamlMixin):
         nonstructural = [
             a for a in nonstructural_and_contents if a.category == "nonstructural"
         ]  # categories can be any string but we should ideally filter by ENUM
-        for asset in nonstructural:
-            if asset.net_worth:
-                asset.net_worth = self.num_frames * asset.net_worth
+        # collocation algorithm already takes care of spatial distribution.
+        # for asset in nonstructural:
+        #     if asset.net_worth:
+        #         asset.net_worth = (self.num_frames - 1) * asset.net_worth
         return nonstructural
 
     def build_contents(self) -> list[Asset]:
         from app.occupancy import BuildingOccupancy
-
-        return []
 
         occupancy = BuildingOccupancy(fem=self, model_str=self.occupancy)
         nonstructural_and_contents = occupancy.build()
         contents = [
             a for a in nonstructural_and_contents if a.category == "contents"
         ]  # categories can be any string but we should ideally filter by ENUM
-        for asset in contents:
-            if asset.net_worth:
-                asset.net_worth = self.num_frames * asset.net_worth
+        # collocation algorithm already takes care of spatial distribution.
+        # for asset in contents:
+        #     if asset.net_worth:
+        #         asset.net_worth = self.num_frames * asset.net_worth
         return contents
 
     @property
@@ -267,6 +274,10 @@ class FiniteElementModel(ABC, YamlMixin):
             + self.nonstructural_net_worth
             + self.contents_net_worth
         )
+
+    @property
+    def cost_per_unit_area(self) -> float:
+        return self.total_net_worth / self.total_area
 
     @property
     def eigen_df(self) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -382,24 +393,24 @@ class FiniteElementModel(ABC, YamlMixin):
         with open(filepath, "w+") as f:
             f.write(self.model_str)
 
-    def determine_collapse_from_results(self, results: dict) -> bool:
+    def determine_collapse_from_results(
+        self, results: dict, view_handler
+    ) -> "CollapseTypes":
         """
         upper bound on collapse, if any column is in DS==Collapse
-        """
-        collapse = False
-        return collapse
-        """
         collapse_elwood = determine_collapse_elwood()
-        collapse_residual = 
+        collapse_residual =
         return collapse_damage or collapse_residual or collapse_elwood
         """
+        from app.utils import CollapseTypes
 
+        collapse = CollapseTypes.NONE.value
         for st, columns in enumerate(self.columns_by_storey):
             column = columns[0]
             x = results[SummaryEDP.peak_drifts.value][st]
             ds = column._risk.simulate_damage_state(x)
             if ds == column._risk.damage_states[-1]["name"]:
-                collapse = True
+                collapse = CollapseTypes.INSTABILITY.value
                 break
         return collapse
 
@@ -526,7 +537,6 @@ class FiniteElementModel(ABC, YamlMixin):
         ]  # where next tangent is smaller than previous by a small negative tolerance
         df3 = df2.iloc[possible_pts]
         indices = df3["fp"][df3["fp"] < self._YIELD_TANGENT_PCT * K].index
-        print(indices)
         if len(indices) == 0:
             return df["sum"].max(), 0
         yield_point = indices[0]
@@ -1108,10 +1118,12 @@ class BilinFrame(FiniteElementModel):
         ):
             for c in cols:
                 # c.My = cm/fem.num_cols
+                c.model = "BilinBeamColumn"
                 c.My = cm
                 c.Q = Q
             for b in beams:
                 # b.My = bm/fem.num_cols
+                b.model = "BilinBeamColumn"
                 b.My = bm
                 b.Q = Q
 
@@ -1221,6 +1233,14 @@ class IMKFrame(FiniteElementModel):
         return [e for e in self.elements if e.type == ElementTypes.SPRING_COLUMN.value]
 
     @property
+    def springs_columns_by_storey(self):
+        st = []
+        for iy in range(1, self.num_modes + 1):
+            cols = [col for col in self.springs_columns if col.storey == iy]
+            st.append(cols)
+        return st
+
+    @property
     def spring_columns_ids(self):
         return [c.id for c in self.springs_columns]
 
@@ -1322,11 +1342,12 @@ class IMKFrame(FiniteElementModel):
                     type=type,
                     id=elem_id,
                     recorder_ix=recorder_ixs[type],
+                    net_worth=0,
                 )
                 recorder_ixs[type] = recorder_ixs[type] + 1
                 d1 = {**elem.to_dict, **data_imk1}
                 imk1 = IMKSpring.from_bilin(**d1)
-
+                imk1.net_worth = (2 * self.num_frames - 1) * imk1.net_worth
                 elem_id += 1
                 elements.append(imk1)
                 Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1e5
@@ -1350,10 +1371,12 @@ class IMKFrame(FiniteElementModel):
                     type=type,
                     id=elem_id,
                     recorder_ix=recorder_ixs[type],
+                    net_worth=0,
                 )
                 recorder_ixs[type] = recorder_ixs[type] + 1
                 d2 = {**elem.to_dict, **data_imk2}
                 imk2 = IMKSpring.from_bilin(**d2)
+                imk2.net_worth = (2 * self.num_frames - 1) * imk2.net_worth
                 elements.append(imk2)
                 elem_id += 1
             self.elements = elements
@@ -1362,7 +1385,8 @@ class IMKFrame(FiniteElementModel):
 
     @property
     def element_recorders(self) -> str:
-        s = f"region 1 -ele {self.spring_columns_ids_str}\n"
+        s = super().element_recorders
+        s += f"region 1 -ele {self.spring_columns_ids_str}\n"
         s += f"recorder Element         -file $abspath/columns-M.csv -time      -region 1 -dof 3 force\n"
         s += f"recorder EnvelopeElement -file $abspath/columns-M-envelope.csv   -region 1 -dof 3 force\n"
         s += f"recorder Element         -file $abspath/columns-rot.csv -time    -region 1 deformation\n"
@@ -1374,15 +1398,62 @@ class IMKFrame(FiniteElementModel):
         s += f"recorder EnvelopeElement -file $abspath/beams-rot-envelope.csv -region 2 deformation\n"
         return s
 
-    def determine_collapse_from_results(self, results: dict):
+    def determine_collapse_from_results(
+        self, results: dict, view_handler: "StructuralResultView"
+    ) -> "CollapseTypes":
         """
-        uses the following criteria
-        - residual drifts
-        - dynamical instability
-        - shear failure (Elwood drift)
-        - too much damage everywhere, impossible to restore without demolishing
+        simplification of the actual problem
+        1. constant axial force (P = dead weight / num_columns)
+        2. uses a single column from each storey (when they could be built with different steel ratios, but we assume they are more or less the same and we are thinking rigid diaphragms..)
         """
-        return False
+        from app.utils import CollapseTypes
+
+        collapse_type = self.determine_intra_analysis_collapse(
+            results, view_handler=view_handler
+        )
+        if collapse_type == CollapseTypes.NONE.value:
+            collapse_type = self.determine_extra_analysis_collapse(
+                results, view_handler=view_handler
+            )
+        return collapse_type
+
+    def determine_intra_analysis_collapse(
+        self, results: dict, view_handler: "StructuralResultView"
+    ) -> "CollapseTypes":
+        """
+        read collapse.csv written by dynamic_integrator.tcl
+        if that file exists we have intra-analysis collapse.
+        """
+        from app.utils import CollapseTypes
+
+        collapse_type = CollapseTypes.NONE.value
+        try:
+            file = view_handler.read_collapse_file()
+            if file is not None:
+                collapse_type = CollapseTypes.INSTABILITY.value
+        except FileNotFoundError as e:
+            print(e)
+        return collapse_type
+
+    def determine_extra_analysis_collapse(
+        self, results: dict, view_handler: "StructuralResultView"
+    ) -> "CollapseTypes":
+        from app.utils import CollapseTypes
+
+        shears = view_handler.view_column_design_shears()
+        axials = view_handler.view_column_design_axials()
+        columns: list[IMKSpring] = self.springs_columns[::2]  # take the top spring
+        capacities = [
+            column.elwood_shear_capacity(shear, axial)
+            for column, shear, axial in zip(columns, shears, axials)
+        ]
+        drifts_by_storey = view_handler.view_peak_drifts().to_list()
+        drifts = [d for d in drifts_by_storey for _ in range(self.num_cols)]
+        collapses = [d > capacity for d, capacity in zip(drifts, capacities)]
+        elwood_collapse = (
+            CollapseTypes.SHEAR.value if any(collapses) else CollapseTypes.NONE.value
+        )
+        return elwood_collapse
 
 
 class FEMFactory:

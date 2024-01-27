@@ -1,0 +1,18 @@
+groups:
+  - name: Reception
+    pct: 0.01
+    dy: 8
+    unique: yes
+    units:
+      - waiting_room
+      - cubicle
+      - bathroom
+  - name: OfficeFloorMedium
+    pct: 0.20
+    dy: 8
+    units:
+      - small_kitchen
+      - printing_station
+      - two_cubicles
+      - meeting_room
+      - bathroom

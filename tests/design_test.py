@@ -178,7 +178,6 @@ class LoeraPreDesignTest(TestCase):
 
 
 class CodeMassesPreDesignTest(TestCase):
-
     file = None
     path = None
     maxDiff = None
@@ -195,7 +194,7 @@ class CodeMassesPreDesignTest(TestCase):
             design_criteria=[CodeMassesPre.__name__],
         )
         expected_masses = [
-            (5 + 8 + 5) ** 2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81
+            (5 + 8 + 5) ** 2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81 / 4
         ]
         design.force_design(self.path)
         # self.assertTrue(np.allclose(design.masses, [10.0], rtol=1e-3))
@@ -209,7 +208,7 @@ class CodeMassesPreDesignTest(TestCase):
             design_criteria=[CodeMassesPre.__name__],
         )
         expected_masses = [
-            (5 + 3 + 5) ** 2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81
+            (5 + 3 + 5) ** 2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81 / 4
         ]
         design.force_design(self.path)
         # self.assertTrue(np.allclose(design.masses, [10.0, 10.0, 10.0, 10.0], rtol=1e-3))
@@ -222,7 +221,7 @@ class CodeMassesPreDesignTest(TestCase):
             bays=5 * [4.0],
             design_criteria=[CodeMassesPre.__name__],
         )
-        expected_masses = [20**2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81]
+        expected_masses = [20**2 * CodeMassesPre.CODE_UNIFORM_LOADS_kPA / 9.81 / 4]
         design.force_design(self.path)
         # self.assertTrue(np.allclose(design.masses, 10 * [10.0], rtol=1e-3))
         self.assertTrue(np.allclose(expected_masses, design.fem.masses, rtol=1e-3))
@@ -250,7 +249,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             design_criteria=[EulerShearPre.__name__, ShearStiffnessRetryPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         self.assertAlmostEqual(
             spec.fem.periods[0],
             expected_period,
@@ -268,7 +267,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             design_criteria=[EulerShearPre.__name__, ShearStiffnessRetryPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         self.assertAlmostEqual(
             spec.fem.periods[0],
             expected_period,
@@ -285,7 +284,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             design_criteria=[LoeraPreArctan.__name__, ShearStiffnessRetryPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         self.assertAlmostEqual(
             spec.fem.periods[0],
             expected_period,
@@ -302,7 +301,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             design_criteria=[LoeraPre.__name__, ShearStiffnessRetryPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         self.assertAlmostEqual(
             spec.fem.periods[0],
             expected_period,
@@ -324,7 +323,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             design_criteria=[LoeraPre.__name__, ShearStiffnessRetryPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         self.assertAlmostEqual(
             spec.fem.periods[0],
             expected_period,
@@ -345,7 +344,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             design_criteria=[EulerShearPre.__name__, ShearStiffnessRetryPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         self.assertAlmostEqual(
             spec.fem.periods[0],
             expected_period,
@@ -366,7 +365,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             design_criteria=[EulerShearPre.__name__, ShearStiffnessRetryPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         self.assertAlmostEqual(
             spec.fem.periods[0],
             expected_period,
@@ -387,7 +386,7 @@ class ShearStiffnessRetryPreTest(TestCase):
             design_criteria=[LoeraPreArctan.__name__, ShearStiffnessRetryPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         self.assertAlmostEqual(
             spec.fem.periods[0],
             expected_period,
@@ -430,7 +429,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -452,7 +451,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -474,7 +473,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -491,7 +490,7 @@ class ForcePreDesignTest(TestCase):
         """it should load a spec and produce a realistic design"""
         spec = ReinforcedConcreteFrame.from_file(self.file)
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -513,7 +512,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -535,7 +534,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -557,7 +556,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -579,7 +578,7 @@ class ForcePreDesignTest(TestCase):
             design_criteria=[ForceBasedPre.__name__],
         )
         spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
+        expected_period = spec.cdmx_fundamental_period
         expected_weight = (
             CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
         )
@@ -592,28 +591,28 @@ class ForcePreDesignTest(TestCase):
             np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
         )
 
-    def test_produces_realistic_periods_and_stiffnesses_30(self):
-        # this seems to crash the test runner, memory?
-        spec = ReinforcedConcreteFrame(
-            name="force-based-design-test",
-            storeys=[4.5, 4.5, 4.5] + 27 * [3.0],
-            bays=[6, 6, 6, 6],
-            damping=0.05,
-            design_criteria=[ForceBasedPre.__name__],
-        )
-        spec.force_design(DESIGN_FIXTURES_PATH)
-        expected_period = spec.miranda_fundamental_period
-        expected_weight = (
-            CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
-        )
-        self.assertAlmostEqual(
-            spec.fem.period,
-            expected_period,
-            delta=expected_period * self.rtol_periods,
-        )
-        self.assertTrue(
-            np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
-        )
+    # def test_produces_realistic_periods_and_stiffnesses_30(self):
+    #     # this seems to crash the test runner, memory?
+    #     spec = ReinforcedConcreteFrame(
+    #         name="force-based-design-test",
+    #         storeys=[4.5, 4.5, 4.5] + 27 * [3.0],
+    #         bays=[6, 6, 6, 6],
+    #         damping=0.05,
+    #         design_criteria=[ForceBasedPre.__name__],
+    #     )
+    #     spec.force_design(DESIGN_FIXTURES_PATH)
+    #     expected_period = spec.miranda_fundamental_period
+    #     expected_weight = (
+    #         CodeMassesPre.CODE_UNIFORM_LOADS_kPA * spec.width**2 * spec.num_storeys
+    #     )
+    #     self.assertAlmostEqual(
+    #         spec.fem.period,
+    #         expected_period,
+    #         delta=expected_period * self.rtol_periods,
+    #     )
+    #     self.assertTrue(
+    #         np.allclose(spec.fem.weight, expected_weight, rtol=self.rtol_weight)
+    #     )
 
 
 class Chopra1326RSADesign(TestCase):
@@ -691,7 +690,7 @@ class CDMXDesignTest(TestCase):
         spec.force_design(DESIGN_FIXTURES_PATH)
         # spec.to_file(self.path)
         Vd = spec.fem.extras["design_shears"]
-        self.assertTrue(np.allclose(sum(Vd), 400, atol=30.0))
+        self.assertTrue(np.allclose(sum(Vd), 200, atol=30.0))
 
     # def test_correct_nonlin_behavior(self):
     #     target_drift = 0.10

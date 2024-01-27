@@ -21,7 +21,6 @@ clean-results:
 .PHONY: clean
 clean:
 	rm -rf models/design/**;
-	rm -rf models/hazard/**;
 	rm -rf models/strana/**;
 	rm -rf models/loss/**;
 	rm -rf models/compare/**;

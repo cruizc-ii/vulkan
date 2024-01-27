@@ -1,6 +1,6 @@
 name: RuggedContentsGeneric
 category: contents
-edp: accel
+edp: pfa
 net_worth: 500.0
 icon: bed.png
 damage_states:

@@ -9,8 +9,12 @@
     - Toilet
     - Toilet
     - NonStructuralGenericRoofTilings
+    - NonStructuralGenericRoofTilings
+    - NonStructuralGenericFloorFinishes
     - NonStructuralGenericFloorFinishes
     - NonStructuralGenericWallFinishes
+    - NonStructuralGenericWallFinishes
+    - NonStructuralGenericPlumbing
     - NonStructuralGenericPlumbing
 - name: office_test
   dx: 2

@@ -1,8 +1,10 @@
 a0: null
 a1: null
+cdmx_fundamental_period: null
 chopra_fundamental_period_plus1sigma: null
 contents: []
 damping: 0.05
+depth: null
 elements:
 - A: 100000
   CRACKED_INERTIA_FACTOR: 1.0
@@ -256,7 +258,7 @@ nonstructural_elements: []
 num_bays: 0
 num_cols: null
 num_floors: null
-num_frames: 1
+num_frames: 2
 num_storeys: 2
 occupancy: EmptyOccupancy.yml
 omegas:
@@ -272,6 +274,7 @@ periods:
 - 3.734418363095138
 - 3.2742216226855287
 pushover_abs_path: null
+total_area: null
 uniform_beam_loads_by_mass: null
 values: []
 vectors:

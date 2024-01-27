@@ -40,7 +40,6 @@ class ShearModelAnalysisTest(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-
         cls.path = STRANA_FIXTURES_PATH / "mdof-frame"
         cls.file = cls.path / "chopra1281-mdof-fem.yml"
         cls.fem = ShearModel.from_file(cls.file)
@@ -116,7 +115,7 @@ class ShearModelAnalysisTest(TestCase):
 
 class Chopra1326Test(TestCase):
     """
-    example 1281 from Chopra.
+    example 1326 from Chopra. page 532
     the unfortunate thing is that the normalized modal vectors
     are done with respect to a 100kips/g masses. (weird) instead of unit masses
     so our masses are
@@ -147,10 +146,8 @@ class Chopra1326Test(TestCase):
     strana = None
     view = None
 
-
     @classmethod
     def setUpClass(cls) -> None:
-
         cls.path = STRANA_FIXTURES_PATH / "chopra-1326"
         cls.file = cls.path / "chopra1326-fem.yml"
         cls.fem = ShearModel.from_file(cls.file)
@@ -231,7 +228,8 @@ class Chopra1326Test(TestCase):
 
     def test_generate_rayleigh_damping(self) -> None:
         """it should compute a0, a1 such that for a given damping % z_i
-        all the modes that contribute significantly (in modal mass participation) are close to z_i"""
+        all the modes that contribute significantly (in modal mass participation) are close to z_i
+        """
         # TODO; choose best mode, not 0 and 1.
         view = self.fem.get_and_set_eigen_results(self.path)
         a0, a1 = self.fem._rayleigh()
@@ -239,27 +237,27 @@ class Chopra1326Test(TestCase):
         modal_damping = a0 / (2 * omegas) + a1 * omegas / 2
         self.assertTrue(np.allclose(modal_damping[0:1], [0.05, 0.05]))
 
-    def test_run_standalone_timehistory(self) -> None:
-        """it should generate results that are easily queried and correct."""
-        rec = Record(str(RECORDS_DIR / "elCentro.csv"))
-        view = self.strana.timehistory(rec, scale=-32.17, gravity_loads=False)
-        view.to_file()
+    """it's too difficult to get the same record as Chopra."""
+    # def test_run_standalone_timehistory(self) -> None:
+    #     rec = Record(str(RECORDS_DIR / "elCentro.csv"))
+    #     view = self.strana.timehistory(rec, scale=-32.17, gravity_loads=False)
+    #     view.to_file()
 
-        u5x = view.view_displacements_envelope(6, 1)
-        self.assertAlmostEqual(u5x, 6.85 / 12, delta=1e-2)
+    #     u5x = view.view_displacements_envelope(6, 1)
+    #     self.assertAlmostEqual(u5x, 6.85 / 12, delta=1e-2)
 
-        # # roof lateral force. (5th storey static lateral force (not element shears!))
-        # Vs = view.view_node_reactions_envelope(6, 1)
-        # self.assertAlmostEqual(Vs, 28.7, delta=1.0)
-        # self.assertAlmostEqual(Vs, 35.217, delta=1.0)
+    # # roof lateral force. (5th storey static lateral force (not element shears!))
+    # Vs = view.view_node_reactions_envelope(6, 1)
+    # self.assertAlmostEqual(Vs, 28.7, delta=1.0)
+    # self.assertAlmostEqual(Vs, 35.217, delta=1.0)
 
-        # env = view.view_base_reactions_envelope()
-        # Vb = env[EDP.shear.value]
-        # self.assertAlmostEqual(Vb.values.sum(), 73.278, delta=1)
+    # env = view.view_base_reactions_envelope()
+    # Vb = env[EDP.shear.value]
+    # self.assertAlmostEqual(Vb.values.sum(), 73.278, delta=1)
 
-        # # overturning moments.. the sum of all node moments
-        # moments = view.view_moments()
-        # self.assertAlmostEqual(moments.values.sum(axis=1).max(), 2597, delta=20)
+    # # overturning moments.. the sum of all node moments
+    # moments = view.view_moments()
+    # self.assertAlmostEqual(moments.values.sum(axis=1).max(), 2597, delta=20)
 
     # def test_load_view_directly_from_file(self) -> None:
     #     rec = Record(str(RECORDS_DIR / "elCentro.csv"))
@@ -384,11 +382,11 @@ class IDATest(TestCase):
                 "collapse",
                 "pfa",
                 "pfv",
-                "peak_drift"
+                "peak_drift",
             }
             | set(SummaryEDP.list()),
         )
         pfas = results_df["pfa"]
         # check there are no NaN
-        self.assertTrue((~results_df.isna()).all().all()) # all elems evaluate to True
+        self.assertTrue((~results_df.isna()).all().all())  # all elems evaluate to True
         ida.to_file(LOSS_FIXTURES_PATH)

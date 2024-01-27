@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from pandas import DataFrame, set_option, read_csv
 from typing import Union
 from app.utils import (
+    ROOT_DIR,
     EDP,
     GRAVITY,
     AnalysisTypes,
@@ -14,6 +15,7 @@ from app.utils import (
     IDAResultsDataFrame,
     SummaryEDP,
     YamlMixin,
+    CollapseTypes,
 )
 from dataclasses import dataclass, field
 from plotly.graph_objects import Figure
@@ -21,14 +23,16 @@ import numpy as np
 from numpy.linalg import inv
 from pathlib import Path
 import os
+import time
 import subprocess
 from human_id import generate_id as uuid
 from app.codes import BuildingCode
-from app.utils import ROOT_DIR
 from subprocess import Popen
-from iteration_utilities import grouper as itertools_grouper
+from iteration_utilities import grouper
+import multiprocessing
 import plotly.express as px
 
+API_DIR = ROOT_DIR / "api"
 MODELS_DIR = ROOT_DIR / "models"
 STRANA_DIR = MODELS_DIR / "strana"
 
@@ -104,6 +108,12 @@ class StructuralResultView(YamlMixin):
         }
         result = fns[edp](node=node, **kwargs)
         return result
+
+    def read_collapse_file(self) -> str:
+        path = self._path / 'collapse.csv'
+        with open(path, 'r') as f:
+            file = f.read()
+        return file
 
     def _read_eigen_values(self) -> DataFrame:
         values = read_csv(self._path / "eigen_values.csv", sep="\s+", header=None)
@@ -196,7 +206,7 @@ class StructuralResultView(YamlMixin):
         """
         env = self._read_envelope("node-disp-envelope.csv")
         col = (node - 1) * 3 + dof - 1
-        disp = env[col].values.sum()
+        disp = env[col].values.max()
         return disp
 
     def view_mass_disp_env(self) -> DataFrame:
@@ -348,12 +358,12 @@ class StructuralResultView(YamlMixin):
         return moments
 
     def view_beam_springs_moments(self) -> DataFrame:
-        if not self._beams_moments:
+        if self._beams_moments is None:
             self._beams_moments = self._read_timehistory("beams-M.csv")
         return self._beams_moments
 
     def view_column_springs_moments(self) -> DataFrame:
-        if not self._columns_moments:
+        if self._columns_moments is None:
             self._columns_moments = self._read_timehistory("columns-M.csv")
         return self._columns_moments
 
@@ -366,12 +376,12 @@ class StructuralResultView(YamlMixin):
         return moments
 
     def view_beam_springs_rotations(self) -> DataFrame:
-        if not self._beams_rotations:
+        if self._beams_rotations is None:
             self._beams_rotations = self._read_timehistory("beams-rot.csv")
         return self._beams_rotations
 
     def view_column_springs_rotations(self) -> DataFrame:
-        if not self._columns_rotations:
+        if self._columns_rotations is None:
             self._columns_rotations = self._read_timehistory("columns-rot.csv")
         return self._columns_rotations
 
@@ -393,11 +403,11 @@ class StructuralResultView(YamlMixin):
         M = moments[ix].values.flatten()
         r = rotations[ix].values.flatten()
         df = DataFrame(dict(M=M, r=r), index=moments.index)
-        fig = df.plot(x="r", y="M")
-        path = kwargs.get("path", "").split("/")[-3:]
-        fig.write_image(
-            f"/Users/carlo/Desktop/moment-rotation-{ix}-{path}.png", engine="kaleido"
-        )
+        # fig = df.plot(x="r", y="M")
+        # path = kwargs.get("path", "").split("/")[-3:]
+        # fig.write_image(
+        #     f"/Users/carlo/Desktop/moment-rotation-{ix}-{path}.png", engine="kaleido"
+        # )
         return df
 
     def view_drifts(self) -> DataFrame:
@@ -420,7 +430,6 @@ class StructuralResultView(YamlMixin):
         accels = storey_accels.merge(
             ground_accel, how="outer", left_index=True, right_index=True
         )
-        print(accels)
         accels = accels.interpolate("cubic").fillna(0)
         return accels
 
@@ -507,21 +516,21 @@ class StructuralResultView(YamlMixin):
         return envs.tolist()
 
     def view_timehistory_summary(self) -> dict:
-        # accels = self.view_peak_absolute_floor_accelerations_in_g()
+        accels = self.view_peak_absolute_floor_accelerations_in_g()
         results = {
             "path": self.abs_folder,  # DONT REMOVE. frontend relies on this to load results.
             SummaryEDP.peak_drifts.value: self.view_peak_drifts().to_list(),
             SummaryEDP.peak_floor_vels.value: self.view_peak_floor_vels().to_list(),
-            # SummaryEDP.peak_floor_accels.value: accels,
+            SummaryEDP.peak_floor_accels.value: accels,
         }
         return results
 
     def get_and_set_timehistory_summary(self) -> dict:
         results = self.view_timehistory_summary()
-        # self.pfa = results[SummaryEDP.peak_floor_accels.value]
+        self.pfa = results[SummaryEDP.peak_floor_accels.value]
         self.peak_drift = max(results[SummaryEDP.peak_drifts.value])
         self.pfv = max(results[SummaryEDP.peak_floor_vels.value])
-        # results["pfa"] = self.pfa
+        results["pfa"] = self.pfa
         results["peak_drift"] = self.peak_drift
         results["pfv"] = self.pfv
         return results
@@ -832,7 +841,8 @@ class TimehistoryRecorder(GravityRecorderMixin):
         s = f"set duration {self.record.duration}\n"
         s += f"set record_dt {self.record.dt}\n"
         s += f"set results_dir $abspath\n"
-        s += "source /Users/carlo/vulkan/dynamic_integrator_crazy.tcl\n"
+        integrator = API_DIR / "dynamic_integrator.tcl"
+        s += f"source {integrator.resolve()}\n"
         return s
 
     @property
@@ -1109,7 +1119,7 @@ class IDA(NamedYamlMixin):
     _hazard: Hazard | None = None
     _design = None
     _intensities: np.ndarray | None = None
-    _NUM_PARALLEL_RUNS: int = 4
+    _NUM_PARALLEL_RUNS: int = 10
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
@@ -1144,12 +1154,12 @@ class IDA(NamedYamlMixin):
         period_ix: int = -1,
     ) -> list[dict]:
         """
-        returns a set of inputs for running IDAs in parallel.
+        returns a set of input dicts for running IDAs in parallel.
         """
         fem = self._design.fems[fem_ix]
         modal_view = fem.get_and_set_eigen_results(results_path)
         period = modal_view.periods[period_ix]
-        inputs = []
+        input_dicts = []
         for rix, record in enumerate(self._hazard.records, start=1):
             for iix, (intensity, sup, inf) in enumerate(
                 zip(*self._intensities), start=1
@@ -1164,7 +1174,7 @@ class IDA(NamedYamlMixin):
                     [inf, sup]
                 )
                 freq = rate_inf - rate_sup
-                inputs.append(
+                input_dicts.append(
                     dict(
                         freq=freq,
                         inf=inf,
@@ -1177,73 +1187,104 @@ class IDA(NamedYamlMixin):
                         intensity=intensity,
                         intensity_str_precision=intensity_str_precision,
                         fem=fem,
+                        id=f"${record}-{intensity_str_precision}",
                     )
                 )
 
-        return inputs
+        return input_dicts
 
     def run_parallel(
         self,
         *,
-        results_dir: Path = None,
-        run_id: str = None,
+        results_dir: Path | None = None,
+        run_id: str | None = None,
         fem_ix: int = -1,
         period_ix: int = 0,
     ) -> IDAResultsDataFrame:
         if not run_id:
             run_id = str(uuid())
-
+        tic = time.perf_counter()
         input_dicts = self.generate_run_dicts(
             run_id=run_id, results_path=results_dir, fem_ix=fem_ix, period_ix=period_ix
         )
         dataframe_records = []
-        views: list[StructuralResultView] = []
-
-        import multiprocessing
+        collapse_results_by_record: dict[str, dict] = {}
 
         num_runs_parallel = multiprocessing.cpu_count() or self._NUM_PARALLEL_RUNS
-        for group in itertools_grouper(input_dicts, num_runs_parallel):
+        fem = self._design.fem
+        stats = fem.pushover_stats()
+        for group in grouper(input_dicts, num_runs_parallel):
             cmds = []
-            for g in group:
-                record: Record = g["record"]
-                strana = StructuralAnalysis(g["outdir"], fem=g["fem"])
+            views: list[StructuralResultView] = []
+            inputs: list[dict] = []
+            for input in group:
+                record: Record = input["record"]
+                strana = StructuralAnalysis(input["outdir"], fem=input["fem"])
                 cmd_string, view_handler = strana.async_timehistory(
-                    record=record, scale=g["scale_factor"]
+                    record=record, scale=input["scale_factor"]
                 )
                 views.append(view_handler)
+                inputs.append(input)
+                if (
+                    record.name in collapse_results_by_record
+                    and collapse_results_by_record[record.name]["collapse"]
+                    != CollapseTypes.NONE.value
+                ):
+                    # has previously collapsed, so skip this run.
+                    # structural resurrection is not considered valid here.
+                    continue
                 cmds.append(cmd_string)
             procs = [Popen(cmd, shell=True) for cmd in cmds]
+
             for proc in procs:
                 code = proc.wait(timeout=600)
-                print(f"{code=}")
+                if code != 0:
+                    print(
+                        f"WARNING: Run took longer than 10 min. exited with code {code=}"
+                    )
 
-        for input, view_handler in zip(input_dicts, views):
-            stats = self._design.fem.pushover_stats()
-            Say_g = stats["cs [1]"]
-            drift_yield = stats["drift_y [%]"]
-            results = view_handler.get_and_set_timehistory_summary()
-            results["peak_drift/drift_yield"] = results["peak_drift"] / float(
-                drift_yield / 100
-            )
-            results["Sa/Say_design"] = input["intensity"] / float(Say_g)
-            collapse = self._design.fem.determine_collapse_from_results(results)
-            row = {
-                "record": view_handler.record.name,
-                "intensity_str": input["intensity_str_precision"],
-                "intensity": input["intensity"],
-                "sup": input["sup"],
-                "inf": input["inf"],
-                "freq": input["freq"],
-                "collapse": collapse,
-                # **input, # doesn't work because input has non-hashable objects
-                **results,
-            }
-            dataframe_records.append(row)
-            view_handler.to_file()
+            for input, view_handler in zip(inputs, views):
+                record_name: str = view_handler.record.name
+                Say_g, drift_yield = stats["cs [1]"], stats["drift_y [%]"]
+
+                if (
+                    record_name in collapse_results_by_record
+                    and collapse_results_by_record[record_name]["collapse"]
+                    != CollapseTypes.NONE.value
+                ):
+                    # reuse the last run results, including collapse type
+                    results = collapse_results_by_record[record_name]
+                else:
+                    results = view_handler.get_and_set_timehistory_summary()
+                    results["peak_drift/drift_yield"] = results["peak_drift"] / float(
+                        drift_yield / 100
+                    )
+                    collapse = fem.determine_collapse_from_results(
+                        results, view_handler
+                    )
+                    results["collapse"] = collapse
+                    collapse_results_by_record[record_name] = results
+
+                results["Sa/Say_design"] = input["intensity"] / float(Say_g)
+                row = {
+                    "record": record_name,
+                    "intensity_str": input["intensity_str_precision"],
+                    "intensity": input["intensity"],
+                    "sup": input["sup"],
+                    "inf": input["inf"],
+                    "freq": input["freq"],
+                    # **input, # doesn't work because input has non-hashable objects
+                    **results,
+                }
+                dataframe_records.append(row)
+                view_handler.to_file()
 
         results_df = DataFrame(dataframe_records)
         results_df.to_csv(STRANA_DIR / f"{run_id}.csv")
         self.results = results_df.to_dict(orient="records")
+        toc = time.perf_counter()
+        dt = toc - tic
+        print(f"IDA in {dt:0.1f} s. ({dt/60:0.1f} min.)")
         return results_df
 
     def run(
@@ -1287,7 +1328,9 @@ class IDA(NamedYamlMixin):
                 strana = StructuralAnalysis(outdir, fem=fem)
                 th_view = strana.timehistory(record=record, scale=scale_factor)
                 results = th_view.get_and_set_timehistory_summary()
-                collapse = self._design.fem.determine_collapse_from_results(results)
+                collapse = self._design.fem.determine_collapse_from_results(
+                    results, th_view
+                )
                 row = {
                     "record": record.name,
                     "intensity_str": intensity_str_precision,
@@ -1313,13 +1356,18 @@ class IDA(NamedYamlMixin):
         df2 = df.pivot(index="intensity", columns="record", values="peak_drift")
         df2["median"] = df2.median(axis=1)
         Sa_g = (
-            self._design.fem.summary.get("cs", 1)
+            self._design.fem.pushover_stats().get("cs [1]", 1)
             if self._design and self._design.fem
             else 1
         )
-        _ida_x = df2["median"].values.tolist()
+        drift_y = (
+            self._design.fem.pushover_stats().get("drift_y [1]", 1)
+            if self._design and self._design.fem
+            else 1
+        )
+        _ida_x = df2["median"].values.flatten()
         _ida_y = df2.index.values.tolist()
-        _norm_ida_x = _ida_x
+        _norm_ida_x = (_ida_x / drift_y).tolist()
         _norm_ida_y = (df2.index / Sa_g).values.tolist()
         return {
             "_ida_x": _ida_x,
@@ -1344,8 +1392,8 @@ class IDA(NamedYamlMixin):
             y="intensity",
             x="peak_drift",
             color="record",
-            symbol="symbol",
-            symbol_sequence=["circle", "x"],
+            # symbol="symbol",
+            # symbol_sequence=["circle", "x"],
             markers=True,
         )
         # seems like figures are 100% of parent container
@@ -1373,8 +1421,8 @@ class IDA(NamedYamlMixin):
             y="Sa/Say_design",
             x="peak_drift/drift_yield",
             color="record",
-            symbol="symbol",
-            symbol_sequence=["circle", "x"],
+            # symbol="symbol",
+            # symbol_sequence=["circle", "x"],
             markers=True,
         )
         # seems like figures are 100% of parent container
@@ -1423,11 +1471,11 @@ class RSA(StructuralAnalysis):
         return peak_moments.tolist(), peak_shears.tolist(), float(cs)
 
     def srss_moment_shear_correction(
-        self, maximum_variation_pct: float = 0.1
+        self, maximum_variation_pct: float = 0.2
     ) -> tuple[list, list, list]:
         """
-        moment and shear distribution along height can vary wildly e.g. 1000, 400, 100
-        this corrects moments/shears with respecto to the base shears such that the difference between successive forces doesn't exceed some pct
+        moment and shear distribution along height can vary wildly (high variance) e.g. 1000, 400, 100
+        this corrects moments/shears with respect to the total base shear, such that the difference between successive forces doesn't exceed some specified pct
         """
         moments, shears, cs = self.srss()
         corrected_moments = []

@@ -446,3 +446,7 @@ elCentro.csv:
   dt: 1.0
 100_SCT190917:
   dt: 0.005
+filtrado:
+  dt: 0.02
+filtrado2:
+  dt: 0.005

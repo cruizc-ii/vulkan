@@ -1,44 +1,55 @@
 from __future__ import annotations
+import time
+import numpy as np
+import pandas as pd
+import plotly.express as px
 from app.strana import IDA, SummaryEDP
 from random import randrange, uniform
-import numpy as np
 from dataclasses import dataclass, asdict, field
-import pandas as pd
 from human_id import generate_id as uuid
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line
 from app.assets import Asset, LossResultsDataFrame
 from app.hazard import HazardCurve, TimeHistorySeries
-from app.utils import EDP, NamedYamlMixin, IDAResultsDataFrame, YamlMixin
+from app.utils import (
+    EDP,
+    NamedYamlMixin,
+    IDAResultsDataFrame,
+    YamlMixin,
+    LossModelsResultsDataFrame,
+    ScatterResultsDataFrame,
+)
 from pathlib import Path
-import plotly.express as px
 from app.utils import ROOT_DIR
+from functools import reduce
+
 
 LOSS_DIR = ROOT_DIR / "models" / "loss"
 LOSS_CSV_RESULTS_DIR = ROOT_DIR / "models" / "loss_csvs"
 RATE_CSV_RESULTS_DIR = ROOT_DIR / "models" / "rate_csvs"
-# EXPECTED_LOSS_CSV_RESULTS_DIR = ROOT_DIR / "models" / "expected_loss_csvs"
-# ACCELS_CSV_RESULTS_DIR = ROOT_DIR / "models" / "accels_csvs"
-# SAMPLED_STRANA_CSV_RESULTS_DIR = ROOT_DIR / "models" / "sampled_strana_results_csvs"
-# EXPECTED_STRANA_CSV_RESULTS_DIR = ROOT_DIR / "models" / "expected_strana_results_csvs"
+
+
+class IDANotFoundException(FileNotFoundError):
+    pass
 
 
 @dataclass
 class Loss:
-    name: str = None
-    src: str = None
-    net_worth: float = None
-    average_annual_loss: float = None
-    average_annual_loss_pct: float = None
-    expected_loss: float = None
-    expected_loss_pct: float = None
-    std_loss: float = None
-    _loss_df: LossResultsDataFrame = None
-    _ida_results_df: IDAResultsDataFrame = None
-    rate_src: str = None
-    _rate_df: pd.DataFrame = None
+    name: str | None = None
+    src: str | None = None
+    net_worth: float | None = None
+    average_annual_loss: float | None = None
+    average_annual_loss_pct: float | None = None
+    expected_loss: float | None = None
+    expected_loss_pct: float | None = None
+    std_loss: float | None = None
+    _loss_df: LossResultsDataFrame | None = None
+    _ida_results_df: IDAResultsDataFrame | None = None
+    rate_src: str | None = None
+    _rate_df: pd.DataFrame | None = None
     _RATE_NUM_BINS: int = 20
-    scatter_src: str = None
-    _scatter_df: pd.DataFrame = None
+    scatter_src: str | None = None
+    _srcs_dfs_cache: dict = field(default_factory=dict)
+    _scatter_df: ScatterResultsDataFrame | None = None
 
     def __post_init__(self):
         if self.src:
@@ -53,7 +64,7 @@ class Loss:
         df.to_csv(src)
         return src
 
-    def stats(self) -> tuple[float, float, float, float, float, float]:
+    def stats(self):
         return (
             self.average_annual_loss,
             self.expected_loss,
@@ -73,8 +84,8 @@ class Loss:
         mean = aal / lambda0
         self.expected_loss = mean
         self.average_annual_loss = aal
-        self.average_annual_loss_pct = self.average_annual_loss / self.net_worth
-        self.expected_loss_pct = self.expected_loss / self.net_worth
+        self.average_annual_loss_pct = self.average_annual_loss / self.net_worth * 100
+        self.expected_loss_pct = self.expected_loss / self.net_worth * 100
         return self.stats()
 
     def _compute_rate_losses(self) -> pd.DataFrame:
@@ -118,18 +129,19 @@ class Loss:
         fig = px.line(df, markers=True)
         if log_axes:
             fig.update_layout(
-                xaxis_type="log",
+                # xaxis_type="log",
                 yaxis_type="log",
             )
         fig.update_layout(
-            # xaxis_range=[-0.3, df.values.max()],
-            # yaxis_range=[-0.1, 0.15],
+            # df.values.max()
+            # xaxis_range=[-2, 3],
+            yaxis_range=[-5, 0],
             xaxis_title="$",
-            yaxis_title="v(L)",
+            yaxis_title="v($) [1/yr]",
         )
         return fig
 
-    def aggregated_expected_loss_and_variance_fig(self, df: pd.DataFrame):
+    def aggregated_expected_loss_and_variance_fig(self, df: LossModelsResultsDataFrame):
         # start, stop, num = df.index.min(), df.index.max(), 10
         # binspace = np.linspace(start=start, stop=stop, num=num)
         # bins = pd.cut(df.index, binspace)
@@ -154,10 +166,10 @@ class Loss:
         return fig
 
     def deaggregate_rate_of_exceedance(
-        self, df: pd.DataFrame, key: str
+        self, df: LossModelsResultsDataFrame, key: str
     ) -> pd.DataFrame:
-        keys = df[key].unique()
         rates = {}
+        keys = df[key].unique()
         for k in keys:
             srcs = df[df[key].isin([k])]["src"].values
             sum_df = None
@@ -169,7 +181,10 @@ class Loss:
                 else:
                     sum_df = sum_df.add(adf)
             rates[k] = self._rate_of_exceedance_for_loss_df(sum_df)
-        vdf = pd.DataFrame(rates, index=rates[k].index)
+
+        index = rates[k].index
+
+        vdf = pd.DataFrame(rates, index=index)
         return vdf
 
     def _rate_of_exceedance_for_loss_df(self, df: LossResultsDataFrame) -> pd.DataFrame:
@@ -190,7 +205,9 @@ class Loss:
         rate_df = df[df.columns.difference(columns)].sum()
         return rate_df
 
-    def multiple_rates_of_exceedance_fig(self, df: pd.DataFrame, key: str):
+    def multiple_rates_of_exceedance_fig(
+        self, df: LossModelsResultsDataFrame, key: str
+    ):
         vdf = self.deaggregate_rate_of_exceedance(df, key)
         fig = vdf.plot()
         fig.update_layout(
@@ -225,9 +242,10 @@ class Loss:
 
 @dataclass
 class LossModel(YamlMixin, Loss):
-    _asset: Asset = None
-    category: str = None
-    floor: str = None
+    _asset: Asset | None = None
+    category: str | None = None
+    floor: str | None = None
+    _views_by_path: dict | None = None
 
     def __post_init__(self):
         super().__post_init__()
@@ -236,34 +254,42 @@ class LossModel(YamlMixin, Loss):
             self.floor = self._asset.floor
             self.net_worth = self._asset.net_worth
             self.name = self._asset.name
+            tic = time.perf_counter()
             self._compute_losses()
             self._get_and_set_loss_statistics()
             self._compute_rate_losses()
+            toc = time.perf_counter()
+            print(f"Computed losses in {toc - tic:0.1f} seconds {self.name}")
 
     def _compute_losses(self) -> LossResultsDataFrame:
         self._csv_name = f"{self.name}-{self.floor}"
+        self._scatter_csv_name = f"{self.name}-{self.floor}-scatter"
         df = self._ida_results_df
-        df["loss"] = self._asset.dollars(strana_results_df=self._ida_results_df)
+        df["loss"] = self._asset.dollars(
+            strana_results_df=self._ida_results_df, views_by_path=self._views_by_path
+        )
         df["name"] = self._asset.name
         df["category"] = self._asset.category
         df["floor"] = self._asset.floor
-        self._scatter_df = df.copy(deep=True)
-        df = df.pivot(index=["intensity", "freq"], columns="record", values="loss")
+        self._scatter_df: ScatterResultsDataFrame = df.copy(deep=True)
+        self.scatter_src = self.save_df(
+            df, LOSS_CSV_RESULTS_DIR, name=self._scatter_csv_name
+        )
+        df: LossResultsDataFrame = df.pivot(
+            index=["intensity", "freq"], columns="record", values="loss"
+        )
         df["mean"] = df.mean(axis=1)
         self._loss_df = df
         self.src = self.save_df(
             self._loss_df, LOSS_CSV_RESULTS_DIR, name=self._csv_name
         )
-
-
-class IDANotFoundException(FileNotFoundError):
-    pass
+        return df
 
 
 @dataclass
 class LossAggregator(NamedYamlMixin, Loss):
-    ida_model_path: str = None
-    loss_models: list["LossModel"] = None
+    ida_model_path: str | None = None
+    loss_models: list["LossModel"] | None = None
     _assets: list[Asset] = field(default_factory=list)
 
     def __post_init__(self):
@@ -283,17 +309,54 @@ class LossAggregator(NamedYamlMixin, Loss):
         if self.scatter_src:
             self._scatter_df = pd.read_csv(self.scatter_src, index_col=0)
 
+    @property
+    def summary(self) -> dict:
+        df = self._rate_df
+        _rate_x = []
+        _rate_y = []
+        if df is not None:
+            _rate_x = df.index.astype(float).tolist()
+            _rate_y = df.values.astype(float).tolist()
+        return {
+            "AAL $": self.average_annual_loss,
+            "EL $": self.expected_loss,
+            "std L $": self.std_loss,
+            # self.sum_losses,
+            "EL %": self.expected_loss_pct,
+            "AAL %": self.average_annual_loss_pct,
+            "net worth $": self.net_worth,
+            "_rate_x": _rate_x,
+            "_rate_y": _rate_y,
+        }
+
+    @property
+    def asset_records(self) -> list[dict]:
+        return [a.to_dict for a in self._assets]
+
+    @property
+    def assets_df(self) -> pd.DataFrame:
+        return pd.DataFrame(self.asset_records)
+
+    @property
+    def loss_models_df(self) -> pd.DataFrame:
+        return pd.DataFrame(self.loss_models)
+
     def run(self) -> None:
+        tic = time.perf_counter()
         self._create_loss_models()
         self._compute_losses()
         self._get_and_set_scatter_df()
         self._get_and_set_loss_statistics()
+        toc = time.perf_counter()
+        print(f"Ran loss in {toc - tic:0.4f} s.")
 
     def _create_loss_models(self) -> list[LossModel]:
+        views_by_path = {}  # cache views because disk i/o is slow
         self.loss_models = [
             LossModel(
                 _asset=asset,
                 _ida_results_df=self._ida_results_df,
+                _views_by_path=views_by_path,
             )
             for asset in self._assets
             if asset
@@ -309,12 +372,13 @@ class LossAggregator(NamedYamlMixin, Loss):
         self._compute_rate_losses()
         return self._loss_df
 
-    def _get_and_set_scatter_df(self) -> pd.DataFrame:
-        df = self._concat_scatter_dfs()
+    def _get_and_set_scatter_df(self) -> ScatterResultsDataFrame:
+        df: ScatterResultsDataFrame = self._concat_scatter_dfs()
         self.scatter_src = self.save_df(
             df, LOSS_CSV_RESULTS_DIR, name=self._scatter_csv_name
         )
         self._scatter_df = df
+        return df
 
     def _concat_scatter_dfs(self) -> pd.DataFrame:
         scatter_dfs = [lm._scatter_df for lm in self.loss_models]
@@ -326,7 +390,7 @@ class LossAggregator(NamedYamlMixin, Loss):
     def sum_columns_for_similar_dfs(
         self, dfs: list[pd.DataFrame], columns=True
     ) -> pd.DataFrame:
-        """algebraically adds dataframes that have the same schema along all their columns, ignoring index"""
+        """algebraically sums dataframes that have the same schema along all their columns, ignoring index"""
         df = dfs[0]
         # if index in df.columns:
         #     df = df.set_index(index)
@@ -337,27 +401,68 @@ class LossAggregator(NamedYamlMixin, Loss):
         # df = df.reset_index()
         return df
 
-    def aggregate_src_df(self, df: pd.DataFrame, key: str) -> pd.DataFrame:
+    def aggregate_src_df(
+        self, df: LossModelsResultsDataFrame, key: str
+    ) -> pd.DataFrame:
         """
         we need to load the df for each asset
         first, get all csvs from src and put the numpy array of losses in a col
         now groupby the key and construct a new dataframe
-        where each row is the
         """
-        df["asset"] = df[["src"]].applymap(
-            lambda src: pd.read_csv(src, usecols=["mean"], squeeze=True).to_numpy()
-        )
-        grouped = df.groupby(key)[["asset"]].agg(np.sum)
-        data = {
-            **grouped.to_dict()["asset"],
-        }
-        df = pd.DataFrame(data, index=self._loss_df.index.get_level_values("intensity"))
-        df["total"] = df.sum(axis=1)
+        # # this does not work because the summary that we have groups by intensity, so the record variability is lost, we must go one level deeper
+        # df["collapse"] = df[["scatter_src"]].applymap(
+        #     lambda src: pd.read_csv(
+        #         src,
+        #         usecols=["collapse"],
+        #     )
+        #     .squeeze("columns")
+        #     .to_numpy()
+        # )
+
+        if key == "collapse":
+            dfs = []
+
+            def deaggregate_collapse(src: str):
+                df: LossResultsDataFrame = pd.read_csv(src)
+                num_records = len(set(df["record"].values))
+                df = (
+                    pd.pivot_table(
+                        df,
+                        index="intensity",
+                        columns="collapse",
+                        values="loss",
+                        aggfunc=sum,
+                    )
+                    / num_records
+                )
+                df = df.fillna(0)
+                dfs.append(df)
+                return df
+
+            df["collapse"] = df[["scatter_src"]].applymap(deaggregate_collapse)
+            df = reduce(lambda x, y: x.add(y, fill_value=0), dfs)
+        else:
+            df["asset"] = df[["src"]].applymap(
+                lambda src: pd.read_csv(
+                    src,
+                    usecols=["mean"],
+                )
+                .squeeze("columns")
+                .to_numpy()
+            )
+            grouped = df.groupby(key)[["asset"]].agg(np.sum)
+            data = {
+                **grouped.to_dict()["asset"],
+            }
+            df = pd.DataFrame(
+                data, index=self._loss_df.index.get_level_values("intensity")
+            )
+            df["total"] = df.sum(axis=1)
         return df
 
     @staticmethod
     def filter_src_df(
-        df: pd.DataFrame,
+        df: LossModelsResultsDataFrame,
         category_filter: list[str],
         name_filter: list[str],
         storey_filter: list[str],
@@ -368,30 +473,6 @@ class LossAggregator(NamedYamlMixin, Loss):
             & (df["floor"].isin(storey_filter))
         ]
         return df
-
-    @property
-    def summary(self) -> dict:
-        return {
-            "AAL $": self.average_annual_loss,
-            "EL $": self.expected_loss,
-            "std L $": self.std_loss,
-            # self.sum_losses,
-            "EL %": self.expected_loss_pct,
-            "aal %": self.average_annual_loss_pct,
-            "net worth $": self.net_worth,
-        }
-
-    @property
-    def asset_records(self) -> list[dict]:
-        return [a.to_dict for a in self._assets]
-
-    @property
-    def assets_df(self) -> pd.DataFrame:
-        return pd.DataFrame(self.asset_records)
-
-    @property
-    def loss_models_df(self) -> pd.DataFrame:
-        return pd.DataFrame(self.loss_models)
 
     def scatter_fig(
         self, category_filter=None, name_filter=None, floor_filter=None

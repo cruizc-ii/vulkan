@@ -21,7 +21,7 @@ class BuildingCode(ABC):
 @dataclass
 class CDMXBuildingCode(BuildingCode):
     Q: float = 1
-    _SPECTRA_NAME = "EspectrosDis145.txt"
+    _SPECTRA_NAME = "Copilco.txt"
 
     def __post_init__(self):
         spectra_path = DESIGN_SPECTRA_PATH / self._SPECTRA_NAME
