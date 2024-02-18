@@ -168,39 +168,67 @@ class Loss:
     def deaggregate_rate_of_exceedance(
         self, df: LossModelsResultsDataFrame, key: str
     ) -> pd.DataFrame:
-        rates = {}
-        keys = df[key].unique()
-        for k in keys:
-            srcs = df[df[key].isin([k])]["src"].values
-            sum_df = None
-            for src in srcs:
-                adf = pd.read_csv(src)
-                adf = adf.set_index(["intensity", "freq"])
-                if sum_df is None:
-                    sum_df = adf
-                else:
-                    sum_df = sum_df.add(adf)
-            rates[k] = self._rate_of_exceedance_for_loss_df(sum_df)
+        if key == "collapse":
+            dfs = []
+            rates = {}
 
-        index = rates[k].index
+            def deaggregate_collapse(src: str):
+                df: LossResultsDataFrame = pd.read_csv(src)
+                num_records = len(set(df["record"].values))
+                df = (
+                    pd.pivot_table(
+                        df,
+                        index=["intensity", "freq"],
+                        columns="collapse",
+                        values="loss",
+                        aggfunc=sum,
+                    )
+                    / num_records
+                )
+                df = df.fillna(0)
+                dfs.append(df)
+                return df
 
-        vdf = pd.DataFrame(rates, index=index)
-        return vdf
+            df["collapse"] = df[["scatter_src"]].applymap(deaggregate_collapse)
+            df = reduce(lambda x, y: x.add(y, fill_value=0), dfs)
+            for col in df.columns:
+                rates[col] = self._rate_of_exceedance_for_loss_df(df[[col]])
+            index = rates[col].index
+            vdf = pd.DataFrame(rates, index=index)
+            return vdf
+        else:
+            rates = {}
+            keys = df[key].unique()
+            for k in keys:
+                srcs = df[df[key].isin([k])]["src"].values
+                sum_df = None
+                for src in srcs:
+                    adf = pd.read_csv(src)
+                    adf = adf.set_index(["intensity", "freq"])
+                    if sum_df is None:
+                        sum_df = adf
+                    else:
+                        sum_df = sum_df.add(adf)
+                rates[k] = self._rate_of_exceedance_for_loss_df(sum_df)
+
+            index = rates[k].index
+
+            vdf = pd.DataFrame(rates, index=index)
+            return vdf
 
     def _rate_of_exceedance_for_loss_df(self, df: LossResultsDataFrame) -> pd.DataFrame:
         """
-        loss results df has either a column called freq or index
+        loss results df has either a column or index called freq
         and has columns for the loss of each record at each intensity
         """
         _loss_linspace = np.linspace(0, self.net_worth, self._RATE_NUM_BINS)
         df = df[df.columns.difference(["mean", "aal", "std"])]
         columns = df.columns
+        num_columns = len(columns)
         freq = df.index.get_level_values("freq")
         for loss in _loss_linspace:
             df[loss] = (
-                df[df[columns] > loss].count(axis=1).values
-                * freq.values
-                / df[columns].count(axis=1)
+                df[df[columns] > loss].count(axis=1).values * freq.values / num_columns
             )
         rate_df = df[df.columns.difference(columns)].sum()
         return rate_df
@@ -209,6 +237,7 @@ class Loss:
         self, df: LossModelsResultsDataFrame, key: str
     ):
         vdf = self.deaggregate_rate_of_exceedance(df, key)
+        vdf["total"] = vdf.sum(axis=1)
         fig = vdf.plot()
         fig.update_layout(
             xaxis_title="$",
@@ -218,7 +247,7 @@ class Loss:
             xaxis_type="log",
             yaxis_type="log",
             # title_font_size=24,
-            # xaxis_range=[0, 5],
+            yaxis_range=[-5, -1],
             # margin=dict(l=0, r=0, b=0),
             # title_text=f"rates of exceedance",
         )
@@ -409,7 +438,7 @@ class LossAggregator(NamedYamlMixin, Loss):
         first, get all csvs from src and put the numpy array of losses in a col
         now groupby the key and construct a new dataframe
         """
-        # # this does not work because the summary that we have groups by intensity, so the record variability is lost, we must go one level deeper
+        # # this does not work because the summary groups by intensity, so the record variability is lost, we must go one level deeper
         # df["collapse"] = df[["scatter_src"]].applymap(
         #     lambda src: pd.read_csv(
         #         src,

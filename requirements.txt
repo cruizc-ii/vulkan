@@ -23,6 +23,7 @@ executing==0.8.3
 fastjsonschema==2.15.3
 gitdb==4.0.9
 GitPython==3.1.27
+human-id==0.2.0
 idna==3.3
 importlib-metadata==4.11.4
 iniconfig==1.1.1
@@ -85,7 +86,7 @@ pytz-deprecation-shim==0.1.0.post0
 PyYAML==6.0
 pyzmq==23.0.0
 requests==2.27.1
-scipy==1.8.1
+scipy==1.12.0
 semver==2.13.0
 Send2Trash==1.8.0
 shortuuid==1.0.9

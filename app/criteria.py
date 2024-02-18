@@ -358,7 +358,7 @@ class DesignCriterionFactory:
     }
 
     public_seeds = {
-        CDMX2017Q1.__name__: CDMX2017Q1,
+        # CDMX2017Q1.__name__: CDMX2017Q1,
         # CDMX2017Q4.__name__: CDMX2017Q4,
         CDMX2017Q1IMK.__name__: CDMX2017Q1IMK,
         CDMX2017Q4IMK.__name__: CDMX2017Q4IMK,

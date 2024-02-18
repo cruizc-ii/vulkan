@@ -21,6 +21,31 @@ make
 
 Set a `breakpoint()` anywhere
 
+## Dockerize it
+
+```
+alias podman=docker
+podman machine init --cpus 2 --memory 4096 --disk-size 20
+podman machine start
+podman machine list
+podman build -t vulkan .
+podman run -p 8080:80 -t vulkan
+http://127.0.0.1:80
+```
+
+## Change project name
+
+`fly.toml > app`
+
+## Adding secrets
+
+Add to `.env`
+Add to `fly secrets set`
+
+## Access fly container
+
+`fly ssh console`
+
 ## TODO
 
 Source code has MIT licence.
@@ -47,7 +72,6 @@ Biblioteca unam has a .zip of the source code.
 - [x] incluir porcentaje de oficina transversal e.g. 2.7 veces cabe la distribucion de oficina que tiene dy=10m, el algoritmo de colocacion hace ese trabajo y multiplica asset.net_worth x 2.7
 - [ ] incluir cimentacion como rugged asset always, 10% structural cost
 - [ ] nonstructural glass windows drift sensitive
-- [ ] collapse deaggregation is loading too many files, and is extremely slow. we should cache the mask.
 - [ ] libro de manuel alejandro con alcocer, hacer mejor los costos, desacoplar el acero longitudinal del transversal?
 - [ ] ver publicaciones sobre IDAs con cortante, hablar con Vamvatsikos
 
@@ -58,13 +82,22 @@ refuerzo por integridad, para proteger del colapso progresivo por carga vertical
 q=4 se revisa por capacidad
 q=2 se revisa con cortante del analisis (mas laxo)
 
-- [ ] echar ojo a la desagregción numeros negativos
+- [ ] echar ojo a la desagregación numeros negativos
 - [ ] asegurar que el cambio preserva la inestabilidad dinamica (keep resolution but remove shear failure)
-- [ ] montar en server.
+
+- [ ] rate of exceedance deaggregation
+
+fix L=l0
+
+count how many records exceeded without collapse
+with collapse
+and without collapse
+
+then normalize
 
 ### Design
 
-- [ ] introduce PDelta.
+- [x] introduce PDelta.
 - [x] fix deselecting model.yml when clicking 'run'
 - [x] include more tests for CDMX design
 - [x] check mass and weight are correctly set
@@ -94,12 +127,12 @@ q=2 se revisa con cortante del analisis (mas laxo)
 
 ### Adding new hazard curves
 
-TODO: change this inconsistency and force users to provide them in SI units
+TODO: change units inconsistency and force users to provide them in SI units
 provide them in (g)
 
 ### Adding new records
 
-TODO: change this units inconsistency and force users to provide them in SI units
+TODO: change units inconsistency and force users to provide them in SI units
 provide records in their base units, add a scale factor to `record-parameters.yml` such that spectra can be computed correctly in m/s/s
 
 ## COMMON PROBLEMS

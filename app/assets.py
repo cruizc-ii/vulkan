@@ -16,7 +16,7 @@ from scipy.stats import lognorm
 
 LOSS_MODELS_DIR = Path(__file__).resolve().parent.parent / "models" / "loss"
 RISK_MODELS_DIR = Path(__file__).resolve().parent.parent / "models" / "risk"
-LossResultsDataFrame = pd.DataFrame  # accels vs loss values
+LossResultsDataFrame = pd.DataFrame  # summarized accels vs loss values
 
 
 class AssetNotFoundException(Exception):

@@ -174,7 +174,7 @@ with st.sidebar:
             DesignCriterionFactory.public_options(),
             index=DesignCriterionFactory.public_options().index(
                 design.design_criteria[0] or DesignCriterionFactory.DEFAULT
-            )
+            ),
             # this [0] is bad design. the idea was to have multiple criteria, this is too complex in the ui.
             # FEMs and Criteria should be singletons instead of lists
         )
@@ -212,6 +212,7 @@ with st.sidebar:
 
             st.success("design successful")
 
+        elements = None
         if design and design.fems:
             elements, stylesheet = design.fem.cytoscape()
 
@@ -627,7 +628,9 @@ with st.sidebar:
         state.first_render = False
 
 if state.module == 1:
-    if design and design.fems:
+    if elements is None or design is None or design.fems is None:
+        st.header("Create a design")
+    else:
         selected = cytoscape(
             elements=elements,
             stylesheet=stylesheet,
@@ -870,8 +873,8 @@ if state.module == 4:
                 name_filter=selected_names,
                 storey_filter=selected_floors,
             )
-            # fig = loss.multiple_rates_of_exceedance_fig(df, key=agg_key_1)
-            # st.plotly_chart(fig)
+            fig = loss.multiple_rates_of_exceedance_fig(df, key=agg_key_1)
+            st.plotly_chart(fig)
             df = loss.aggregate_src_df(df, key=agg_key_1)
             df = df * 1.0 / normalization
             fig = loss.aggregated_expected_loss_and_variance_fig(df)

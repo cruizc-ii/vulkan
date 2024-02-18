@@ -28,3 +28,10 @@ clean:
 	rm -rf models/rate_csvs/**;
 	rm -rf results/**;
 	git restore models/;
+
+docker: build docker_run
+build:
+	podman build -t vulkan .
+docker_run:
+	podman run -p 8501:8501 -t vulkan
+
