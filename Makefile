@@ -24,9 +24,9 @@ clean:
 	rm -rf models/strana/**;
 	rm -rf models/loss/**;
 	rm -rf models/compare/**;
-	rm -rf models/loss_csvs/**;
-	rm -rf models/rate_csvs/**;
-	rm -rf results/**;
+	find models/loss_csvs/ -delete
+	find models/rate_csvs/ -delete
+	find results/** -name ".csv" -delete
 	git restore models/;
 
 docker: build docker_run

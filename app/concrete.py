@@ -135,19 +135,27 @@ class RectangularConcreteColumn:
     Ec: float | None = None  # Young's modulus for concrete
     Ac: float | None = None  # effective cross-sectional area for flexure A = bd
     Ag: float | None = None  # gross cross-sectional area Ag = bh
-    d: float | None = None  # distance from the extreme fiber in compression to the centroid of the longitudinal reinforcement on the tension side of the member
+    d: float | None = (
+        None  # distance from the extreme fiber in compression to the centroid of the longitudinal reinforcement on the tension side of the member
+    )
     c: float | None = None  # depth of neutral axis
-    dp: float | None = None  # distance from the extreme compression fiber to the centroid of the longitudinal compression steel
+    dp: float | None = (
+        None  # distance from the extreme compression fiber to the centroid of the longitudinal compression steel
+    )
     p: float | None = None  # longitudinal total reinforcement ratio, p = As/bd.
     pc: float | None = None  # longitudinal compression reinforcement ratio pc = Asc/bd
     pt: float | None = None  # longitudinal tension reinforcement ratio pc = Asc/bd
-    pw: float | None = None  # compression ratio of transverse reinforcement, in region of close spacing at column end pw = Asw/sb
+    pw: float | None = (
+        None  # compression ratio of transverse reinforcement, in region of close spacing at column end pw = Asw/sb
+    )
     pmin: float | None = None
     pmax: float | None = None
     Asmin: float | None = None
     Asmax: float | None = None
     pcc: float | None = None  # ratio of longitudinal reinforcement to the confined core
-    pweff: float | None = None  # effective ratio of transverse reinforcement, in region of close spacing pweff=pw*fy/fc′
+    pweff: float | None = (
+        None  # effective ratio of transverse reinforcement, in region of close spacing pweff=pw*fy/fc′
+    )
     beta: float | None = None
     My: float | None = 0.0
     Mc: float | None = 0.0
@@ -176,13 +184,20 @@ class RectangularConcreteColumn:
     singly_reinforced: bool = False
     Ig: float | None = None  # gross stiffness
     Iy: float | None = None  # (effective) yield stiffness
-    L: float = 1.0
-    Ls: float | None = None  # shear span, distance between column end and point of inflection, shear span is length of equivalent cantilever
+    length: float = 1.0
+    L: float = 1.0  # use length instead of L
+    Ls: float | None = (
+        None  # shear span, distance between column end and point of inflection, shear span is length of equivalent cantilever
+    )
     Lpl: float = 0.03
     DESIGN_TOL: float = 0.05
     EFFECTIVE_INERTIA_COEFF: float | None = None  # Iy = coeff*Ig
-    alpha_steel_type: float = 0.016  # 0.016 for ductile hot-rolled or heat-treated steel and to 0.0105 for cold-worked steel
-    alpha_slippage: int = 1  # asl is the zero-one variable for slip, equal to 1 if there is slippage of the longitudinal bars from their anchorage beyond the section of the maximum moment, or to 0 if there is not
+    alpha_steel_type: float = (
+        0.016  # 0.016 for ductile hot-rolled or heat-treated steel and to 0.0105 for cold-worked steel
+    )
+    alpha_slippage: int = (
+        1  # asl is the zero-one variable for slip, equal to 1 if there is slippage of the longitudinal bars from their anchorage beyond the section of the maximum moment, or to 0 if there is not
+    )
     alpha_postyield: float = 0.13
     alpha_confinement: int = 1  # EuroCode confinement effectiveness factor
     alpha_cyclic: int = 1  # 1 if cyclic load, 0 if monotonic
@@ -323,6 +338,7 @@ set stable {self.stable}
             raise DesignException("Provide either My or (p, As, Ast or pt)")
 
         self.My = float(self.My)
+        self.Vy = 2 * self.My / self.length
         self.q = self.p * self.fy / self.fpc
         self.qc = self.pc * self.fy / self.fpc
         self.qt = self.pt * self.fy / self.fpc
@@ -373,7 +389,7 @@ set stable {self.stable}
         # self.phi_U = self.eps_cu / self.cw / self.d
 
         self.Ls = (
-            self.L / 2
+            self.length / 2
         )  # shear span is M/V but for double curvature, member shear is constant and equal to 2M/L
 
         self.theta_y_fardis = (
@@ -451,21 +467,6 @@ set stable {self.stable}
             / self.theta_pc_cyclic
         )
         self.stable = self.Iy > self.Icrit
-
-    def shear_failure_drift(self, shear_force: float = 0) -> float:
-        """
-        should P be in MN?
-        how do we compute shear_stress just by V,M. is it 1.5 V/Ac?
-        """
-        shear_stress_MPa = 1.5 * 1e-3 * shear_force / self.Ac
-        drift = (
-            3.0 / 100
-            + 4 * self.pw
-            - 1.0 / 40 * shear_stress_MPa / self.fpcMPa**0.5
-            - 1.0 / 40 * self.P * 1e-3 / (self.Ac * self.fpcMPa)
-        )
-        drift = drift if drift >= 0.01 else 0.01
-        return drift
 
     def get_and_set_net_worth(self) -> float:
         # required to override the elasticbeamcolumn method
@@ -619,7 +620,41 @@ set stable {self.stable}
             3.0 / 100
             + 4 * self.pw
             - 1.0 / 40 * shear_force / 1000 / self.Ag / self.fcMPa**0.5
-            - 1.0 / 40 * axial_force / 1000 / self.Ag / self.fcMPa
-            , 0.01
+            - 1.0 / 40 * axial_force / 1000 / self.Ag / self.fcMPa,
+            0.01,
+        )
+        return cap
+
+    def ntc_shear_capacity(
+        self, shear_force: float = 0.0, axial_force: float = 0.0
+    ) -> float:
+        """
+        at every instant, the combination of shear/axial may change the capacity
+        usually we consider P=constant.
+        """
+        knl, lambd = 0.7, 1.0
+        Mud_over_Vud = 2.0  # 7.34 ASCE41, between 2 and 4
+        d = self.d
+        s = self.s
+        acol = (
+            1.0  # if s / d <= 0.75 else linealmente decreciente hasta cero cuando s/d=1
+        )
+        Ag = self.Ag
+        P = axial_force
+        fcLE = self.fc
+        fytLE = self.fyw
+        Av = self.Asw
+        sqrtFc = fcLE**0.5
+        cap = (
+            1
+            * 0.6895
+            * knl
+            * (
+                acol * (Av * fytLE * d / s)
+                + lambd
+                * 0.8
+                * Ag
+                * ((6 * sqrtFc / Mud_over_Vud) * (1 + P / (6 * Ag * sqrtFc)) ** 0.5)
+            )
         )
         return cap

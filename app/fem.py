@@ -65,7 +65,9 @@ class FiniteElementModel(ABC, YamlMixin):
     miranda_fundamental_period: float | None = None
     cdmx_fundamental_period: float | None = None
     uniform_beam_loads_by_mass: list[float] | None = None
-    _YIELD_TANGENT_PCT: float = 0.2  # less than this we consider structure to have yielded. when curr_tangent < PCT*initial tangent
+    _YIELD_TANGENT_PCT: float = (
+        0.2  # less than this we consider structure to have yielded. when curr_tangent < PCT*initial tangent
+    )
 
     def __str__(self) -> str:
         h = "#!/usr/local/bin/opensees\n"
@@ -1440,20 +1442,28 @@ class IMKFrame(FiniteElementModel):
     ) -> "CollapseTypes":
         from app.utils import CollapseTypes
 
+        return CollapseTypes.NONE.value
+
         shears = view_handler.view_column_design_shears()
         axials = view_handler.view_column_design_axials()
         columns: list[IMKSpring] = self.springs_columns[::2]  # take the top spring
+        # capacities = [
+        #     column.elwood_shear_capacity(shear, axial)
+        #     for column, shear, axial in zip(columns, shears, axials)
+        # ]
         capacities = [
-            column.elwood_shear_capacity(shear, axial)
+            column.ntc_shear_capacity(shear, axial)
             for column, shear, axial in zip(columns, shears, axials)
         ]
-        drifts_by_storey = view_handler.view_peak_drifts().to_list()
-        drifts = [d for d in drifts_by_storey for _ in range(self.num_cols)]
-        collapses = [d > capacity for d, capacity in zip(drifts, capacities)]
-        elwood_collapse = (
+        print(shears, capacities)
+        # drifts_by_storey = view_handler.view_peak_drifts().to_list()
+        # drifts = [d for d in drifts_by_storey for _ in range(self.num_cols)]
+        # collapses = [d > capacity for d, capacity in zip(drifts, capacities)]
+        collapses = [d > capacity for d, capacity in zip(shears, capacities)]
+        shear_collapse = (
             CollapseTypes.SHEAR.value if any(collapses) else CollapseTypes.NONE.value
         )
-        return elwood_collapse
+        return shear_collapse
 
 
 class FEMFactory:

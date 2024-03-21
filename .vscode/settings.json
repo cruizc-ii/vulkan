@@ -1,15 +1,9 @@
 {
-  "python.linting.enabled": false,
-  "python.linting.mypyEnabled": false,
-  "python.linting.pylintEnabled": true,
   "python.testing.pytestArgs": ["tests"],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
-  "python.linting.mypyArgs": [
-    "--python-executable=./.direnv/python-3.9.6/bin/python"
-  ],
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
-  "python.formatting.provider": "none"
+  "python.testing.unittestArgs": ["-v", "-s", "./tests", "-p", "*test*.py"]
 }

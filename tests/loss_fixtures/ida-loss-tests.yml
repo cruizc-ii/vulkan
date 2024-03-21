@@ -2,7 +2,7 @@ design_abspath: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/ida-design-t
 hazard_abspath: /Users/carlo/vulkan/tests/strana_fixtures/ida-tests/ida-hazard-test.yml
 name: ida-loss-tests
 results:
-- collapse: false
+- collapse: none
   freq: 1.7840039472670224
   inf: 0.05
   intensity: 0.1
@@ -19,7 +19,7 @@ results:
   pfv: 0.735097
   record: 98_SCT190985NS.csv
   sup: 0.15000000000000002
-- collapse: false
+- collapse: none
   freq: 0.13084714172131995
   inf: 0.15000000000000002
   intensity: 0.2
@@ -36,7 +36,7 @@ results:
   pfv: 1.47019
   record: 98_SCT190985NS.csv
   sup: 0.25
-- collapse: false
+- collapse: none
   freq: 1.7840039472670224
   inf: 0.05
   intensity: 0.1
@@ -53,7 +53,7 @@ results:
   pfv: 0.353953
   record: 6_JA241093EW.csv
   sup: 0.15000000000000002
-- collapse: false
+- collapse: none
   freq: 0.13084714172131995
   inf: 0.15000000000000002
   intensity: 0.2
