@@ -319,6 +319,39 @@ class FiniteElementModel(ABC, YamlMixin):
         df = pd.DataFrame.from_records(records)
         return df
 
+    def column_beam_ratios(self, key: str = "My") -> pd.DataFrame:
+        df = self.structural_elements_breakdown()
+        df = df[df["type"].str.contains("spring_column|spring_beam")]
+        xs, ys = sorted(list(set(df.x.values))), sorted(list(set(df.y.values)))
+        M = np.full((3 * len(xs), 3 * len(ys)), np.nan)
+        for i, y in enumerate(ys):
+            for j, x in enumerate(xs):
+                springs = df[(df.x == x) & (df.y == y)]
+                up_spring = springs[springs.up == True]
+                right_spring = springs[springs.right == True]
+                down_spring = springs[springs.down == True]
+                left_spring = springs[springs.left == True]
+                up, right, down, left = 0.0, 0.0, 0.0, 0.0
+                if not up_spring.empty:
+                    up = up_spring[key].values[0]
+                if not down_spring.empty:
+                    down = down_spring[key].values[0]
+                if not left_spring.empty:
+                    left = left_spring[key].values[0]
+                if not right_spring.empty:
+                    right = right_spring[key].values[0]
+                Mc = up + down
+                Mb = left + right
+                ratio = Mc / Mb if Mb != 0 else 0.0
+                M[3 * i, 3 * j + 1] = up
+                M[3 * i + 2, 3 * j + 1] = down
+                M[3 * i + 1, 3 * j + 2] = left
+                M[3 * i + 1, 3 * j] = right
+                M[3 * i + 1, 3 * j + 1] = ratio
+
+        M = np.flip(M)
+        return pd.DataFrame(M)
+
     def nonstructural_elements_breakdown(self) -> pd.DataFrame:
         records = [a.to_dict for a in self.nonstructural_elements]
         df = pd.DataFrame.from_records(records)
@@ -508,18 +541,23 @@ class FiniteElementModel(ABC, YamlMixin):
         normalized_fig.update_layout(
             xaxis_title="roof drift [1]",
             yaxis_title="cs",
-            title_text=f"Normalized pushover",
+            title_text=f"Normalized 1st mode pushover",
         )
         return fig, normalized_fig
 
     def pushover_dfs(self) -> tuple[pd.DataFrame, pd.DataFrame]:
-        # if not self._pushover_view:
-        #     raise Exception("You must run a pushover first!")
         view = self._pushover_view
+        columns: list[IMKSpring] = self.springs_columns[::2]  # take the top spring
+        bottom_columns = columns[: self.num_cols]
+        VRs = [c.ntc_shear_capacity() for c in bottom_columns]
+        VR = sum(VRs)
+        print(VR)
         Vb = view.base_shear()
+        VR = [VR for _ in Vb.index]
         Vb = -Vb
         Vb["sum"] = Vb.sum(axis=1)
         roof_disp = view.roof_displacements()
+        Vb["VR"] = VR
         df = Vb.join(roof_disp)
         cs = Vb / self.weight
         roof_drifts = roof_disp / self.height
@@ -1273,6 +1311,7 @@ class IMKFrame(FiniteElementModel):
             next_id = self.nodes[-1].id + 1
             # create nodes in counterclockwise manner
             nodes_by_id = {}
+            node_coordinates_by_id = {}
             for node in self.nodes:
                 if node.fixed:
                     orientations = ["col_down"]
@@ -1305,6 +1344,7 @@ class IMKFrame(FiniteElementModel):
                         base=node.fixed,
                     )
                     nodes_by_id[node.id][o] = next_id
+                    node_coordinates_by_id[node.id] = dict(x=node.x, y=node.y)
                     next_id += 1
                     nodes.append(n)
 
@@ -1338,9 +1378,20 @@ class IMKFrame(FiniteElementModel):
                     )
                     type = ElementTypes.SPRING_COLUMN.value
 
+                x, y = node_coordinates_by_id[i]["x"], node_coordinates_by_id[i]["y"]
+                up, left, down, right = (
+                    False,
+                    elem.type == ElementTypes.BEAM.value,
+                    elem.type == ElementTypes.COLUMN.value,
+                    False,
+                )
                 data_imk1 = dict(
                     i=i,
                     j=imk_i,
+                    x=x,
+                    y=y,
+                    down=down,
+                    left=left,
                     type=type,
                     id=elem_id,
                     recorder_ix=recorder_ixs[type],
@@ -1367,9 +1418,20 @@ class IMKFrame(FiniteElementModel):
                 )
                 elem_id += 1
                 elements.append(bc)
+                x, y = node_coordinates_by_id[j]["x"], node_coordinates_by_id[j]["y"]
+                up, left, down, right = (
+                    elem.type == ElementTypes.COLUMN.value,
+                    False,
+                    False,
+                    elem.type == ElementTypes.BEAM.value,
+                )
                 data_imk2 = dict(
                     i=imk_j,
                     j=j,
+                    x=x,
+                    y=y,
+                    up=up,
+                    right=right,
                     type=type,
                     id=elem_id,
                     recorder_ix=recorder_ixs[type],
@@ -1455,7 +1517,9 @@ class IMKFrame(FiniteElementModel):
             column.ntc_shear_capacity(shear, axial)
             for column, shear, axial in zip(columns, shears, axials)
         ]
-        print(shears, capacities)
+        shears = np.array(shears)
+        capacities = np.array(capacities)
+        print(shears > capacities)
         # drifts_by_storey = view_handler.view_peak_drifts().to_list()
         # drifts = [d for d in drifts_by_storey for _ in range(self.num_cols)]
         # collapses = [d > capacity for d, capacity in zip(drifts, capacities)]

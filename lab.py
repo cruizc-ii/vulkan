@@ -425,7 +425,9 @@ with st.sidebar:
         )
         loss = None
         try:
-            if file:
+            if state.loss_abspath:
+                loss = LossAggregator.from_file(state.loss_abspath)
+            elif file:
                 loss = LossAggregator.from_file(LOSS_MODELS_DIR / file)
                 state.loss_abspath = LOSS_MODELS_DIR / file
                 loss.ida_model_path = state.ida_abspath
@@ -694,11 +696,11 @@ if state.module == 1:
             )
             df
 
-        with st.expander("summary"):
-            st.dataframe(pd.DataFrame([design.fem.pushover_stats()]))
+        # with st.expander("summary"):
+        #     st.dataframe(pd.DataFrame([design.fem.pushover_stats()]))
 
-        with st.expander("assets"):
-            pass
+        # with st.expander("assets"):
+        #     pass
 
         with st.expander("eigen"):
             eigen, storeys = design.fem.eigen_df
@@ -726,7 +728,8 @@ if state.module == 1:
             Vy_error = stats["Vy_error"]
             uy = stats["uy"]
             drift_y = stats["drift_y"]
-            col1, col2, col3 = st.columns(3)
+
+            col1, col2 = st.columns(2)
             col1.header("Design values")
             col1.metric(
                 label="period T0",
@@ -753,11 +756,43 @@ if state.module == 1:
                 label="roof disp yield",
                 value=uy,
             )
-            col3.header("Moments and shears")
-            col3.dataframe(design.fem.extras)
 
-            st.header("Element properties")
+        with st.expander("design details"):
+            st.header("Moments and shears")
+            st.dataframe(design.fem.extras)
+
+            st.header("Column backbone")
+            base_col = design.fem.springs_columns[0]
+            fig = base_col.moment_rotation_figure()
+            st.plotly_chart(fig)
+
+            st.subheader("Mc/Mb ratio")
+
             sdf = design.fem.structural_elements_breakdown()
+            properties = sdf.columns
+            key = st.selectbox("property", options=properties)
+            df = design.fem.column_beam_ratios(key=key)
+
+            def color_survived(val):
+                if val > 0 and val < 1:
+                    color = "yellow"
+                elif val <= 0:
+                    color = f"opacity: 1%;"
+                elif val > 1.0 and val < 10.0:
+                    color = "green"
+                elif val > 10:
+                    color = "gray"
+                else:
+                    color = "white"
+                return f"background-color: {color}"
+
+            df = df.replace(0, np.nan)
+            styler = df.style.format("{:.2f}", na_rep="-")
+            sty = styler.applymap(color_survived)
+            st.dataframe(sty)
+            # st.dataframe()
+
+        with st.expander("Element properties"):
             desired_columns = "name model type storey bay My Ix Iy Ig Ic Mc b h radius theta_y theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s".split(
                 " "
             )
@@ -769,6 +804,9 @@ if state.module == 1:
             sdf = sdf[columns]
             sdf = sdf.sort_values(["storey", "bay"])
             st.dataframe(sdf, height=1000)
+            st.subheader("ratios")
+            df = pd.DataFrame()
+            st.dataframe(df)
 
 if state.module == 2:
     left, mid, right = st.columns(3)
@@ -838,7 +876,7 @@ if state.module == 4:
         average_annual_loss_pct,
         net_worth,
     ) = asset.stats()
-    if average_annual_loss is not None:
+    if loss and average_annual_loss is not None:
         one, two, three, four = st.columns(4)
         one.metric("AAL", f"{average_annual_loss or 0:.4f}")
         two.metric("AAL %", f"{average_annual_loss_pct or 0:.3f}")

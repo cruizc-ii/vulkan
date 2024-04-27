@@ -60,8 +60,8 @@ class LognormalExpectedLossTest(TestCase):
 class LossComputationTest(TestCase):
     """
     make sure that the UI computation behaves correctly when
-    we have an IDA_analysis_file we simulate N accels and just use
-    LossView to compute all losses for all assets
+    we have an IDA_analysis_file
+    we simulate N accels and just use LossView to compute all losses for all assets
     and write those computations to .csv
     and the assets + statistics (summary) to the .yml
     """

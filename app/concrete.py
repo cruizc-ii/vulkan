@@ -79,8 +79,9 @@ class Rebar:
         caliber = b.nums[i]
         num = b._allowed_num_bars[j]
         real_area = num * b._areas_by_num[caliber]
+        diameter = b._diameters_by_num[caliber]
         print(f"{num=} {caliber=} {real_area=}")
-        return real_area, num, caliber
+        return real_area, num, caliber, diameter
 
 
 @dataclass
@@ -173,6 +174,7 @@ class RectangularConcreteColumn:
     bar: float | None = None
     num_bars: float | None = None
     bar_caliber: float | None = None
+    bar_diameter: float | None = None
     bar_num: float | None = None
     bars_top: float | None = None
     bars_bottom: float | None = None
@@ -392,6 +394,7 @@ set stable {self.stable}
             self.length / 2
         )  # shear span is M/V but for double curvature, member shear is constant and equal to 2M/L
 
+        # assumes that we have a single bar diameter
         self.theta_y_fardis = (
             self.phi_y * self.Ls / 3
             + 0.0025
@@ -399,12 +402,13 @@ set stable {self.stable}
             * (
                 0.25
                 * self.eps_y
-                * self._rebar.diameter
+                * self.bar_diameter
                 * self.fyMPa
                 / ((self.d - self.dp) * self.fpcMPa**0.5)
             )
         )
         self.theta_y = self.theta_y_fardis if self.theta_y is None else self.theta_y
+        # self.theta_y = self.theta_y_fardis
         self.theta_pc = 0.76 * 0.031**self.nu * (0.02 + 40 * self.pw) ** 1.02
         self.theta_pc = self.theta_pc if self.theta_pc < 0.10 else 0.10
         self.theta_pc_cyclic = 0.5 * self.theta_pc
@@ -421,6 +425,7 @@ set stable {self.stable}
         self.theta_u_cyclic = (
             self.theta_y + self.theta_cap_cyclic + self.theta_pc_cyclic
         )
+        # self.theta_u_cyclic = 2 * self.theta_y
         self.ductility_cyclic = (self.theta_y + self.theta_cap_cyclic) / self.theta_y
         self.Ks = self.My / self.theta_y
         self.Mc = (
@@ -544,7 +549,8 @@ set stable {self.stable}
 
     def design(self, My: float, tol=1, iter=100) -> float:
         # balancing_steel = self.P / self.fy / self.Ag
-        pmin = self.pmin or 4 * Rebar.num3
+        pmin = self.pmin or 0.005
+        # pmin = self.pmin or 4 * Rebar.num3
         pmax = self.pmax or 0.1
         Asmin, Asmax = self.Asmin or pmin * self.Ag, self.Asmax or pmax * self.Ag
         try:
@@ -578,8 +584,12 @@ set stable {self.stable}
             self.My = self.Mymin
 
         pi = area / self.Ac
+        _, num, caliber, diameter = Rebar.area_to_bars(area)
         # if self.pmin and pi < self.pmin:
         #     pi = self.pmin
+        self.bar_num = float(num)
+        self.bar_caliber = float(caliber)
+        self.bar_diameter = float(diameter)
         self.p = float(pi)
         self.pc = self.pt = self.p / 2
         self.As = self.p * self.Ag
@@ -658,3 +668,24 @@ set stable {self.stable}
             )
         )
         return cap
+
+    def moment_rotation_df(self):
+        rots = [
+            0,
+            self.theta_y,
+            self.theta_y + self.theta_cap_cyclic,
+            self.theta_u_cyclic,
+        ]
+        Ms = [0, self.My, self.Mc, self.Mu]
+        df = pd.DataFrame(Ms, index=rots)
+        return df
+
+    def moment_rotation_figure(self):
+        df = self.moment_rotation_df()
+        fig = df.plot()
+        fig.update_layout(
+            xaxis_title="rot (rad)",
+            yaxis_title="M (kNm)",
+            title_text=f"spring M-rot backbone",
+        )
+        return fig

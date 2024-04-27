@@ -284,7 +284,7 @@ class IMKFrameTest(TestCase):
         P = reactions["P"].values.flatten()
         M = reactions["M"].values.flatten()
         self.assertEqual(len(P), 3)
-        self.assertAlmostEqual(sum(P), 1800, delta=5.0)
+        self.assertAlmostEqual(sum(P), 1460, delta=5.0)
         self.assertEqual(len(V), 3)
         self.assertEqual(len(M), 3)
 

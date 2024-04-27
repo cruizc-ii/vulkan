@@ -1,168 +1,170 @@
-average_annual_loss: 0.4815825080721807
-average_annual_loss_pct: 2.8678419993666595
-expected_loss: 0.25149867310392854
-expected_loss_pct: 1.4976840840829053
+average_annual_loss: 0.7438804684580635
+average_annual_loss_pct: 4.429836246529186
+collapse_mask_src: /Users/carlo/vulkan/models/loss_csvs/__collapse_mask-allow-full-clear-issue.csv
+collapse_rate_src: /Users/carlo/vulkan/models/loss_csvs/__collapse_rate-stand-current-man-eye.csv
+expected_loss: 0.38847953908054117
+expected_loss_pct: 2.3134103074665537
 ida_model_path: /Users/carlo/vulkan/tests/loss_fixtures/ida-loss-tests.yml
 loss_models:
-- average_annual_loss: 0.017748564030754546
-  average_annual_loss_pct: 4.930145146385647
+- average_annual_loss: 0.03944427333587896
+  average_annual_loss_pct: 10.956716971729294
   category: structural
-  expected_loss: 0.009268900403180437
-  expected_loss_pct: 2.574688535697233
+  expected_loss: 0.020599133563288324
+  expected_loss_pct: 5.721968164907261
   floor: 1
   name: ConcreteColumnAsset
   net_worth: 0.3600008418365988
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteColumnAsset-1-continue-entire-medical-parent.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteColumnAsset-1-work-private-group-room.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-ConcreteColumnAsset-1-can-easy-education-day.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-ConcreteColumnAsset-1-turn-remember-likely-girl.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-ConcreteColumnAsset-1-stand-fine-part-teacher.csv
   std_loss: null
-- average_annual_loss: 0.014028717342422154
-  average_annual_loss_pct: 3.8968568159042434
+- average_annual_loss: 0.0052617271264482545
+  average_annual_loss_pct: 1.4615874506306032
   category: structural
-  expected_loss: 0.00732627065524653
-  expected_loss_pct: 2.035070423133027
+  expected_loss: 0.002747851859973164
+  expected_loss_pct: 0.7632903984208985
   floor: 1
   name: ConcreteColumnAsset
   net_worth: 0.3600008418365988
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteColumnAsset-1-have-democratic-day-law.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteColumnAsset-1-want-best-main-world.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-ConcreteColumnAsset-1-understand-dead-point-house.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-ConcreteColumnAsset-1-speak-main-woman-father.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-ConcreteColumnAsset-1-turn-difficult-great-government.csv
   std_loss: null
-- average_annual_loss: 1.2842913838633793e-10
-  average_annual_loss_pct: 1.9026494527977543e-08
+- average_annual_loss: 1.296041724974264e-10
+  average_annual_loss_pct: 1.9200573248474436e-08
   category: structural
-  expected_loss: 6.707003961033327e-11
-  expected_loss_pct: 9.936278929151435e-09
+  expected_loss: 6.768368216345174e-11
+  expected_loss_pct: 1.0027188724434189e-08
   floor: 2
   name: ConcreteBeamAsset
   net_worth: 0.6750015784436227
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteBeamAsset-2-call-serious-lot-money.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteBeamAsset-2-see-live-open-money.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-ConcreteBeamAsset-2-hold-sure-case-year.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-ConcreteBeamAsset-2-take-stay-general-problem.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-ConcreteBeamAsset-2-turn-would-blue-others.csv
   std_loss: null
-- average_annual_loss: 0.12320282557625414
-  average_annual_loss_pct: 68.44585415284935
+- average_annual_loss: 0.2350222906945385
+  average_annual_loss_pct: 130.56763395081893
   category: structural
-  expected_loss: 0.06434068230409754
-  expected_loss_pct: 35.74473991552564
+  expected_loss: 0.12273658878545272
+  expected_loss_pct: 68.18683431921627
   floor: 2
   name: ConcreteColumnAsset
   net_worth: 0.1800004209182994
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteColumnAsset-2-keep-must-left-week.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteColumnAsset-2-understand-fine-president-office.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-ConcreteColumnAsset-2-grow-change-young-face.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-ConcreteColumnAsset-2-want-full-country-eye.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-ConcreteColumnAsset-2-play-natural-political-group.csv
   std_loss: null
-- average_annual_loss: 0.10488649085426095
-  average_annual_loss_pct: 58.270136435885334
+- average_annual_loss: 0.0790229804134859
+  average_annual_loss_pct: 43.90155312434171
   category: structural
-  expected_loss: 0.05477527284363129
-  expected_loss_pct: 30.43063597528658
+  expected_loss: 0.04126847297313102
+  expected_loss_pct: 22.92687581650846
   floor: 2
   name: ConcreteColumnAsset
   net_worth: 0.1800004209182994
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteColumnAsset-2-would-best-final-system.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteColumnAsset-2-need-other-body-job.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-ConcreteColumnAsset-2-believe-human-government-reason.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-ConcreteColumnAsset-2-happen-stop-hot-job.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-ConcreteColumnAsset-2-hear-private-student-member.csv
   std_loss: null
-- average_annual_loss: 0.026956190593423072
-  average_annual_loss_pct: 7.987000758006227
+- average_annual_loss: 0.0047911128224906036
+  average_annual_loss_pct: 1.4195856648328609
   category: structural
-  expected_loss: 0.014077434401264391
-  expected_loss_pct: 4.171081920644772
+  expected_loss: 0.002502081154008614
+  expected_loss_pct: 0.7413556453535293
   floor: 3
   name: ConcreteBeamAsset
   net_worth: 0.33750078922181137
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ConcreteBeamAsset-3-come-be-white-year.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ConcreteBeamAsset-3-work-feel-common-thing.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-ConcreteBeamAsset-3-die-financial-issue-name.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-ConcreteBeamAsset-3-leave-cultural-country-number.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-ConcreteBeamAsset-3-try-common-lot-area.csv
   std_loss: null
-- average_annual_loss: 0.04466308411640431
-  average_annual_loss_pct: 1.3534267914061913
+- average_annual_loss: 0.10278558262059438
+  average_annual_loss_pct: 3.1147146248664965
   category: nonstructural
-  expected_loss: 0.023324573055965827
-  expected_loss_pct: 0.7068052441201766
+  expected_loss: 0.053678107510124064
+  expected_loss_pct: 1.6266093184886081
   floor: 1
   name: NonStructuralGenericTest
   net_worth: 3.3
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-1-take-black-long-story.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-1-hold-special-story-part.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-NonStructuralGenericTest-1-think-current-old-business.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-NonStructuralGenericTest-1-let-tell-true-state.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-NonStructuralGenericTest-1-add-happy-study-moment.csv
   std_loss: null
-- average_annual_loss: 0.03062104590238393
-  average_annual_loss_pct: 0.9279104818904222
+- average_annual_loss: 0.06888393488886994
+  average_annual_loss_pct: 2.0873919663293923
   category: nonstructural
-  expected_loss: 0.015991345791051405
-  expected_loss_pct: 0.48458623609246687
+  expected_loss: 0.03597352049201007
+  expected_loss_pct: 1.090106681576063
   floor: 1
   name: NonStructuralGenericTest
   net_worth: 3.3
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-1-grow-simple-force-money.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-1-include-turn-private-teacher.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-NonStructuralGenericTest-1-believe-certain-american-friend.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-NonStructuralGenericTest-1-mean-central-company-year.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-NonStructuralGenericTest-1-hold-political-water-case.csv
   std_loss: null
-- average_annual_loss: 0.06480082911181298
-  average_annual_loss_pct: 1.9636614882367571
+- average_annual_loss: 0.11633858433984884
+  average_annual_loss_pct: 3.525411646662086
   category: nonstructural
-  expected_loss: 0.0338411845623195
-  expected_loss_pct: 1.025490441282409
+  expected_loss: 0.0607559433779851
+  expected_loss_pct: 1.841089193272276
   floor: 2
   name: NonStructuralGenericTest
   net_worth: 3.3
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-2-let-natural-book-time.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-2-go-happy-people-time.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-NonStructuralGenericTest-2-take-available-month-work.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-NonStructuralGenericTest-2-live-real-hot-case.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-NonStructuralGenericTest-2-know-send-early-company.csv
   std_loss: null
-- average_annual_loss: 0.04556361239869025
-  average_annual_loss_pct: 1.380715527233038
+- average_annual_loss: 0.07829845323785431
+  average_annual_loss_pct: 2.3726804011471003
   category: nonstructural
-  expected_loss: 0.023794859381343594
-  expected_loss_pct: 0.7210563448891999
+  expected_loss: 0.0408901003781036
+  expected_loss_pct: 1.2390939508516243
   floor: 2
   name: NonStructuralGenericTest
   net_worth: 3.3
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/NonStructuralGenericTest-2-feel-hear-clear-guy.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/NonStructuralGenericTest-2-create-economic-year-person.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-NonStructuralGenericTest-2-look-open-federal-service.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-NonStructuralGenericTest-2-like-hot-company-service.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-NonStructuralGenericTest-2-could-open-world-kid.csv
   std_loss: null
-- average_annual_loss: 0.004436650036280907
-  average_annual_loss_pct: 0.8873300072561815
+- average_annual_loss: 0.004195465958347422
+  average_annual_loss_pct: 0.8390931916694844
   category: contents
-  expected_loss: 0.002316968698921067
-  expected_loss_pct: 0.4633937397842134
+  expected_loss: 0.0021910142164443596
+  expected_loss_pct: 0.43820284328887193
   floor: 1
   name: ContentsGeneric
   net_worth: 0.5
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ContentsGeneric-1-build-black-cultural-area.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ContentsGeneric-1-reach-let-old-teacher.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-ContentsGeneric-1-turn-fall-american-number.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-ContentsGeneric-1-appear-move-able-thing.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-ContentsGeneric-1-watch-bad-special-person.csv
   std_loss: null
-- average_annual_loss: 0.0026143631315330455
-  average_annual_loss_pct: 0.5228726263066091
+- average_annual_loss: 0.005938203576448242
+  average_annual_loss_pct: 1.1876407152896484
   category: contents
-  expected_loss: 0.0013653088465037093
-  expected_loss_pct: 0.2730617693007419
+  expected_loss: 0.0031011307409734533
+  expected_loss_pct: 0.6202261481946907
   floor: 2
   name: ContentsGeneric
   net_worth: 0.5
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ContentsGeneric-2-follow-big-moment-line.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ContentsGeneric-2-expect-feel-clear-case.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-ContentsGeneric-2-watch-remember-early-part.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-ContentsGeneric-2-die-try-political-back.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-ContentsGeneric-2-work-serious-small-life.csv
   std_loss: null
-- average_annual_loss: 0.0020601348495313445
-  average_annual_loss_pct: 0.4120269699062689
+- average_annual_loss: 0.0038978593136539987
+  average_annual_loss_pct: 0.7795718627307997
   category: contents
-  expected_loss: 0.0010758720933332518
-  expected_loss_pct: 0.21517441866665035
+  expected_loss: 0.0020355939613629814
+  expected_loss_pct: 0.4071187922725963
   floor: 2
   name: ContentsGeneric
   net_worth: 0.5
-  rate_src: /Users/carlo/vulkan/models/rate_csvs/ContentsGeneric-2-take-single-information-research.csv
-  scatter_src: null
-  src: /Users/carlo/vulkan/models/loss_csvs/ContentsGeneric-2-remember-think-black-car.csv
+  rate_src: /Users/carlo/vulkan/models/rate_csvs/_src-ContentsGeneric-2-create-white-happy-hand.csv
+  scatter_src: /Users/carlo/vulkan/models/loss_csvs/_scatter-ContentsGeneric-2-speak-social-end-person.csv
+  src: /Users/carlo/vulkan/models/loss_csvs/_src-ContentsGeneric-2-offer-nice-fine-month.csv
   std_loss: null
 name: loss-view-test
 net_worth: 16.79250489317523
-rate_src: /Users/carlo/vulkan/models/rate_csvs/total-read-strong-question-point.csv
-scatter_src: /Users/carlo/vulkan/models/loss_csvs/scatter-ask-private-special-kid.csv
-src: /Users/carlo/vulkan/models/loss_csvs/total-meet-foreign-international-government.csv
+rate_src: /Users/carlo/vulkan/models/rate_csvs/__total-ask-human-head-change.csv
+scatter_src: /Users/carlo/vulkan/models/loss_csvs/__total_scatter-walk-low-game-back.csv
+src: /Users/carlo/vulkan/models/loss_csvs/__total-lose-sure-new-water.csv
 std_loss: null

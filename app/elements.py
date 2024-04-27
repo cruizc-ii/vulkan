@@ -192,11 +192,11 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
 
     def dollars(self, *, strana_results_df, views_by_path: dict, **kwargs):
         print(f"Structural element {self.name=} {self.node=} {self.rugged=}")
-        strana_results_df["collapse_losses"] = (
-            strana_results_df["collapse"]
-            .apply(lambda r: self.net_worth if r != CollapseTypes.NONE.value else 0)
-            .values
-        )
+        # strana_results_df["collapse_losses"] = (
+        #     strana_results_df["collapse"]
+        #     .apply(lambda r: self.net_worth if r != CollapseTypes.NONE.value else 0)
+        #     .values
+        # )
         if self.type == ElementTypes.COLUMN.value:
             strana_results_df = self.dollars_for_storey(
                 strana_results_df=strana_results_df,
@@ -218,10 +218,10 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
             )
             df = pd.DataFrame(dict(i=dollars_for_i, j=dollars_for_j))
             df["peak"] = df.apply(max, axis=1)
-            strana_results_df["losses"] = df.peak.values
-        losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
-        strana_results_df.drop("collapse_losses", axis=1, inplace=True)
-        return losses
+            strana_results_df = df.peak.values
+        # losses = strana_results_df[["collapse_losses", "losses"]].apply(max, axis=1)
+        # strana_results_df.drop("collapse_losses", axis=1, inplace=True)
+        return strana_results_df
 
     @property
     def area(self) -> float:
@@ -359,6 +359,8 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     Vy: float | None = None
     residual_My: float | None = 0.01
     Ke_Ks_ratio: float | None = None
+    x: float | None = None
+    y: float | None = None
 
     def __repr__(self) -> str:
         return f"IMKSpring My={self.My:.0f} kNm"
@@ -406,6 +408,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
             and self.Q == 4
         ):
             # indirectly take into account recommendations for ductile design from BCs
+            # I do not like this part, it does not feel right.
             self.s = min([0.1, self.b / 4, self.h / 4])
         self.model = self.__class__.__name__
         self.Ke = 6 * self.E * self.Ix / self.length
