@@ -110,8 +110,8 @@ class StructuralResultView(YamlMixin):
         return result
 
     def read_collapse_file(self) -> str:
-        path = self._path / 'collapse.csv'
-        with open(path, 'r') as f:
+        path = self._path / "collapse.csv"
+        with open(path, "r") as f:
             file = f.read()
         return file
 
@@ -375,6 +375,130 @@ class StructuralResultView(YamlMixin):
         moments[ElementTypes.SPRING_BEAM.value] = self.view_beam_springs_moments()
         return moments
 
+    def generate_springs_visual_timehistory_fig(
+        self,
+        design: "BuildingSpecification",
+        *,
+        thinner: int = 10,
+    ) -> DataFrame:
+        import plotly.graph_objs as go
+
+        M, steps, ts = self.view_springs_visual_moment_timehistory(
+            design, thinner=thinner
+        )
+        zmax, zmin = np.nanmax(M), np.nanmin(M)
+        fig = go.Figure(
+            data=[go.Heatmap(z=M[:, :, 0], zmax=zmax, zmin=zmin)],
+            layout=go.Layout(
+                title="time: 0s",
+                updatemenus=[
+                    dict(
+                        type="buttons",
+                        buttons=[
+                            dict(
+                                label="Play",
+                                method="animate",
+                                args=[
+                                    None,
+                                ],
+                            )
+                        ],
+                    )
+                ],
+            ),
+            frames=[
+                go.Frame(
+                    data=[go.Heatmap(z=M[:, :, i])],
+                    layout=go.Layout(title_text=f"time: {ts[i]} s"),
+                )
+                for i in range(steps)
+            ],
+        )
+        fig.update_layout(
+            updatemenus=[
+                dict(
+                    buttons=[
+                        dict(
+                            args=[
+                                None,
+                                {
+                                    "frame": {"duration": 0.1, "redraw": True},
+                                    "fromcurrent": True,
+                                    "transition": {"duration": 0},
+                                },
+                            ],
+                            label="Play",
+                            method="animate",
+                        )
+                    ],
+                    type="buttons",
+                    showactive=True,
+                    # y=1,
+                    # x=1.12,
+                    xanchor="right",
+                    yanchor="top",
+                )
+            ],
+        )
+        return fig
+
+    def view_springs_visual_moment_timehistory(
+        self,
+        design: "BuildingSpecification",
+        *,
+        normalize: bool = False,
+        thinner: int = 10,
+    ) -> DataFrame:
+        """
+        ugh, have to pass in a design directly from lab.
+        perhaps everything should have references to the design spec.
+        reference dataframe is used for comparing against certain values
+        """
+        from app.design import BuildingSpecification
+
+        _des: BuildingSpecification = design
+
+        df = _des.fem.column_beam_ratios(key="My")
+        N = df.to_numpy()
+        cols, beams = (
+            self.view_column_springs_moments(),
+            self.view_beam_springs_moments(),
+        )
+        ts = cols.index
+        steps = len(cols.index)
+        num_storeys, num_bays = _des.num_storeys, _des.num_bays
+        M = np.full((3 * (num_storeys + 1), 3 * (num_bays + 1), steps), np.nan)
+
+        ups = cols.columns[::2]
+        downs = cols.columns[1::2]
+        for st, group in enumerate(grouper(ups, num_bays + 1)):
+            for b, up in enumerate(reversed(group)):
+                y, x = 3 * st + 2, 3 * b + 1
+                M[y, x, :] = cols[up]
+
+        for st, group in enumerate(grouper(downs, num_bays + 1)):
+            for b, down in enumerate(reversed(group)):
+                y, x = 3 * st + 3, 3 * b + 1
+                M[y, x, :] = cols[down]
+
+        lefts = beams.columns[::2]
+        rights = beams.columns[1::2]
+        for st, group in enumerate(grouper(lefts, num_storeys)):
+            for b, left in enumerate(reversed(group)):
+                y, x = 3 * (st + 1) + 1, 3 * b + 2
+                M[y, x, :] = beams[left]
+
+        for st, group in enumerate(grouper(rights, num_storeys)):
+            for b, right in enumerate(reversed(group)):
+                y, x = 3 * (st + 1) + 1, 3 * b + 3
+                M[y, x, :] = beams[right]
+
+        M = M[:, :, ::thinner]
+        N = np.flip(N)
+        M = M / N[:, :, np.newaxis]
+        th = ts[::thinner]
+        return M, steps // thinner, th
+
     def view_beam_springs_rotations(self) -> DataFrame:
         if self._beams_rotations is None:
             self._beams_rotations = self._read_timehistory("beams-rot.csv")
@@ -389,9 +513,9 @@ class StructuralResultView(YamlMixin):
         from app.fem import ElementTypes
 
         rotations = {}
-        rotations[
-            ElementTypes.SPRING_COLUMN.value
-        ] = self.view_column_springs_rotations()
+        rotations[ElementTypes.SPRING_COLUMN.value] = (
+            self.view_column_springs_rotations()
+        )
         rotations[ElementTypes.SPRING_BEAM.value] = self.view_beam_springs_rotations()
         return rotations
 
@@ -447,7 +571,11 @@ class StructuralResultView(YamlMixin):
 
     def drifts_plot(self) -> Figure:
         fig = self.view_drifts().plot()
-        fig.update_layout(xaxis_title="t (s)", yaxis_title="drifts per storey [1]")
+        fig.update_layout(
+            xaxis_title="t (s)",
+            yaxis_title="drifts per storey [1]",
+            # yaxis_range=(-1, 1),
+        )
         return fig
 
     def moments_plot(self) -> Figure:
@@ -1430,7 +1558,7 @@ class IDA(NamedYamlMixin):
         fig.update_layout(
             yaxis_title="Sa/Say_design",
             xaxis_title="peak_drift/drift_yield [1]",
-            title="IDA curves",
+            title="Normalized IDA curves (dynamic overstrength)",
             # marginal_x="histogram", marginal_y="rug",
             # yaxis_range=[0.0, 0.3],
             xaxis_range=[0, 12],

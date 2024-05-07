@@ -80,7 +80,7 @@ class Rebar:
         num = b._allowed_num_bars[j]
         real_area = num * b._areas_by_num[caliber]
         diameter = b._diameters_by_num[caliber]
-        print(f"{num=} {caliber=} {real_area=}")
+        # print(f"{num=} {caliber=} {real_area=}")
         return real_area, num, caliber, diameter
 
 

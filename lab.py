@@ -408,7 +408,8 @@ with st.sidebar:
                 for ix, r in enumerate(ida.results):
                     with st.container():
                         c1, c2 = st.columns([5, 1])
-                        c1.write(f'{r["record"]} - {r["intensity"]:.4f}g')
+                        coll = "💀" if r["collapse"] != "none" else ""
+                        c1.write(f'{r["record"]} - {r["intensity"]:.4f}g - {coll}')
                         view_result = c2.button("view", key=f"record{ix}")
                         if view_result:
                             selected_ix = ix
@@ -767,10 +768,10 @@ if state.module == 1:
             st.plotly_chart(fig)
 
             st.subheader("Mc/Mb ratio")
-
             sdf = design.fem.structural_elements_breakdown()
-            properties = sdf.columns
-            key = st.selectbox("property", options=properties)
+            properties = sdf.columns.to_list()
+            My_index = properties.index("My")
+            key = st.selectbox("property", options=properties, index=My_index)
             df = design.fem.column_beam_ratios(key=key)
 
             def color_survived(val):
@@ -781,7 +782,7 @@ if state.module == 1:
                 elif val > 1.0 and val < 10.0:
                     color = "green"
                 elif val > 10:
-                    color = "gray"
+                    color = "silver"
                 else:
                     color = "white"
                 return f"background-color: {color}"
@@ -837,9 +838,13 @@ if state.module == 3:
         fig = ida.view_normalized_ida_curves()
         st.plotly_chart(fig, container_width=True)
         st.dataframe(pd.DataFrame.from_records(ida.stats), height=800)
+
         if selected_ix is not None:
             instance_path = ida.results[selected_ix]["path"]
             view = StructuralResultView.from_file(instance_path)
+            st.subheader("Springs timehistory (Moments)")
+            fig = view.generate_springs_visual_timehistory_fig(ida._design)
+            st.plotly_chart(fig)
             figures = view.timehistory_figures
             for fig in figures:
                 st.plotly_chart(fig)
