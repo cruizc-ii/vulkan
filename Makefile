@@ -28,7 +28,8 @@ clean:
 	find models/rate_csvs/ -delete
 	find results/** -name ".csv" -delete
 	git restore models/;
-
+clean-results:
+	rm -rf results/**;
 docker: build docker_run
 build:
 	podman build -t vulkan .

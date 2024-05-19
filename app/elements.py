@@ -252,6 +252,10 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
         self.k = k
         return self.k
 
+    @property
+    def Kbc(self) -> float:
+        return 6 * self.E * self.Ix / self.length
+
     @staticmethod
     def from_adjacency(
         adjacency: list[tuple[int, int, dict]]
@@ -363,7 +367,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     y: float | None = None
 
     def __repr__(self) -> str:
-        return f"IMKSpring My={self.My:.0f} kNm"
+        return f"IMKSpring My={self.My:.0f} kN-m"
 
     def __str__(self) -> str:
         # s = f"uniaxialMaterial Elastic {self.elasticMatTag} 1e9\n"
@@ -402,6 +406,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     def __post_init__(self):
         from app.strana import EDP
 
+        self.model = self.__class__.__name__
         if (
             self.type == ElementTypes.SPRING_COLUMN
             and self.Q is not None
@@ -410,16 +415,16 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
             # indirectly take into account recommendations for ductile design from BCs
             # I do not like this part, it does not feel right.
             self.s = min([0.1, self.b / 4, self.h / 4])
-        self.model = self.__class__.__name__
         self.Ke = 6 * self.E * self.Ix / self.length
+        self.Kb = 1e9
         n = 1
-        self.Ks = n * self.Ke
-        self.theta_y = self.My / self.Ks
+        # self.Ks = n * self.Ke
+        # self.theta_y = self.My / self.Ks
         super().__post_init__()
         # self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
         # self.Ic = self.Kb * self.length / 6 / self.E
         # self.Ic = self.Ks * self.length / 6 / self.E / n
-        # self.Ks = self.My / self.theta_y
+        self.Ks = self.My / self.theta_y
         self.Ke_Ks_ratio = self.Ke / self.Ks
         self.radius = self.h / 2
         self.secColTag = self.id + 100000

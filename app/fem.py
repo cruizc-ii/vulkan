@@ -549,15 +549,28 @@ class FiniteElementModel(ABC, YamlMixin):
         view = self._pushover_view
         columns: list[IMKSpring] = self.springs_columns[::2]  # take the top spring
         bottom_columns = columns[: self.num_cols]
-        VRs = [c.ntc_shear_capacity() for c in bottom_columns]
+        # print(view.view_column_design_axials())
+        # print(view.view_column_axials(envelope=True))
+        axial_envelopes = view.view_column_design_axials()[: self.num_cols]
+        VRs = [
+            c.aci_shear_capacity(axial_force=P)
+            for c, P in zip(bottom_columns, axial_envelopes)
+        ]
+        # VRs2 = [c.ntc_shear_capacity() for c in bottom_columns]
+        VRs2 = [c.Vcr for c in bottom_columns]
+        print(VRs2)
+        VR2 = sum(VRs2)
         VR = sum(VRs)
-        print(VR)
+        # VRs = [c.VR for c in bottom_columns]
+        # VR = sum(VRs)
+        # print(VR)
         Vb = view.base_shear()
         VR = [VR for _ in Vb.index]
         Vb = -Vb
         Vb["sum"] = Vb.sum(axis=1)
         roof_disp = view.roof_displacements()
         Vb["VR"] = VR
+        Vb["VR_ntc"] = VR2
         df = Vb.join(roof_disp)
         cs = Vb / self.weight
         roof_drifts = roof_disp / self.height
@@ -569,7 +582,7 @@ class FiniteElementModel(ABC, YamlMixin):
         df2 = df.diff(1)
         df2["fp"] = (
             df2["sum"] / df2["u"]
-        )  # an idea might be to use a better approximation of derivative as f(x+e)-f(x-e)/2e. will need an applymap.
+        )  # an idea might be to use a better approximation of derivative as (f(x+e)-f(x-e))/2e. will need an applymap.
         K = df2["fp"].iloc[:10].mean()
         tol = -1e-2
         possible_pts = np.where(df2.diff(1, axis=0) < -tol)[
@@ -1401,6 +1414,12 @@ class IMKFrame(FiniteElementModel):
                 d1 = {**elem.to_dict, **data_imk1}
                 imk1 = IMKSpring.from_bilin(**d1)
                 imk1.net_worth = (2 * self.num_frames - 1) * imk1.net_worth
+                # TR152_Ibarra-Krawinkler-2005.pdf p.298
+                Ks = imk1.Ks
+                Kmem = elem.Kbc
+                Kbc = (Kmem * Ks) / (Ks - Kmem)
+                EI_bc = Kbc
+                print(Kbc)
                 elem_id += 1
                 elements.append(imk1)
                 Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1e5
@@ -1409,8 +1428,11 @@ class IMKFrame(FiniteElementModel):
                     radius=imk1.radius,
                     i=imk_i,
                     j=imk_j,
-                    Ix=elem.Ix,
-                    E=elem.E,
+                    # Ix=elem.Ix,
+                    # E=elem.E,
+                    # TR152_Ibarra-Krawinkler-2005.pdf p.298
+                    Ix=1.0,
+                    E=1e12,
                     type=elem.type,
                     storey=st,
                     bay=bay,

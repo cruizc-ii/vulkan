@@ -203,9 +203,9 @@ class BuildingSpecification(ABC, NamedYamlMixin):
             "bays": self.num_bays,
             "occupancy": self.occupancy,
             "num frames": self.num_frames,
-            "criteria": self.design_criteria[-1]
-            if len(self.design_criteria) > 0
-            else None,
+            "criteria": (
+                self.design_criteria[-1] if len(self.design_criteria) > 0 else None
+            ),
         }
 
     @property

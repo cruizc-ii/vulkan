@@ -473,10 +473,6 @@ set stable {self.stable}
         )
         self.stable = self.Iy > self.Icrit
 
-    def get_and_set_net_worth(self) -> float:
-        # required to override the elasticbeamcolumn method
-        pass
-
     def compute_net_worth(self) -> float:
         # normalized by 1k dollars
         STEEL_DENSITY_TON = 7.85
@@ -635,36 +631,38 @@ set stable {self.stable}
         )
         return cap
 
-    def ntc_shear_capacity(
+    def ntc_shear_capacity(self):
+        return self.VR
+
+    def aci_shear_capacity(
         self, shear_force: float = 0.0, axial_force: float = 0.0
     ) -> float:
         """
+        4.2.3.1
         at every instant, the combination of shear/axial may change the capacity
         usually we consider P=constant.
         """
-        knl, lambd = 0.7, 1.0
-        Mud_over_Vud = 2.0  # 7.34 ASCE41, between 2 and 4
-        d = self.d
-        s = self.s
+        knl, lambd = 0.85, 1.0
+        MUD_over_VUD_d = 3.0  # 7.34 ASCE41, between 2 and 4
         acol = (
             1.0  # if s / d <= 0.75 else linealmente decreciente hasta cero cuando s/d=1
         )
-        Ag = self.Ag
-        P = axial_force
+        d, s = self.d, self.s
+        Ag, Av = self.Ag, self.Asw
         fcLE = self.fc
-        fytLE = self.fyw
-        Av = self.Asw
-        sqrtFc = fcLE**0.5
+        fytLE = self.fyw * 1.2  # some overstrength
+        sqrtFcLE = fcLE**0.5
         cap = (
-            1
-            * 0.6895
-            * knl
+            # 0.6895
+            knl
             * (
                 acol * (Av * fytLE * d / s)
                 + lambd
-                * 0.8
-                * Ag
-                * ((6 * sqrtFc / Mud_over_Vud) * (1 + P / (6 * Ag * sqrtFc)) ** 0.5)
+                * (0.8 * Ag)
+                * (
+                    (6 * sqrtFcLE / MUD_over_VUD_d)
+                    * (1 + axial_force / (6.0 * Ag * sqrtFcLE)) ** 0.5
+                )
             )
         )
         return cap
@@ -689,3 +687,7 @@ set stable {self.stable}
             title_text=f"spring M-rot backbone",
         )
         return fig
+
+    def get_and_set_net_worth(self) -> float:
+        # required to override the elasticbeamcolumn method
+        pass

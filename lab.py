@@ -794,7 +794,7 @@ if state.module == 1:
             # st.dataframe()
 
         with st.expander("Element properties"):
-            desired_columns = "name model type storey bay My Ix Iy Ig Ic Mc b h radius theta_y theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s".split(
+            desired_columns = "name model type storey bay My Vy Mc b h radius theta_y theta_y_fardis theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s Ix Iy Ig Ic ".split(
                 " "
             )
             desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]
