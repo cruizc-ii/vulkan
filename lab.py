@@ -759,21 +759,8 @@ if state.module == 1:
             )
 
         with st.expander("design details"):
-            st.header("Moments and shears")
-            st.dataframe(design.fem.extras)
-
-            st.header("Column backbone")
-            base_col = design.fem.springs_columns[0]
-            fig = base_col.moment_rotation_figure()
-            st.plotly_chart(fig)
-
-            st.subheader("Mc/Mb ratio")
-            sdf = design.fem.structural_elements_breakdown()
-            properties = sdf.columns.to_list()
-            My_index = properties.index("My")
-            key = st.selectbox("property", options=properties, index=My_index)
-            df = design.fem.column_beam_ratios(key=key)
-
+            # st.header("Moments and shears")
+            # st.dataframe(design.fem.extras)
             def color_survived(val):
                 if val > 0 and val < 1:
                     color = "yellow"
@@ -787,11 +774,22 @@ if state.module == 1:
                     color = "white"
                 return f"background-color: {color}"
 
+            st.subheader("Column/beam ratio")
+            sdf = design.fem.structural_elements_breakdown()
+            properties = sdf.columns.to_list()
+            My_index = properties.index("My")
+            key = st.selectbox("property", options=properties, index=My_index)
+            df = design.fem.column_beam_ratios(key=key)
+
             df = df.replace(0, np.nan)
             styler = df.style.format("{:.2f}", na_rep="-")
             sty = styler.applymap(color_survived)
             st.dataframe(sty)
-            # st.dataframe()
+
+            st.header("Element backbone")
+            base_col = design.fem.springs_columns[1]
+            fig = base_col.moment_rotation_figure()
+            st.plotly_chart(fig)
 
         with st.expander("Element properties"):
             desired_columns = "name model type storey bay My Vy Mc b h radius theta_y theta_y_fardis theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s Ix Iy Ig Ic ".split(
