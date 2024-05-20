@@ -480,7 +480,7 @@ with st.sidebar:
             fig = design.fem.assets_pie_fig
 
             fig.update_layout(height=300, width=300)
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, theme=None)
             st.header("Filter")
             all_categories = sorted(list(set([lm["category"] for lm in assets])))
             selected_categories = st.multiselect(
@@ -551,7 +551,7 @@ with st.sidebar:
         # logy = right.checkbox("log y", value=True)
         # if hazard:
         #     hazard_fig = hazard.rate_figure(logx=logx, logy=logy)
-        # st.plotly_chart(hazard_fig, use_container_width=True)
+        # st.plotly_chart(hazard_fig, use_container_width=True, theme=None)
 
         design_files = find_files(DESIGN_DIR, only_yml=True)
         design_files = ["add a design"] + design_files
@@ -665,7 +665,7 @@ if state.module == 1:
             col3.metric("Contents", f"$ {design.fem.contents_net_worth:.0f} k ")
             fig = design.fem.assets_pie_fig
             st.header("summary")
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, theme=None)
             asset_records = [a.to_dict for a in design.fem.assets]
             df = pd.DataFrame.from_records(asset_records)
             columns = "name category edp net_worth hidden bay storey floor rugged x node".split(
@@ -678,7 +678,7 @@ if state.module == 1:
                 df2, names="name", values="net_worth", height=400
             )
             st.header("structural")
-            st.plotly_chart(structural_pie_fig)
+            st.plotly_chart(structural_pie_fig, theme=None)
 
             df3 = df[df.category == "nonstructural"].groupby("name").sum()
             df3["name"] = df3.index
@@ -686,15 +686,13 @@ if state.module == 1:
                 df3, names="name", values="net_worth", height=400
             )
             st.header("non structural")
-            st.plotly_chart(nonstructural_pie_fig)
+            st.plotly_chart(nonstructural_pie_fig, theme=None)
 
             df4 = df[df.category == "contents"].groupby("name").sum()
             df4["name"] = df4.index
             contents_pie_fig = px.pie(df4, names="name", values="net_worth", height=400)
             st.header("contents")
-            st.plotly_chart(
-                contents_pie_fig,
-            )
+            st.plotly_chart(contents_pie_fig, theme=None)
             df
 
         # with st.expander("summary"):
@@ -715,8 +713,8 @@ if state.module == 1:
             # fig, nfig = design.fem.pushover_figs(path)
             fig, nfig = design.fem.pushover_figs()
             col1, col2 = st.columns(2)
-            col1.plotly_chart(fig)
-            col2.plotly_chart(nfig)
+            col1.plotly_chart(fig, theme=None)
+            col2.plotly_chart(nfig, theme=None)
             stats = design.fem.pushover_stats()
             design_c_error = stats["design_error"]
             c_design = stats["c_design"]
@@ -774,7 +772,7 @@ if state.module == 1:
                     color = "white"
                 return f"background-color: {color}"
 
-            st.subheader("Column/beam ratio")
+            st.subheader("Column/beam ratios")
             sdf = design.fem.structural_elements_breakdown()
             properties = sdf.columns.to_list()
             My_index = properties.index("My")
@@ -786,10 +784,25 @@ if state.module == 1:
             sty = styler.applymap(color_survived)
             st.dataframe(sty)
 
-            st.header("Element backbone")
-            base_col = design.fem.springs_columns[1]
+            c1, c2 = st.columns(2)
+
+            c1.header("Columns backbone")
+            options = list(range(len(design.fem.springs_columns)))
+            ix = c1.selectbox("index", options=options, index=0)
+            col = design.fem.springs_columns[ix]
+            base_col = col
             fig = base_col.moment_rotation_figure()
-            st.plotly_chart(fig)
+            c1.plotly_chart(fig, theme=None)
+            c1.dataframe(col.to_dict)
+
+            c2.header("Beams backbone")
+            options = list(range(len(design.fem.springs_beams)))
+            ix = c2.selectbox("index", options=options, index=0)
+            beam = design.fem.springs_beams[ix]
+            base_col = beam
+            fig = base_col.moment_rotation_figure()
+            c2.plotly_chart(fig, theme=None)
+            c2.dataframe(beam.to_dict)
 
         with st.expander("Element properties"):
             desired_columns = "name model type storey bay My Vy Mc b h radius theta_y theta_y_fardis theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s Ix Iy Ig Ic ".split(
@@ -814,15 +827,15 @@ if state.module == 2:
     logy = right.checkbox("log y", value=True)
     if hazard:
         fig = hazard.rate_figure(normalize_g=normalize_g, logx=logx, logy=logy)
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, theme=None)
         if len(hazard.records) > 0:
             record = (
                 hazard.records[selected_ix]
                 if selected_ix is not None
                 else hazard.records[0]
             )
-            st.plotly_chart(record.figure(normalize_g=normalize_g))
-            st.plotly_chart(record.spectra(normalize_g=normalize_g))
+            st.plotly_chart(record.figure(normalize_g=normalize_g), theme=None)
+            st.plotly_chart(record.spectra(normalize_g=normalize_g), theme=None)
 
 if state.module == 3:
     if design_missing:
@@ -832,9 +845,9 @@ if state.module == 3:
     if not (design_missing or hazard_missing) and ida and ida.results:
         fig = ida.view_ida_curves()
         # fig.update_layout(width=640 * 3, height=640,)
-        st.plotly_chart(fig, container_width=True)
+        st.plotly_chart(fig, container_width=True, theme=None)
         fig = ida.view_normalized_ida_curves()
-        st.plotly_chart(fig, container_width=True)
+        st.plotly_chart(fig, container_width=True, theme=None)
         st.dataframe(pd.DataFrame.from_records(ida.stats), height=800)
 
         if selected_ix is not None:
@@ -842,10 +855,10 @@ if state.module == 3:
             view = StructuralResultView.from_file(instance_path)
             st.subheader("Springs timehistory (Moments)")
             fig = view.generate_springs_visual_timehistory_fig(ida._design)
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, theme=None)
             figures = view.timehistory_figures
             for fig in figures:
-                st.plotly_chart(fig)
+                st.plotly_chart(fig, theme=None)
     else:
         st.header("run analysis to see results")
 
@@ -896,16 +909,16 @@ if state.module == 4:
             )
         if not agg_key_1:
             fig = asset.rate_fig(normalization=normalization)
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, theme=None)
             fig = asset.expected_loss_and_variance_fig(normalization=normalization)
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, theme=None)
             if selected_ix is None:
                 fig = asset.scatter_fig(
                     category_filter=selected_categories,
                     name_filter=selected_names,
                     floor_filter=selected_floors,
                 )
-                st.plotly_chart(fig)
+                st.plotly_chart(fig, theme=None)
         elif agg_key_1 and selected_ix is None:
             df: LossModelsResultsDataFrame = loss.loss_models_df
             df = loss.filter_src_df(
@@ -915,18 +928,18 @@ if state.module == 4:
                 storey_filter=selected_floors,
             )
             fig = loss.multiple_rates_of_exceedance_fig(df, key=agg_key_1)
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, theme=None)
             df = loss.aggregate_src_df(df, key=agg_key_1)
             df = df * 1.0 / normalization
             fig = loss.aggregated_expected_loss_and_variance_fig(df)
             fig.update_layout(width=800, height=600)
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, theme=None)
             fig = asset.scatter_fig(
                 category_filter=selected_categories,
                 name_filter=selected_names,
                 floor_filter=selected_floors,
             )
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, theme=None)
             if agg_key_1 != "collapse":
                 agg_key_2 = st.selectbox(
                     "2nd deaggregator",
@@ -949,7 +962,7 @@ if state.module == 4:
                     )
                     df2 = df2 * 1.0 / normalization
                     fig = px.imshow(df2)
-                    st.plotly_chart(fig)
+                    st.plotly_chart(fig, theme=None)
 
 if state.module == 5:
     if hazard_missing:
@@ -958,32 +971,32 @@ if state.module == 5:
     units = st.button("use units")
     if not units:
         norm_pushover_figs = compare.normalized_pushover_figs
-        st.plotly_chart(norm_pushover_figs)
+        st.plotly_chart(norm_pushover_figs, theme=None)
 
         norm_ida_figs = compare.normalized_ida_figs
-        st.plotly_chart(norm_ida_figs)
+        st.plotly_chart(norm_ida_figs, theme=None)
 
         rate_figs = compare.rate_figs
-        st.plotly_chart(rate_figs)
+        st.plotly_chart(rate_figs, theme=None)
 
         risk_figs = compare.risk_figs
-        st.plotly_chart(risk_figs)
+        st.plotly_chart(risk_figs, theme=None)
 
         st.subheader("Summary")
         df = compare.summary_df
         st.dataframe(df)
     else:
         pushover_fig = compare.pushover_figs
-        st.plotly_chart(pushover_fig)
+        st.plotly_chart(pushover_fig, theme=None)
 
         ida_fig = compare.ida_figs
-        st.plotly_chart(ida_fig)
+        st.plotly_chart(ida_fig, theme=None)
 
         rate_figs = compare.rate_figs
-        st.plotly_chart(rate_figs)
+        st.plotly_chart(rate_figs, theme=None)
 
         risk_figs = compare.risk_figs
-        st.plotly_chart(risk_figs)
+        st.plotly_chart(risk_figs, theme=None)
 
         df = compare.summary_df
         st.subheader("Summary")
@@ -994,7 +1007,7 @@ if state.module == 5:
     if stat:
         # fig = df[stat].plot()
         fig = px.scatter(df, x="design name", y=stat)
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, theme=None)
 
     for ix, comp in enumerate(compare.comparisons):
         design = comp._design_model
