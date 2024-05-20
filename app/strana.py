@@ -391,20 +391,6 @@ class StructuralResultView(YamlMixin):
             data=[go.Heatmap(z=M[:, :, 0], zmax=zmax, zmin=zmin)],
             layout=go.Layout(
                 title="time: 0s",
-                updatemenus=[
-                    dict(
-                        type="buttons",
-                        buttons=[
-                            dict(
-                                label="Play",
-                                method="animate",
-                                args=[
-                                    None,
-                                ],
-                            )
-                        ],
-                    )
-                ],
             ),
             frames=[
                 go.Frame(
@@ -424,12 +410,24 @@ class StructuralResultView(YamlMixin):
                                 {
                                     "frame": {"duration": 0.1, "redraw": True},
                                     "fromcurrent": True,
-                                    "transition": {"duration": 0},
+                                    "transition": {"duration": 0, "mode": "immediate"},
                                 },
                             ],
                             label="Play",
                             method="animate",
-                        )
+                        ),
+                        dict(
+                            label="Pause",
+                            method="animate",
+                            args=[
+                                None,
+                                {
+                                    "frame": {"duration": 0, "redraw": False},
+                                    "mode": "immediate",
+                                    "transition": {"duration": 0},
+                                },
+                            ],
+                        ),
                     ],
                     type="buttons",
                     showactive=True,
