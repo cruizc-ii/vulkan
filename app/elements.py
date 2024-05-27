@@ -407,20 +407,15 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         from app.strana import EDP
 
         self.model = self.__class__.__name__
-        if (
-            self.type == ElementTypes.SPRING_COLUMN
-            and self.Q is not None
-            and self.Q == 4
-        ):
-            # indirectly take into account recommendations for ductile design from BCs
-            # I do not like this part, it does not feel right.
+        if self.type == ElementTypes.SPRING_COLUMN.value and self.Q == 4:
+            # indirectly take into account recommendations for ductile design from BCs, I do not like this part, it does not feel right.
             self.s = min([0.1, self.b / 4, self.h / 4])
         self.Ke = 6 * self.E * self.Ix / self.length
         self.Kb = 1e9
-        n = 1
+        super().__post_init__()
+        # n = 1
         # self.Ks = n * self.Ke
         # self.theta_y = self.My / self.Ks
-        super().__post_init__()
         # self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
         # self.Ic = self.Kb * self.length / 6 / self.E
         # self.Ic = self.Ks * self.length / 6 / self.E / n

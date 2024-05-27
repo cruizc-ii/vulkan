@@ -323,9 +323,10 @@ class FiniteElementModel(ABC, YamlMixin):
         df = self.structural_elements_breakdown()
         df = df[df["type"].str.contains("spring_column|spring_beam")]
         xs, ys = sorted(list(set(df.x.values))), sorted(list(set(df.y.values)))
-        M = np.full((3 * len(xs), 3 * len(ys)), np.nan)
-        for i, y in enumerate(ys):
-            for j, x in enumerate(xs):
+        n_cols, n_floors = len(xs), len(ys)
+        M = np.full((3 * n_floors, 3 * n_cols), np.nan)
+        for fl, y in enumerate(ys):
+            for col, x in enumerate(xs):
                 springs = df[(df.x == x) & (df.y == y)]
                 up_spring = springs[springs.up == True]
                 right_spring = springs[springs.right == True]
@@ -340,14 +341,15 @@ class FiniteElementModel(ABC, YamlMixin):
                     left = left_spring[key].values[0]
                 if not right_spring.empty:
                     right = right_spring[key].values[0]
-                Mc = up + down
-                Mb = left + right
-                ratio = Mc / Mb if Mb != 0 else 0.0
-                M[3 * i, 3 * j + 1] = up
-                M[3 * i + 2, 3 * j + 1] = down
-                M[3 * i + 1, 3 * j + 2] = left
-                M[3 * i + 1, 3 * j] = right
-                M[3 * i + 1, 3 * j + 1] = ratio
+                cols = up + down
+                beams = left + right
+                ratio = cols / beams if beams != 0 else np.nan
+                # x coord=floors,  ycoord= cols
+                M[3 * fl, 3 * col + 1] = up
+                M[3 * fl + 2, 3 * col + 1] = down
+                M[3 * fl + 1, 3 * col + 2] = left
+                M[3 * fl + 1, 3 * col] = right
+                M[3 * fl + 1, 3 * col + 1] = ratio
 
         M = np.flip(M)
         return pd.DataFrame(M)
@@ -558,7 +560,7 @@ class FiniteElementModel(ABC, YamlMixin):
         ]
         # VRs2 = [c.ntc_shear_capacity() for c in bottom_columns]
         VRs2 = [c.Vcr for c in bottom_columns]
-        print(VRs2)
+        # print(VRs2)
         VR2 = sum(VRs2)
         VR = sum(VRs)
         # VRs = [c.VR for c in bottom_columns]
@@ -1419,7 +1421,6 @@ class IMKFrame(FiniteElementModel):
                 Kmem = elem.Kbc
                 Kbc = (Kmem * Ks) / (Ks - Kmem)
                 EI_bc = Kbc
-                print(Kbc)
                 elem_id += 1
                 elements.append(imk1)
                 Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1e5

@@ -208,6 +208,10 @@ class RectangularConcreteColumn:
     gammaParkAng: float | None = None
     gammaJiangCheng: float | None = None
     Et: float | None = None  # energy capacity
+    phi_y: float | None = None
+    # phi_y2: float | None = None
+    phi_y_fardis: float | None = None
+    phi_y_fardis2: float | None = None
     theta_y: float | None = None
     theta_y_fardis: float | None = None
     theta_u: float | None = None
@@ -382,9 +386,22 @@ set stable {self.stable}
         self.My2 = self.fy * self.Ast * self.d * (1 - self.q)  # JAPAN
         self.My3 = self.fpc * self.b * self.d**2 * 7 / 8 * self.qt  # AIC
 
-        self.phi_y = 1.7 * self.fy / self.h / self.Es  # Fardis' approximate expression
-        self.phi_y2 = self.phi_y_fardis = self.fy / (0.7 * self.d * self.Ec)
+        n = self.Es / self.Ec
+        delta_p = self.dp / self.d
+        axial_design = 0
+        axial_coeff = axial_design / self.d / self.b / self.fy
+        A = self.p + self.pw + axial_coeff
+        B = self.pt + self.pc * self.dp + 0.5 * self.pw * (1 + delta_p) + axial_coeff
+        k_fardis = (n**2 * A**2 + 2 * n * B) ** 0.5 - n * A
+        self.phi_y_fardis2 = (
+            1.8 * self.fc / self.Ec / self.d / k_fardis
+        )  # significant nonlinearity
+        self.phi_y_fardis = self.fy / (
+            self.Es * self.d * (1 - k_fardis)
+        )  # controlled by tension
         # self.cw = 1.384 * self.qt
+        self.phi_y = 1.7 * self.fy / self.h / self.Es  # Fardis' approximate expression
+        # self.phi_y2 = self.fy / (0.7 * self.d * self.Ec)
         # self.Mu1 = self.Ast * self.fy * self.d * (1 - 0.59* self.q)
         # self.Mu2 = 0.9 * self.d * self.Ast * self.fy
         # self.Mu3 = self.d * self.Ast * self.fy * (1 - 0.425 * self.cw)
@@ -396,7 +413,7 @@ set stable {self.stable}
 
         # assumes that we have a single bar diameter
         self.theta_y_fardis = (
-            self.phi_y * self.Ls / 3
+            self.phi_y_fardis * self.Ls / 3
             + 0.0025
             + self.alpha_slippage
             * (
@@ -433,7 +450,8 @@ set stable {self.stable}
         )  # My + delta M
 
     def __set_advanced_properties(self):
-        # the alpha confinement ratio formula depends highly on the stirrup geometry,  let's assume 1-sum(wi)**2/6bh = 0.5
+        # the alpha confinement ratio formula depends highly on the stirrup geometry,
+        # let's assume 1-sum(wi)**2/6bh = 0.5
         # this is consistent if two designs have the same geometry
         self.hcc = self.h - 2 * self.cover
         self.bcc = self.b - 2 * self.cover
@@ -474,6 +492,10 @@ set stable {self.stable}
         self.stable = self.Iy > self.Icrit
 
     def compute_net_worth(self) -> float:
+        """
+        TODO: this is not how we do it, you cannot isolate an element
+        you have to compute everything from the outside then divide by the number of elements
+        """
         # normalized by 1k dollars
         STEEL_DENSITY_TON = 7.85
         STEEL_TON_UNIT_COST = 920
@@ -500,7 +522,7 @@ set stable {self.stable}
         # dollars = (
         #     dollars / 2
         # )  ## there are two IMK springs, so this will only be half the cost. not sure why this gives low values for elements compares to slabs
-        print(f"{dollars=}")
+        # print(f"{dollars=}")
         return dollars
 
     def analyze(self, As: float | None = None, *, Ast=0, Asc=0, P=0, tol=5, iter=20):
@@ -638,7 +660,7 @@ set stable {self.stable}
         self, shear_force: float = 0.0, axial_force: float = 0.0
     ) -> float:
         """
-        4.2.3.1
+        ACI 369.1 Eq. 4.2.3.1
         at every instant, the combination of shear/axial may change the capacity
         usually we consider P=constant.
         """

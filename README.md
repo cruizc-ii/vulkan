@@ -48,9 +48,9 @@ Add to `fly secrets set`
 
 ## TODO
 
-Source code has MIT licence.
-Anyone can mount it on server.
-Biblioteca unam has a .zip of the source code.
+- [ ] Source code has MIT licence.
+- [ ] Anyone can mount it on server.
+- [ ] Biblioteca unam has a .zip of the source code.
 
 ## TODO
 
@@ -74,26 +74,14 @@ Biblioteca unam has a .zip of the source code.
 - [ ] nonstructural glass windows drift sensitive
 - [ ] libro de manuel alejandro con alcocer, hacer mejor los costos, desacoplar el acero longitudinal del transversal?
 - [ ] ver publicaciones sobre IDAs con cortante, hablar con Vamvatsikos
+- [x] cap6. columnas. comparar con cortante basal del metodo simplificado
 
-cap6. columnas. comparar con cortante basal del metodo simplificado
-
-refuerzo por integridad, para proteger del colapso progresivo por carga vertical
+- [ ] q=1? refuerzo por integridad, para proteger del colapso progresivo por carga vertical
 
 q=4 se revisa por capacidad
 q=2 se revisa con cortante del analisis (mas laxo)
 
 - [ ] echar ojo a la desagregación numeros negativos
-- [ ] asegurar que el cambio preserva la inestabilidad dinamica (keep resolution but remove shear failure)
-
-- [ ] rate of exceedance deaggregation
-
-fix L=l0
-
-count how many records exceeded without collapse
-with collapse
-and without collapse
-
-then normalize
 
 ### Design
 

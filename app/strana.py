@@ -357,24 +357,6 @@ class StructuralResultView(YamlMixin):
         moments = env.iloc[:, [c for c in env.columns if (c + 1) % 3 == 0]]
         return moments
 
-    def view_beam_springs_moments(self) -> DataFrame:
-        if self._beams_moments is None:
-            self._beams_moments = self._read_timehistory("beams-M.csv")
-        return self._beams_moments
-
-    def view_column_springs_moments(self) -> DataFrame:
-        if self._columns_moments is None:
-            self._columns_moments = self._read_timehistory("columns-M.csv")
-        return self._columns_moments
-
-    def view_springs_moments(self) -> dict[str, DataFrame]:
-        from app.fem import ElementTypes
-
-        moments = {}
-        moments[ElementTypes.SPRING_COLUMN.value] = self.view_column_springs_moments()
-        moments[ElementTypes.SPRING_BEAM.value] = self.view_beam_springs_moments()
-        return moments
-
     def generate_springs_visual_timehistory_fig(
         self,
         design: "BuildingSpecification",
@@ -444,58 +426,77 @@ class StructuralResultView(YamlMixin):
         self,
         design: "BuildingSpecification",
         *,
-        normalize: bool = False,
         thinner: int = 10,
     ) -> DataFrame:
         """
-        ugh, have to pass in a design directly from lab.
+        ugh, have to pass in a design directly from lab. this is a design flaw in the view.
         perhaps everything should have references to the design spec.
-        reference dataframe is used for comparing against certain values
         """
         from app.design import BuildingSpecification
 
         _des: BuildingSpecification = design
-
         df = _des.fem.column_beam_ratios(key="My")
-        N = df.to_numpy()
         cols, beams = (
             self.view_column_springs_moments(),
             self.view_beam_springs_moments(),
         )
         ts = cols.index
-        steps = len(cols.index)
-        num_storeys, num_bays = _des.num_storeys, _des.num_bays
-        M = np.full((3 * (num_storeys + 1), 3 * (num_bays + 1), steps), np.nan)
+        num_steps = len(ts)
+        num_floors, num_cols = _des.num_storeys + 1, _des.num_bays + 1
+        M = np.full((3 * num_floors, 3 * num_cols, num_steps), np.nan)
 
         ups = cols.columns[::2]
         downs = cols.columns[1::2]
-        for st, group in enumerate(grouper(ups, num_bays + 1)):
-            for b, up in enumerate(reversed(group)):
-                y, x = 3 * st + 2, 3 * b + 1
-                M[y, x, :] = cols[up]
+        for fl, group in enumerate(grouper(ups, num_cols)):
+            for col, up in enumerate(reversed(group)):
+                x, y = 3 * (fl + 1), 3 * col + 1
+                M[x, y, :] = cols[up]
 
-        for st, group in enumerate(grouper(downs, num_bays + 1)):
-            for b, down in enumerate(reversed(group)):
-                y, x = 3 * st + 3, 3 * b + 1
-                M[y, x, :] = cols[down]
+        for fl, group in enumerate(grouper(downs, num_cols)):
+            for col, down in enumerate(reversed(group)):
+                x, y = 3 * fl + 2, 3 * col + 1
+                M[x, y, :] = cols[down]
 
         lefts = beams.columns[::2]
         rights = beams.columns[1::2]
-        for st, group in enumerate(grouper(lefts, num_storeys)):
-            for b, left in enumerate(reversed(group)):
-                y, x = 3 * (st + 1) + 1, 3 * b + 2
-                M[y, x, :] = beams[left]
 
-        for st, group in enumerate(grouper(rights, num_storeys)):
-            for b, right in enumerate(reversed(group)):
-                y, x = 3 * (st + 1) + 1, 3 * b + 3
-                M[y, x, :] = beams[right]
+        for fl, group in enumerate(grouper(rights, num_cols - 1)):
+            for col, right in enumerate(reversed(group)):
+                x, y = 3 * (fl + 1) + 1, 3 * col + 2
+                M[x, y, :] = beams[right]
+
+        for fl, group in enumerate(grouper(lefts, num_cols - 1)):
+            for col, left in enumerate(reversed(group)):
+                x, y = 3 * (fl + 1) + 1, 3 * (col + 1)
+                M[x, y, :] = beams[left]
 
         M = M[:, :, ::thinner]
-        N = np.flip(N)
-        M = M / N[:, :, np.newaxis]
+        M = np.abs(M)
+
+        # N = df.to_numpy()
+        # N = np.flip(N)
+        # M = M / N[:, :, np.newaxis]
         th = ts[::thinner]
-        return M, steps // thinner, th
+        thinned_steps = num_steps // thinner
+        return M, thinned_steps, th
+
+    def view_beam_springs_moments(self) -> DataFrame:
+        if self._beams_moments is None:
+            self._beams_moments = self._read_timehistory("beams-M.csv")
+        return self._beams_moments
+
+    def view_column_springs_moments(self) -> DataFrame:
+        if self._columns_moments is None:
+            self._columns_moments = self._read_timehistory("columns-M.csv")
+        return self._columns_moments
+
+    def view_springs_moments(self) -> dict[str, DataFrame]:
+        from app.fem import ElementTypes
+
+        moments = {}
+        moments[ElementTypes.SPRING_COLUMN.value] = self.view_column_springs_moments()
+        moments[ElementTypes.SPRING_BEAM.value] = self.view_beam_springs_moments()
+        return moments
 
     def view_beam_springs_rotations(self) -> DataFrame:
         if self._beams_rotations is None:

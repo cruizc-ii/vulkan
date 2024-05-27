@@ -306,7 +306,12 @@ class HazardCurve(ABC, YamlMixin):
         x, y = self.x, self.y
         x, y = np.array(x), np.array(y)
         y = y if normalize_g else y * GRAVITY
-        trace = Scattergl(x=x, y=y, marker=dict(color="LightSkyBlue"))
+        trace = Scattergl(
+            x=x,
+            y=y,
+            #    marker=dict(color="LightSkyBlue")
+            marker=dict(color="black"),
+        )
         fig.add_trace(trace)
         fig.update_layout(
             xaxis_title="Sa (g)" if normalize_g else "Sa m/s/s",

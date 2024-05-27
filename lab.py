@@ -756,9 +756,16 @@ if state.module == 1:
                 value=uy,
             )
 
+            st.subheader("Springs timehistory (Moments)")
+            fig = design.fem._pushover_view.generate_springs_visual_timehistory_fig(
+                design, thinner=1
+            )
+            st.plotly_chart(fig, theme=None)
+
         with st.expander("design details"):
             # st.header("Moments and shears")
             # st.dataframe(design.fem.extras)
+
             def color_survived(val):
                 if val > 0 and val < 1:
                     color = "yellow"
@@ -775,7 +782,8 @@ if state.module == 1:
             st.subheader("Column/beam ratios")
             sdf = design.fem.structural_elements_breakdown()
             properties = sdf.columns.to_list()
-            My_index = properties.index("My")
+            DEFAULT_PROPERTY = "s"
+            My_index = properties.index(DEFAULT_PROPERTY)
             key = st.selectbox("property", options=properties, index=My_index)
             df = design.fem.column_beam_ratios(key=key)
 
@@ -786,6 +794,9 @@ if state.module == 1:
 
             c1, c2 = st.columns(2)
 
+            view = design.fem._pushover_view
+            cols_moments = view.view_column_springs_moments()
+            beams_moments = view.view_beam_springs_moments()
             c1.header("Columns backbone")
             options = list(range(len(design.fem.springs_columns)))
             ix = c1.selectbox("index", options=options, index=0)
@@ -794,6 +805,8 @@ if state.module == 1:
             fig = base_col.moment_rotation_figure()
             c1.plotly_chart(fig, theme=None)
             c1.dataframe(col.to_dict)
+            fig = cols_moments[ix + 1].plot()
+            c1.plotly_chart(fig)
 
             c2.header("Beams backbone")
             options = list(range(len(design.fem.springs_beams)))
@@ -804,8 +817,11 @@ if state.module == 1:
             c2.plotly_chart(fig, theme=None)
             c2.dataframe(beam.to_dict)
 
+            fig = beams_moments[ix + 1].plot()
+            c2.plotly_chart(fig)
+
         with st.expander("Element properties"):
-            desired_columns = "name model type storey bay My Vy Mc b h radius theta_y theta_y_fardis theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s Ix Iy Ig Ic ".split(
+            desired_columns = "name model type storey bay My Vy Mc b h radius phi_y phi_y2 phi_y_fardis phi_y_fardis2 theta_y theta_y_fardis  theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s Ix Iy Ig Ic ".split(
                 " "
             )
             desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]
