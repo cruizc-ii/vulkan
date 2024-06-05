@@ -356,15 +356,35 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     Ks: float | None = None
     Ke: float | None = None
     Kb: float | None = None
+    Ks_original: float | None = None
+    alpha_postyield_member: float = 0.03  # why 3%? Haselton says 13%.
+    residual_My_ratio: float | None = 0.05
+    Mr: float | None = None
+    n: int = 10
+    alpha_postyield: float | None = None
+    theta_y_member: float | None = None
+    theta_pc_member: float | None = None
+    alpha_pc: float | None = None
+    alpha_pc_member: float | None = None
     Ic: float | None = None
     secColTag: int | None = None
     imkMatTag: int | None = None
     elasticMatTag: int | None = None
     Vy: float | None = None
-    residual_My: float | None = 0.01
     Ke_Ks_ratio: float | None = None
     x: float | None = None
     y: float | None = None
+    theta_r_member: float | None = None
+    theta_r: float | None = None
+    theta_r_cyclic: float | None = None
+    theta_u: float = 10.0
+    theta_pc_cyclic: float | None = None
+    theta_cap_cyclic: float | None = None
+    theta_u_cyclic: float | None = None
+    betaParkAng: float | None = None
+    betaJiangCheng: float | None = None
+    gammaParkAng: float | None = None
+    gammaJiangCheng: float | None = None
 
     def __repr__(self) -> str:
         return f"IMKSpring My={self.My:.0f} kN-m"
@@ -372,11 +392,15 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     def __str__(self) -> str:
         # s = f"uniaxialMaterial Elastic {self.elasticMatTag} 1e9\n"
         s = ""
-        s += f"uniaxialMaterial ModIMKPeakOriented {self.imkMatTag} {self.Ks:.2f} {self.alpha_postyield} {self.alpha_postyield} {self.My:.2f} {-self.My:.2f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} 1. 1. 1. 1. {self.theta_cap_cyclic:.8f} {self.theta_cap_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.theta_pc_cyclic:.8f} {self.residual_My} {self.residual_My} {self.theta_u_cyclic:.8f} {self.theta_u_cyclic:.8f} 1. 1.\n"
+        s += f"uniaxialMaterial ModIMKPeakOriented {self.imkMatTag} {self.Ks:.2f} {self.alpha_postyield:.5f} {self.alpha_postyield:.5f} {self.My:.2f} {-self.My:.2f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} {self.gammaJiangCheng:.3f} 1. 1. 1. 1. {self.theta_cap_cyclic:.6f} {self.theta_cap_cyclic:.6f} {self.theta_pc_cyclic:.6f} {self.theta_pc_cyclic:.6f} {self.residual_My_ratio} {self.residual_My_ratio} {self.theta_u:.6f} {self.theta_u:.6f} 1. 1.\n"
         # s += f"section Aggregator {self.secColTag} {self.elasticMatTag} P {self.imkMatTag} Mz\n"
         # s += f"element zeroLengthSection  {self.id}  {self.i} {self.j} {self.secColTag}\n"
         s += f"element zeroLength {self.id} {self.i} {self.j} -mat {self.imkMatTag} -dir 6\n"
         return s
+
+    @property
+    def properties(self):
+        return f"My {self.My:.2f} mu {self.ductility:.3f} θy {self.theta_y:.4f} θpl {self.theta_cap_cyclic:.4f} θpc {self.theta_pc_cyclic:.4f} θu {self.theta_u:.4f} Λ {1./self.betaJiangCheng:.1f} alpha {self.alpha_postyield:.4f}\n"
 
     @classmethod
     def from_bilin(cls, **data):
@@ -406,31 +430,106 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     def __post_init__(self):
         from app.strana import EDP
 
+        self.Ke = 6 * self.E * self.Ix / self.length
         self.model = self.__class__.__name__
         if self.type == ElementTypes.SPRING_COLUMN.value and self.Q == 4:
             # indirectly take into account recommendations for ductile design from BCs, I do not like this part, it does not feel right.
+            # discutir esto en conclusiones de la tesis
+            # es una inconsistencia del procedimiento de diseno
             self.s = min([0.1, self.b / 4, self.h / 4])
-        self.Ke = 6 * self.E * self.Ix / self.length
-        self.Kb = 1e9
-        super().__post_init__()
-        # n = 1
-        # self.Ks = n * self.Ke
-        # self.theta_y = self.My / self.Ks
-        # self.Kb = self.Ks * self.Ke / (self.Ks - self.Ke)
-        # self.Ic = self.Kb * self.length / 6 / self.E
-        # self.Ic = self.Ks * self.length / 6 / self.E / n
-        self.Ks = self.My / self.theta_y
-        self.Ke_Ks_ratio = self.Ke / self.Ks
+        # self.Kb = 1e9
+        # self.Kb = self.Ks * self.Ke / (self.Ks - 2 * self.Ke)
         self.radius = self.h / 2
         self.secColTag = self.id + 100000
         self.imkMatTag = self.id + 200000
         self.elasticMatTag = self.id + 300000
+
+        super().__post_init__()
+
         self._risk.edp = EDP.spring_moment_rotation_th.value
         self._risk.losses = self.losses
+        self.Mr = self.residual_My_ratio * self.My
+        self.theta_y_member = (
+            self.theta_y if not self.theta_y_member else self.theta_y_member
+        )
+        self.Ks_original = self.My / self.theta_y_member
+        self.Ke_Ks_ratio = self.Ke / self.Ks_original
 
-    def losses(self, xs: list[pd.DataFrame]) -> list[float]:
-        costs = [self.park_ang_kunnath_DS(df) for df in xs]
-        return costs
+        self.theta_cap_member = (
+            0.1
+            * (1 + 0.55 * self.alpha_slippage)
+            * 0.16**self.nu
+            * (0.02 + 0.40 * self.pw) ** 0.43
+            * 0.54 ** (0.01 * self.fpcMPa)
+        )
+        self.ductility_member = (
+            self.theta_y_member + self.theta_cap_member
+        ) / self.theta_y_member
+
+        self.theta_pc_member = 0.76 * 0.031**self.nu * (0.02 + 40 * self.pw) ** 1.02
+        self.theta_pc_member = (
+            self.theta_pc_member if self.theta_pc_member < 0.10 else 0.10
+        )
+        # cyclic capacity
+        n0 = self.nu if self.nu else 0.2
+        n0 = n0 if n0 >= 0.2 else 0.2
+        pt = self.pt * 100 if self.pt > 0.0075 else 0.75
+        pw = self.pw * 100
+        self.betaJiangCheng = (
+            0.818 ** (100 * self.alpha_confinement * self.pw * self.fyw / self.fpc)
+            * (0.023 * self.L / self.h + 3.352 * self.nu**2.35)
+            + 0.039
+        )
+        self.betaParkAng = 0.7**pw * (
+            0.073 * self.L / self.d + 0.24 * n0 + 0.314 * pt - 0.447
+        )
+        self.gammaParkAng = 1.0 / self.betaParkAng
+        self.gammaJiangCheng = 1.0 / self.betaJiangCheng
+        #
+        # BEGIN MODIFY SPRING PROPERTIES
+        #
+        self.Ks = (self.n + 2) * self.Ke
+        self.theta_y = self.My / self.Ks
+        # modify cap properties, assuming ductility is postyield
+        self.ductility = (
+            self.n * (self.ductility_member - 1) * (1 - self.alpha_postyield_member)
+            + self.ductility_member
+        )
+
+        self.theta_cap = self.theta_y_member * self.ductility
+
+        self.alpha_postyield = (self.alpha_postyield_member) / (
+            self.n + 2 - self.n * self.alpha_postyield_member
+        )
+        self.theta_cap_cyclic = (
+            0.7 * self.theta_cap_member
+        )  # Haselton et al. Calibration paper
+        pc_slope = self.alpha_postyield_member * self.Ks_original
+        self.Mc = (
+            self.My + pc_slope * self.theta_cap_cyclic
+        )  # My + delta M, original theta_cap
+
+        alpha_pc = (self.Mr - self.Mc) / self.theta_pc_member / self.Ks_original
+        mu_pc = (self.theta_y_member + self.theta_pc_member) / self.theta_y_member
+        mu_pc_spring = self.n * (mu_pc - 1) * (1 - alpha_pc) + mu_pc
+        print(f"{mu_pc=:} {mu_pc_spring=:} {alpha_pc=:} {self.theta_pc_member=:}")
+        self.theta_pc = self.theta_y_member * mu_pc_spring
+
+        self.theta_pc_cyclic = 0.5 * self.theta_pc
+        self.theta_r_member = (
+            self.theta_y_member + self.theta_cap_member + self.theta_pc_member
+        )
+        self.theta_r = self.theta_y + self.theta_cap + self.theta_pc
+        self.theta_r_cyclic = (
+            self.theta_y + self.theta_cap_cyclic + self.theta_pc_cyclic
+        )
+
+        self.gammaJiangCheng = (self.n + 2) * self.gammaJiangCheng
+
+        self.Et = self.gammaJiangCheng * self.My * self.theta_cap_cyclic
+
+    def losses(self, xs: list[pd.DataFrame]):
+        return [self.park_ang_kunnath_DS(df) for df in xs]
 
     def dollars(self, *, strana_results_df, views_by_path: dict, **kwargs):
         # print(f"IMKSpring.dollars {self.name=} {self.node=} {self.rugged=}")
@@ -448,3 +547,63 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         )
         strana_results_df["losses"] = losses
         return losses
+
+    def moment_rotation_member_df(self):
+        rots = [
+            0,
+            self.theta_y_member,
+            self.theta_y_member + self.theta_cap_member,
+            self.theta_r_member,
+            0.2,
+            0.2 + 1e-3,
+        ]
+        Ms = [
+            0,
+            self.My,
+            self.Mc,
+            self.residual_My_ratio * self.My,
+            self.residual_My_ratio * self.My,
+            0,
+        ]
+        df = pd.DataFrame(Ms, index=rots)
+        return df
+
+    def moment_rotation_member_figure(self):
+        df = self.moment_rotation_member_df()
+        fig = df.plot()
+        fig.update_layout(
+            xaxis_title="rot (rad)",
+            yaxis_title="M (kNm)",
+            title_text=f"spring M-rot backbone",
+        )
+        return fig
+
+    def moment_rotation_df(self):
+        rots = [
+            0,
+            self.theta_y,
+            self.theta_y + self.theta_cap,
+            self.theta_r,
+            # 1,
+            # 1 + 1e-3,
+        ]
+        Ms = [
+            0,
+            self.My,
+            self.Mc,
+            self.residual_My_ratio * self.My,
+            # self.residual_My_ratio * self.My,
+            # 0,
+        ]
+        df = pd.DataFrame(Ms, index=rots)
+        return df
+
+    def moment_rotation_figure(self):
+        df = self.moment_rotation_df()
+        fig = df.plot()
+        fig.update_layout(
+            xaxis_title="rot (rad)",
+            yaxis_title="M (kNm)",
+            title_text=f"modified spring M-rot backbone",
+        )
+        return fig

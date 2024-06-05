@@ -1419,7 +1419,9 @@ class IMKFrame(FiniteElementModel):
                 # TR152_Ibarra-Krawinkler-2005.pdf p.298
                 Ks = imk1.Ks
                 Kmem = elem.Kbc
-                Kbc = (Kmem * Ks) / (Ks - Kmem)
+                # Kbc = (Kmem * Ks) / (Ks - 2 * Kmem)
+                n = 10
+                Kbc = (n + 2) / n * Kmem
                 EI_bc = Kbc
                 elem_id += 1
                 elements.append(imk1)
@@ -1431,9 +1433,8 @@ class IMKFrame(FiniteElementModel):
                     j=imk_j,
                     # Ix=elem.Ix,
                     # E=elem.E,
-                    # TR152_Ibarra-Krawinkler-2005.pdf p.298
-                    Ix=1.0,
-                    E=1e12,
+                    Ix=EI_bc,
+                    E=1.0,
                     type=elem.type,
                     storey=st,
                     bay=bay,

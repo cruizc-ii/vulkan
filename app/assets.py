@@ -264,7 +264,9 @@ class Asset(ABC):
 
 @dataclass
 class RiskAsset(Asset):
-    _risk: LognormalRisk | None = None  # an asset can implement NormalRisk or GammaRisk using different functions.
+    _risk: LognormalRisk | None = (
+        None  # an asset can implement NormalRisk or GammaRisk using different functions.
+    )
     # the separation of risk/asset is probably artificial maybe they can be the same class
     # it is better to inherit a risk object instead of creating one.
     # or to create an interface and Lognormal risk is just the implementation
@@ -332,6 +334,7 @@ class RiskAsset(Asset):
                 if view is None:
                     view = StructuralResultView.from_file(Path(path))
                     views_by_path[path] = view
+
                 x = view.view_result_by_edp_and_node(
                     edp=self._risk.edp, node=self.node, path=path, **kwargs
                 )
@@ -344,7 +347,7 @@ class RiskAsset(Asset):
         self, *, strana_results_df: IDAResultsDataFrame, views_by_path: dict, **kwargs
     ) -> np.ndarray:
         """
-        collapse is taken implicitly as a disproportionate response in EDP to an infinitesimal increase in IM i.e. flatline
+        collapse is a disproportionate response in EDP to an infinitesimal increase in IM i.e. flatline
         the asset must return complete loss to a big value of edp
         """
         strana_results_df["collapse_losses"] = (

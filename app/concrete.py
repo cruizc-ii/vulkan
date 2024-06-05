@@ -159,9 +159,6 @@ class RectangularConcreteColumn:
     )
     beta: float | None = None
     My: float | None = 0.0
-    Mc: float | None = 0.0
-    Mu: float | None = 0.0
-    Ke: float | None = 0.0
     fpc: float | None = None
     fyMPa: float | None = None
     fcMPa: float | None = None
@@ -200,13 +197,8 @@ class RectangularConcreteColumn:
     alpha_slippage: int = (
         1  # asl is the zero-one variable for slip, equal to 1 if there is slippage of the longitudinal bars from their anchorage beyond the section of the maximum moment, or to 0 if there is not
     )
-    alpha_postyield: float = 0.13
     alpha_confinement: int = 1  # EuroCode confinement effectiveness factor
     alpha_cyclic: int = 1  # 1 if cyclic load, 0 if monotonic
-    betaParkAng: float | None = None
-    betaJiangCheng: float | None = None
-    gammaParkAng: float | None = None
-    gammaJiangCheng: float | None = None
     Et: float | None = None  # energy capacity
     phi_y: float | None = None
     # phi_y2: float | None = None
@@ -214,27 +206,9 @@ class RectangularConcreteColumn:
     phi_y_fardis2: float | None = None
     theta_y: float | None = None
     theta_y_fardis: float | None = None
-    theta_u: float | None = None
-    theta_pc_cyclic: float | None = None
-    theta_cap_cyclic: float | None = None
-    theta_u_cyclic: float | None = None
 
     def __repr__(self):
         return f"RectangularConcreteColumn {self.b=:.2f} {self.h=:.2f}"
-
-    def __str__(self):
-        s = f"""
-set Ic {self.Iy}
-set theta_y {self.theta_y}
-set theta_p {self.theta_cap_cyclic}
-set theta_pc {self.theta_pc_cyclic}
-set My {self.My}
-set lambda {self.gammaJiangCheng}
-set alpha {self.alpha_postyield}
-set Icrit {self.Icrit}
-set stable {self.stable}
-    """
-        return s
 
     def debug(self) -> str:
         """
@@ -252,10 +226,6 @@ set stable {self.stable}
             self.My, self.VR, self.pt * 100, self.pc * 100
         )
         return s
-
-    @property
-    def properties(self):
-        return f"My {self.My:.2f} mu {self.ductility_cyclic:.3f} θy {self.theta_y:.4f} θpl {self.theta_cap_cyclic:.4f} θpc {self.theta_pc_cyclic:.4f} θu {self.theta_u_cyclic:.4f} Λ {1./self.betaJiangCheng:.1f} alpha {self.alpha_postyield:.4f}\n"
 
     def __post_init__(self):
         self.d = self.h - self.cover
@@ -361,7 +331,6 @@ set stable {self.stable}
             self.Iy = self.EFFECTIVE_INERTIA_COEFF * self.Ig
 
         self.__set_capacities()
-        self.__set_advanced_properties()
         super().__post_init__()
 
     def __set_capacities(self):
@@ -425,31 +394,7 @@ set stable {self.stable}
             )
         )
         self.theta_y = self.theta_y_fardis if self.theta_y is None else self.theta_y
-        # self.theta_y = self.theta_y_fardis
-        self.theta_pc = 0.76 * 0.031**self.nu * (0.02 + 40 * self.pw) ** 1.02
-        self.theta_pc = self.theta_pc if self.theta_pc < 0.10 else 0.10
-        self.theta_pc_cyclic = 0.5 * self.theta_pc
-        self.theta_cap = (
-            0.1
-            * (1 + 0.55 * self.alpha_slippage)
-            * 0.16**self.nu
-            * (0.02 + 0.40 * self.pw) ** 0.43
-            * 0.54 ** (0.01 * self.fpcMPa)
-        )
-        self.theta_cap_cyclic = 0.7 * self.theta_cap
-        self.theta_u = self.theta_y + self.theta_cap + self.theta_pc
-        self.ductility = (self.theta_y + self.theta_cap) / self.theta_y
-        self.theta_u_cyclic = (
-            self.theta_y + self.theta_cap_cyclic + self.theta_pc_cyclic
-        )
-        # self.theta_u_cyclic = 2 * self.theta_y
-        self.ductility_cyclic = (self.theta_y + self.theta_cap_cyclic) / self.theta_y
-        self.Ks = self.My / self.theta_y
-        self.Mc = (
-            self.My + self.alpha_postyield * self.Ks * self.theta_cap_cyclic
-        )  # My + delta M
 
-    def __set_advanced_properties(self):
         # the alpha confinement ratio formula depends highly on the stirrup geometry,
         # let's assume 1-sum(wi)**2/6bh = 0.5
         # this is consistent if two designs have the same geometry
@@ -465,31 +410,15 @@ set stable {self.stable}
             * ((1 - self.s) / (2 * self.hcc))
             / (1 - self.pcc)
         )
-        self.betaJiangCheng = (
-            0.818 ** (100 * self.alpha_confinement * self.pw * self.fyw / self.fpc)
-            * (0.023 * self.L / self.h + 3.352 * self.nu**2.35)
-            + 0.039
-        )
-        n0 = self.nu if self.nu else 0.2
-        n0 = n0 if n0 >= 0.2 else 0.2
-        pt = self.pt * 100 if self.pt > 0.0075 else 0.75
-        pw = self.pw * 100
-        self.betaParkAng = 0.7**pw * (
-            0.073 * self.L / self.d + 0.24 * n0 + 0.314 * pt - 0.447
-        )
-        self.gammaParkAng = 1.0 / self.betaParkAng
-        self.gammaJiangCheng = 1.0 / self.betaJiangCheng
-
-        self.Et = self.gammaJiangCheng * self.My * self.theta_cap_cyclic
-        self.Icrit = (
-            (1 + self.alpha_postyield)
-            * self.L
-            * self.My
-            / 9
-            / self.Ec
-            / self.theta_pc_cyclic
-        )
-        self.stable = self.Iy > self.Icrit
+        # self.Icrit = (
+        #     (1 + self.alpha_postyield)
+        #     * self.L
+        #     * self.My
+        #     / 9
+        #     / self.Ec
+        #     / self.theta_pc_cyclic
+        # )
+        # self.stable = self.Iy > self.Icrit
 
     def compute_net_worth(self) -> float:
         """
@@ -688,27 +617,6 @@ set stable {self.stable}
             )
         )
         return cap
-
-    def moment_rotation_df(self):
-        rots = [
-            0,
-            self.theta_y,
-            self.theta_y + self.theta_cap_cyclic,
-            self.theta_u_cyclic,
-        ]
-        Ms = [0, self.My, self.Mc, self.Mu]
-        df = pd.DataFrame(Ms, index=rots)
-        return df
-
-    def moment_rotation_figure(self):
-        df = self.moment_rotation_df()
-        fig = df.plot()
-        fig.update_layout(
-            xaxis_title="rot (rad)",
-            yaxis_title="M (kNm)",
-            title_text=f"spring M-rot backbone",
-        )
-        return fig
 
     def get_and_set_net_worth(self) -> float:
         # required to override the elasticbeamcolumn method

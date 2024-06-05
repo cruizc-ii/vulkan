@@ -105,6 +105,7 @@ class StructuralResultView(YamlMixin):
         fns = {
             EDP.rotations_env.value: self.view_rotations_envelope,
             EDP.spring_moment_rotation_th.value: self.view_spring_moment_rotation_th,
+            SummaryEDP.peak_drifts.value: self.view_peak_drifts,
         }
         result = fns[edp](node=node, **kwargs)
         return result
@@ -1384,7 +1385,7 @@ class IDA(NamedYamlMixin):
                 else:
                     results = view_handler.get_and_set_timehistory_summary()
                     results["peak_drift/drift_yield"] = results["peak_drift"] / float(
-                        drift_yield / 100
+                        (drift_yield + 0.01) / 100
                     )
                     collapse = fem.determine_collapse_from_results(
                         results, view_handler

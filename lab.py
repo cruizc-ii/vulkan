@@ -797,13 +797,20 @@ if state.module == 1:
             view = design.fem._pushover_view
             cols_moments = view.view_column_springs_moments()
             beams_moments = view.view_beam_springs_moments()
+
             c1.header("Columns backbone")
             options = list(range(len(design.fem.springs_columns)))
             ix = c1.selectbox("index", options=options, index=0)
+            #
             col = design.fem.springs_columns[ix]
             base_col = col
+            fig = base_col.moment_rotation_member_figure()
+            c1.plotly_chart(fig, theme=None)
+
+            c1.subheader("Columns modified backbone")
             fig = base_col.moment_rotation_figure()
             c1.plotly_chart(fig, theme=None)
+
             c1.dataframe(col.to_dict)
             fig = cols_moments[ix + 1].plot()
             c1.plotly_chart(fig)
@@ -811,17 +818,22 @@ if state.module == 1:
             c2.header("Beams backbone")
             options = list(range(len(design.fem.springs_beams)))
             ix = c2.selectbox("index", options=options, index=0)
+            #
             beam = design.fem.springs_beams[ix]
-            base_col = beam
-            fig = base_col.moment_rotation_figure()
+            fig = beam.moment_rotation_member_figure()
             c2.plotly_chart(fig, theme=None)
+
+            c2.subheader("Beams modified backbone")
+            fig = beam.moment_rotation_figure()
+            c2.plotly_chart(fig, theme=None)
+
             c2.dataframe(beam.to_dict)
 
             fig = beams_moments[ix + 1].plot()
             c2.plotly_chart(fig)
 
         with st.expander("Element properties"):
-            desired_columns = "name model type storey bay My Vy Mc b h radius phi_y phi_y2 phi_y_fardis phi_y_fardis2 theta_y theta_y_fardis  theta_cap_cyclic theta_pc_cyclic theta_u_cyclic  Ks Ke Ke_Ks_ratio edp p s Ix Iy Ig Ic ".split(
+            desired_columns = "name model type storey bay My Vy Mc b h radius phi_y phi_y2 phi_y_fardis phi_y_fardis2 theta_y theta_y_fardis  theta_cap_cyclic theta_pc_cyclic theta_u_cyclic Ks Ks_original Ke Ke_Ks_ratio edp p s Ix Iy Ig Ic ".split(
                 " "
             )
             desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]

@@ -1,10 +1,5 @@
 # README
 
-SI engineering units.
-force: kN
-length: m
-time: s
-
 # Quickstart
 
 Make sure opensees is on your path, make a symlink
@@ -48,6 +43,20 @@ Add to `fly secrets set`
 
 ## TODO
 
+- [ ] lo de 'if not designed' esta mal, something is not right
+      hay que separar bien las propiedades, de RC column (simples) y de
+- [ ] show original backbone and modified backbone
+- [ ] do we need rigid beams?
+- [ ] meter hazard para todos los periodos. escribir que agarra el periodo correspondiente al edificio
+- [ ] escribir las formulas correctas de Ibarra y la justificacion de n=10
+- [ ] shear checks intra analysis
+- [ ] correct rate of cycle deterioration
+- [ ] tests passing
+- [ ] hay un bug donde hay structural resurrection
+- [ ] ahora con el modelo bien, parece que se puede mejorar los Delta IM para IDA para tener mejor resolucion
+
+## TODO
+
 - [ ] Source code has MIT licence.
 - [ ] Anyone can mount it on server.
 - [ ] Biblioteca unam has a .zip of the source code.
@@ -63,7 +72,7 @@ Add to `fly secrets set`
 
 ## TODO
 
-- [ ] deploy to streamlit see how it works
+- [x] deploy to streamlit see how it works
 - [x] aim for lower period in design procedure to account for more flexibility in real model, this doesnt work.
 - [x] sustituir ya corrección de My/ke, cambiamos theta_y pero la actualizamos
 - [x] design with a smaller period, so the extra flexibility doesn't hurt as much!
@@ -71,17 +80,11 @@ Add to `fly secrets set`
 - [x] hacer breakdown de los costos de Wasim en mi clasificacion.
 - [x] incluir porcentaje de oficina transversal e.g. 2.7 veces cabe la distribucion de oficina que tiene dy=10m, el algoritmo de colocacion hace ese trabajo y multiplica asset.net_worth x 2.7
 - [ ] incluir cimentacion como rugged asset always, 10% structural cost
-- [ ] nonstructural glass windows drift sensitive
-- [ ] libro de manuel alejandro con alcocer, hacer mejor los costos, desacoplar el acero longitudinal del transversal?
+- [x] libro de manuel alejandro con alcocer, hacer mejor los costos, desacoplar el acero longitudinal del transversal?, realmente debe hacerse desde arriba.
 - [ ] ver publicaciones sobre IDAs con cortante, hablar con Vamvatsikos
-- [x] cap6. columnas. comparar con cortante basal del metodo simplificado
-
-- [ ] q=1? refuerzo por integridad, para proteger del colapso progresivo por carga vertical
-
-q=4 se revisa por capacidad
-q=2 se revisa con cortante del analisis (mas laxo)
-
 - [ ] echar ojo a la desagregación numeros negativos
+- [x] cap6. columnas. comparar con cortante basal del metodo simplificado
+- [x] q=1? refuerzo por integridad, para proteger del colapso progresivo por carga vertical
 
 ### Design
 
@@ -99,19 +102,9 @@ q=2 se revisa con cortante del analisis (mas laxo)
 - [x] EL v0 = AAL
 - [x] v(L=0) = v0.
 
-## Hypotheses
-
-- [x] gravity loads are too big, our moments for design are too small, yes, this has been fixed
-- [x] Some computation is incorrect so IMK numbers are wrong. models are unstable, yes models are unstable.
-- [x] numerical rayleigh damping is incorrect ? not in bilin. check, rayleigh damping is correct.
-- [x] crazy strategy of forcing convergence actually works, is there an explanation for this, yes.
-- [x] Model is fundamentally wrong with negative inertias.
-- [x] Kb, Ic computation to make it match is wrong., yes.
-- [x] Leave Ic as is, if it doesn't work, try out the n=10 method.
-- [x] Opensees binary is wrong (unlikely), upgrade to a newer version to test out.
-- [x] area too big, numerical instability (unlikely)
-
 ## Developing
+
+SI engineering units: force: kN, length: m, time: s.
 
 ### Adding new hazard curves
 
