@@ -2,7 +2,7 @@ import streamlit as st
 from app.assets import LOSS_MODELS_DIR
 from app.criteria import DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
-from app.hazard import RECORDS_DIR, Hazard, HazardCurveFactory, Record
+from app.hazard import RECORDS_DIR, Hazard, HazardCurveFactory, HazardCurves, Record
 from app.strana import (
     STRANA_DIR,
     IDA,
@@ -239,6 +239,27 @@ with st.sidebar:
             options=HazardCurveFactory.options(),
             index=HazardCurveFactory.options().index(hazard._curve.name),
         )
+        sites = find_files(RECORDS_DIR / "hazards", suffix=".gra")
+        site = st.selectbox("select hazard file", options=sites)
+        path = RECORDS_DIR / "hazards" / site
+        hazards = HazardCurves(path)
+        site_names = list(hazards.dfs.keys())
+        site_name = st.selectbox("select hazard sites", options=site_names)
+
+        site = hazards.dfs[site_name]
+        periods = list(site.keys())
+
+        # if state.design_abspath:
+        design = ReinforcedConcreteFrame.from_file(state.design_abspath)
+        T = design.fem.period
+        period = sorted(periods, key=lambda t: abs(t - T))[0]
+        select_manually = st.checkbox("select period manually")
+        if select_manually:
+            period = st.selectbox("periods", periods)
+        curve = site[period]
+        hazard.curve = curve
+        hazard._curve = curve
+
         st.subheader(f"Records ({len(hazard.records)})")
         record_files = find_files(RECORDS_DIR, only_yml=False, only_csv=True)
         record_files = ["add a record"] + record_files
@@ -853,7 +874,7 @@ if state.module == 2:
     normalize_g = left.checkbox("normalize (g)", value=True)
     logx = mid.checkbox("log x", value=True)
     logy = right.checkbox("log y", value=True)
-    if hazard:
+    if hazard is not None:
         fig = hazard.rate_figure(normalize_g=normalize_g, logx=logx, logy=logy)
         st.plotly_chart(fig, theme=None)
         if len(hazard.records) > 0:

@@ -41,10 +41,12 @@ class PositiveSignException(DesignException):
 
 def find_files(
     folder: Path,
+    *,
     files_only=True,
     ignore_hidden=True,
     only_yml=True,
     only_csv=False,
+    suffix: str | None = None,
     return_sorted=True,
 ):
     all_files_or_dirs = os.listdir(folder)
@@ -55,10 +57,11 @@ def find_files(
     if ignore_hidden:
         filters.append(lambda f: not f.startswith("."))
 
-    if only_yml:
+    if suffix:
+        filters.append(lambda f: suffix in f)
+    elif only_yml:
         filters.append(lambda f: ".yml" in f)
-
-    if only_csv:
+    elif only_csv:
         filters.append(lambda f: ".csv" in f)
 
     files = list(

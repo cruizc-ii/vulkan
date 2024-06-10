@@ -88,7 +88,7 @@ class CodeMassesPre(DesignCriterion):
     therefore mass will be sigma*area since this frame is taking the totality the board's mass
     """
 
-    CODE_UNIFORM_LOADS_kPA = 4.905  # 0.5 t/m2
+    CODE_UNIFORM_LOADS_kPA = 9.81  # 1 t/m2
     SLAB_AREA_PERCENTAGE = 0.25  # part of the slab mass that goes to this frame's beams A=Lx * Lz = c Lx**2
     # i.e, the coefficient of perpendicular contribution
 

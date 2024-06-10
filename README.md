@@ -43,16 +43,13 @@ Add to `fly secrets set`
 
 ## TODO
 
-- [ ] lo de 'if not designed' esta mal, something is not right
-      hay que separar bien las propiedades, de RC column (simples) y de
-- [ ] show original backbone and modified backbone
-- [ ] do we need rigid beams?
+- [ ] do we need rigid beams? seems like it works better with rigid beams, why?
 - [ ] meter hazard para todos los periodos. escribir que agarra el periodo correspondiente al edificio
-- [ ] escribir las formulas correctas de Ibarra y la justificacion de n=10
-- [ ] shear checks intra analysis
-- [ ] correct rate of cycle deterioration
+- [ ] poder elegir sitio del peligro, poder elegir periodo (para ver) aunque interpole linealmente
+- [ ] escribir en tesis las formulas correctas de Ibarra y la justificacion de n=10
+- [ ] shear checks intra analysis check.
 - [ ] tests passing
-- [ ] hay un bug donde hay structural resurrection
+- [ ] hay un bug donde hay structural resurrection y se ve feo.
 - [ ] ahora con el modelo bien, parece que se puede mejorar los Delta IM para IDA para tener mejor resolucion
 
 ## TODO

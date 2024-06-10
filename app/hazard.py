@@ -1,20 +1,22 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod, abstractproperty
 import os
+import yaml
+import re
 import subprocess
 import pathlib
-from posixpath import basename
-from pandas import DataFrame, Series, read_csv
+import streamlit
 import pandera as pa
 import numpy as np
+import plotly.express as px
 from enum import Enum
+from pathlib import Path
+from abc import ABC, abstractmethod, abstractproperty
+from posixpath import basename
+from pandas import DataFrame, Series, read_csv
 from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line
 from dataclasses import dataclass, asdict, field, fields
-from pathlib import Path
-import plotly.express as px
 from app.utils import NamedYamlMixin, YamlMixin, UploadComponent
-import yaml
-import streamlit
+from collections import defaultdict
 from typing_extensions import TypeAlias
 from app.utils import GRAVITY
 
@@ -233,8 +235,11 @@ class Hazard(NamedYamlMixin):
             self.records = [Record(**data) for data in self.records]
         if isinstance(self.curve, dict):
             self._curve = HazardCurveFactory(**self.curve)
-        if isinstance(self.curve, str):
-            self._curve = HazardCurveFactory(name=self.curve)
+        # if isinstance(self.curve, str):
+        #     self._curve = HazardCurveFactory(name=self.curve)
+
+    def intensities_for_idas(self):
+        return self._curve.intensities_for_idas()
 
     def simulate_intensities(self, n: int = 10) -> "TimeHistorySeries":
         return self._curve.simulate_intensities(n)
@@ -250,9 +255,6 @@ class Hazard(NamedYamlMixin):
         self.records = [r for r in self.records if r.path != record_path]
         return True
 
-    def intensities_for_idas(self):
-        return self._curve.intensities_for_idas()
-
     @property
     def record_names(self) -> list[str]:
         return [r.name for r in self.records if r.name]
@@ -261,6 +263,55 @@ class Hazard(NamedYamlMixin):
         self, normalize_g: bool = True, logx: bool = True, logy: bool = True
     ):
         return self._curve.figure(normalize_g=normalize_g, logx=logx, logy=logy)
+
+
+def crisis_parser(s: str):
+    dfs: dict[str, dict[float, HazardCurve]] = defaultdict(dict)
+    sites = s.split("Site")[1:]
+    for site in sites:
+        ints = site.split("Intensity")
+        site_name, tbls = ints[0], ints[1:]
+        for tbl in tbls:
+            data = tbl.split("\n")
+            header = data[0]
+            period = re.search("T=\s*\d*\.?\d*", header, re.IGNORECASE)
+            if period is None:
+                raise ValueError("Period incorrectly specified", header)
+            period = period.group()
+            _, T = period.split("=")
+            T = float(T)
+            values = data[2:]
+            rs = [r.split(" ") for r in values[2:]]
+            arr = arr = np.array([r1 for r in rs for r1 in r if r1])
+            df = DataFrame(arr.reshape((int(len(arr) / 2), 2)), columns=["x", "y"])
+            hazard = UserDefinedCurve(name=site_name, _df=df)
+            dfs[site_name][T] = hazard
+    return dfs
+
+
+@dataclass
+class HazardCurves:
+    path: str | Path
+    parsers = [
+        crisis_parser,
+    ]
+    dfs: DataFrame | None = None
+
+    def __post_init__(self):
+        dfs = None
+        with open(self.path) as f:
+            r = f.read()
+            for parser in self.parsers:
+                try:
+                    dfs = parser(r)
+                    if dfs:
+                        break
+                except Exception as e:
+                    print(f"Could not parse {self.path}", e)
+                    continue
+        if dfs is None:
+            raise ValueError(f"Unable to parse {self.path}")
+        self.dfs = dfs
 
 
 @dataclass
@@ -291,6 +342,7 @@ class HazardCurve(ABC, YamlMixin):
         else:
             dataframe_schema.validate(self._df)
             self.x, self.y = self._df.x.to_list(), self._df.y.to_list()
+            self.v0 = self.y[0]
 
     @property
     @abstractmethod
