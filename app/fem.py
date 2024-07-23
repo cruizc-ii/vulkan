@@ -506,7 +506,7 @@ class FiniteElementModel(ABC, YamlMixin):
         view = strana.static(forces_per_storey=forces_per_storey)
         return view
 
-    def pushover(self, results_path: Path, drift: float = 0.03, mode: int | None = 1):
+    def pushover(self, results_path: Path, drift: float = 0.05, mode: int | None = 1):
         from app.strana import StructuralAnalysis
         from app.utils import AnalysisTypes
 
@@ -544,6 +544,7 @@ class FiniteElementModel(ABC, YamlMixin):
             xaxis_title="roof drift [1]",
             yaxis_title="cs",
             title_text=f"Normalized 1st mode pushover",
+            xaxis_range=[0.0, 0.05],
         )
         return fig, normalized_fig
 
@@ -1422,7 +1423,7 @@ class IMKFrame(FiniteElementModel):
                 # Kbc = (Kmem * Ks) / (Ks - 2 * Kmem)
                 n = 10
                 Kbc = (n + 2) / n * Kmem
-                EI_bc = Kbc
+                EI_bc = imk1.length * Kbc / 6
                 elem_id += 1
                 elements.append(imk1)
                 Ic = imk1.Ic if elem.type == ElementTypes.COLUMN.value else 1e5

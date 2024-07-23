@@ -730,9 +730,14 @@ class GravityRecorderMixin(Recorder):
             self.fem.beams_by_storey, self.fem.uniform_beam_loads
         ):
             beam_ids = FE.string_ids_for_list(beams)
-            analysis_str += (
-                f"eleLoad -ele {beam_ids} -type beamUniform {-beam_load:.1f} \n"
-            )
+            for beam in beams:
+                node_load = beam_load * beam.length / 2
+                analysis_str += (
+                    # f"eleLoad -ele {beam_ids} -type beamUniform {-beam_load:.1f} \n"
+                    f"load {beam.i} 0. {-node_load} 0. \n"
+                    f"load {beam.j} 0. {-node_load} 0. \n"
+                    ""
+                )
         analysis_str += "}\n"
         analysis_str += self.elastic_static_solvers
         return analysis_str

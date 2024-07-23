@@ -380,7 +380,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     theta_u: float = 10.0
     theta_pc_cyclic: float | None = None
     theta_cap_cyclic: float | None = None
-    theta_u_cyclic: float | None = None
+    theta_u_cyclic: float = 10.0
     betaParkAng: float | None = None
     betaJiangCheng: float | None = None
     gammaParkAng: float | None = None
@@ -486,7 +486,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self.gammaParkAng = 1.0 / self.betaParkAng
         self.gammaJiangCheng = 1.0 / self.betaJiangCheng
         #
-        # BEGIN MODIFY SPRING PROPERTIES
+        # BEGIN MODIFIED SPRING PROPERTIES
         #
         self.Ks = (self.n + 2) * self.Ke
         self.theta_y = self.My / self.Ks
@@ -495,14 +495,16 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
             self.n * (self.ductility_member - 1) * (1 - self.alpha_postyield_member)
             + self.ductility_member
         )
-
-        self.theta_cap = self.theta_y_member * self.ductility
-
+        # self.theta_cap = self.theta_y_member * self.ductility
+        self.theta_cap = self.theta_cap_member
+        print(
+            f"{self.ductility_member=:} {self.ductility=:} {self.theta_cap_member=:} {self.theta_cap=:}"
+        )
         self.alpha_postyield = (self.alpha_postyield_member) / (
             self.n + 2 - self.n * self.alpha_postyield_member
         )
         self.theta_cap_cyclic = (
-            0.7 * self.theta_cap_member
+            0.7 * self.theta_cap
         )  # Haselton et al. Calibration paper
         pc_slope = self.alpha_postyield_member * self.Ks_original
         self.Mc = (
@@ -512,8 +514,13 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         alpha_pc = (self.Mr - self.Mc) / self.theta_pc_member / self.Ks_original
         mu_pc = (self.theta_y_member + self.theta_pc_member) / self.theta_y_member
         mu_pc_spring = self.n * (mu_pc - 1) * (1 - alpha_pc) + mu_pc
-        print(f"{mu_pc=:} {mu_pc_spring=:} {alpha_pc=:} {self.theta_pc_member=:}")
-        self.theta_pc = self.theta_y_member * mu_pc_spring
+        print(
+            f"{mu_pc=:} {mu_pc_spring=:} {alpha_pc=:} {self.theta_pc_member=:} {self.alpha_postyield=:}"
+        )
+        # self.theta_pc = self.theta_y_member * mu_pc_spring
+        self.theta_pc = (
+            self.theta_pc_member
+        )  # the true value might not matter too much, we just want a steep descent
 
         self.theta_pc_cyclic = 0.5 * self.theta_pc
         self.theta_r_member = (

@@ -10,10 +10,9 @@ import numpy as np
 import plotly.express as px
 from enum import Enum
 from pathlib import Path
-from abc import ABC, abstractmethod, abstractproperty
-from posixpath import basename
+from abc import ABC, abstractmethod
 from pandas import DataFrame, Series, read_csv
-from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line
+from plotly.graph_objects import Figure, Scattergl
 from dataclasses import dataclass, asdict, field, fields
 from app.utils import NamedYamlMixin, YamlMixin, UploadComponent
 from collections import defaultdict
@@ -225,6 +224,8 @@ class Record:
 @dataclass
 class Hazard(NamedYamlMixin):
     name: str
+    site: str | None = None
+    period: float | None = None
     records: list[Record] = field(default_factory=list)
     kind: str = RecordKind.ACCEL.value
     curve: str | dict | None = None
@@ -282,9 +283,13 @@ def crisis_parser(s: str):
             T = float(T)
             values = data[2:]
             rs = [r.split(" ") for r in values[2:]]
-            arr = arr = np.array([r1 for r in rs for r1 in r if r1])
-            df = DataFrame(arr.reshape((int(len(arr) / 2), 2)), columns=["x", "y"])
-            hazard = UserDefinedCurve(name=site_name, _df=df)
+            arr = np.array([float(r1) for r in rs for r1 in r if r1])
+            df = DataFrame(
+                arr.reshape((int(len(arr) / 2), 2)), columns=["x", "y"], dtype="float64"
+            )
+            # df.values = df.values.astype("float64")
+            df = df / 1000  # crisis is in gals
+            hazard = UserDefinedCurve(_df=df)
             dfs[site_name][T] = hazard
     return dfs
 
@@ -295,7 +300,7 @@ class HazardCurves:
     parsers = [
         crisis_parser,
     ]
-    dfs: DataFrame | None = None
+    dfs: defaultdict[str, dict[float, HazardCurve]] = field(default_factory=dict)
 
     def __post_init__(self):
         dfs = None
@@ -308,7 +313,7 @@ class HazardCurves:
                         break
                 except Exception as e:
                     print(f"Could not parse {self.path}", e)
-                    continue
+                    raise e
         if dfs is None:
             raise ValueError(f"Unable to parse {self.path}")
         self.dfs = dfs
@@ -321,14 +326,16 @@ class HazardCurve(ABC, YamlMixin):
     x = intensity (usually Sa in g)
     y = 1/unit_of_time usually 1/yr
     ALWAYS call super().__post_init__() to build the _df
+
+    the curve does not care about the site, period or anything, just the df
     """
 
-    name: str
+    kind: str
     x: list | None = None
     y: list | None = None
     v0: float | None = None
     _df: DataFrame = field(default_factory=DataFrame)
-    _IDA_LINSPACE_BINS: int = 20
+    _IDA_LINSPACE_BINS: int = 5
 
     def __str__(self) -> str:
         return str(self._df)
@@ -337,7 +344,8 @@ class HazardCurve(ABC, YamlMixin):
         if self._df.size == 0:
             if self.y and self.x:
                 self.v0 = self.y[0]
-                self._df = DataFrame(dict(y=self.y), index=self.x)
+                index = np.array(self.x).astype("float64")
+                self._df = DataFrame(dict(y=self.y), index=index, dtype="float64")
                 dataframe_schema.validate(self._df)
         else:
             dataframe_schema.validate(self._df)
@@ -428,9 +436,11 @@ class HazardCurve(ABC, YamlMixin):
     def intensities_for_idas(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         df: DataFrame = self._df
         start, stop = df.index.min(), df.index.max()
-        linspace, step = np.linspace(
-            start=start, stop=stop, num=self._IDA_LINSPACE_BINS, retstep=True
-        )
+        # linspace, step = np.linspace(
+        #     start=start, stop=stop, num=self._IDA_LINSPACE_BINS, retstep=True
+        # )
+        step = 0.1
+        linspace = df.index.values.flatten()
         sups = linspace + step / 2
         infs = linspace - step / 2
         return linspace, sups, infs
@@ -460,7 +470,7 @@ class HazardCurve(ABC, YamlMixin):
 
 @dataclass
 class ParetoCurve(HazardCurve):
-    name: str = "pareto"
+    kind: str = "pareto"
     v0: float = field(
         default=2.0,
         metadata={"input": True, "units": "1/yr", "help": "this is help text"},
@@ -524,7 +534,7 @@ class ParetoCurve(HazardCurve):
 
 @dataclass
 class UserDefinedCurve(HazardCurve):
-    name: str = "user"
+    kind: str = "user"
 
     def html(self, st: streamlit) -> None:
         """
@@ -555,7 +565,7 @@ class HazardCurveFactory:
     models = {"pareto": ParetoCurve, "user": UserDefinedCurve}
 
     def __new__(cls, **data) -> HazardCurve:
-        name = data["name"]
+        name = data["kind"]
         return cls.models[name](**data)
 
     @classmethod

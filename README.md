@@ -43,14 +43,13 @@ Add to `fly secrets set`
 
 ## TODO
 
-- [ ] do we need rigid beams? seems like it works better with rigid beams, why?
 - [ ] meter hazard para todos los periodos. escribir que agarra el periodo correspondiente al edificio
 - [ ] poder elegir sitio del peligro, poder elegir periodo (para ver) aunque interpole linealmente
 - [ ] escribir en tesis las formulas correctas de Ibarra y la justificacion de n=10
+- [ ] fixed-end moments
+- [ ] tomar correctamente drift de la resurreccion estructural
 - [ ] shear checks intra analysis check.
 - [ ] tests passing
-- [ ] hay un bug donde hay structural resurrection y se ve feo.
-- [ ] ahora con el modelo bien, parece que se puede mejorar los Delta IM para IDA para tener mejor resolucion
 
 ## TODO
 
