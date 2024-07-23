@@ -520,7 +520,7 @@ class StructuralResultView(YamlMixin):
         return rotations
 
     def view_spring_moment_rotation_th(
-        self, *, ele_type: str, node: int, ix: int, **kwargs
+        self, *, ele_type: str, ix: int, **kwargs
     ) -> DataFrame:
         moments = self.view_springs_moments()[ele_type]
         rotations = self.view_springs_rotations()[ele_type]
@@ -533,6 +533,32 @@ class StructuralResultView(YamlMixin):
         #     f"/Users/carlo/Desktop/moment-rotation-{ix}-{path}.png", engine="kaleido"
         # )
         return df
+
+    def view_column_spring_moment_rotation_th(self, ix: int):
+        from app.fem import ElementTypes
+
+        df = self.view_spring_moment_rotation_th(
+            ele_type=ElementTypes.SPRING_COLUMN.value, ix=ix
+        )
+        return df
+
+    def view_column_spring_moment_rotation_fig(self, ix: int):
+        df = self.view_column_spring_moment_rotation_th(ix=ix)
+        fig = df.plot(x="r", y="M")
+        return fig
+
+    def view_beam_spring_moment_rotation_th(self, ix: int):
+        from app.fem import ElementTypes
+
+        df = self.view_spring_moment_rotation_th(
+            ele_type=ElementTypes.SPRING_BEAM.value, ix=ix
+        )
+        return df
+
+    def view_beam_spring_moment_rotation_fig(self, ix: int):
+        df = self.view_beam_spring_moment_rotation_th(ix=ix)
+        fig = df.plot(x="r", y="M")
+        return fig
 
     def view_drifts(self) -> DataFrame:
         filename = "drifts.csv"

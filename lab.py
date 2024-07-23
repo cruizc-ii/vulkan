@@ -916,8 +916,28 @@ if state.module == 3:
             fig = view.generate_springs_visual_timehistory_fig(ida._design)
             st.plotly_chart(fig, theme=None)
             figures = view.timehistory_figures
+            # findme
             for fig in figures:
                 st.plotly_chart(fig, theme=None)
+
+            # cols_moments = view.view_spring_moment_rotation_th(ele_type="COLUMN")
+            # beams_moments = view.view_spring_moment_rotation_th(ele_type="BEAM")
+
+            c1, c2 = st.columns(2)
+            design = ida._design
+
+            c1.header("Columns hysteresis")
+            options = design.fem.springs_columns
+            for ix, _ in enumerate(options, start=1):
+                fig = view.view_column_spring_moment_rotation_fig(ix=ix)
+                c1.plotly_chart(fig, theme=None)
+
+            c2.header("Beams hysteresis")
+            options = design.fem.springs_beams
+            for ix, _ in enumerate(options, start=1):
+                fig = view.view_beam_spring_moment_rotation_fig(ix=ix)
+                c2.plotly_chart(fig, theme=None)
+
     else:
         st.header("run analysis to see results")
 
