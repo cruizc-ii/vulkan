@@ -7,14 +7,26 @@ Make sure opensees is on your path, make a symlink
 `cp ./bin/opensees /usr/local/bin`
 
 ```
-pip3 install -r requirements.txt
+cd /usr/local
+sudo cp <opensees location> ./bin/opensees.bin
+cd ./bin
+sudo mv opensees.bin opensees
+chmod -R 755 opensees
+```
+
+Install pyenv
+
+```
+pyenv install 3.9.6
+direnv allow
 mypy --install-types
+pip install -r requirements.txt
 make
 ```
 
 ## Debugging
 
-Set a `breakpoint()` anywhere
+Set a `breakpoint()` anywhere in the code.
 
 ## Dockerize it
 
@@ -43,11 +55,7 @@ Add to `fly secrets set`
 
 ## TODO
 
-- [ ] drift yield points on PUSHOVER
-- [ ] tickmarks (miranda)
-- [ ] black and white plots
 - [ ] collapse prevention points on median ida curvse
-- exportar las imágenes automáticamente a donde van en .tex con botón
 
 word document can take these from the folder
 
@@ -58,7 +66,6 @@ phd_thesis/figures/compare/roels.png
 phd_thesis/figures/compare/risks.png
 
 - [ ] doesnt make sense to have collapse going up at 5% drift or structural resurrection
-- [ ] wtf is up wit the model that Q4 costs more? this is intuitively not the case it should cost 20% more
 
 - escribir conclusiones e inconsistencias
 - future work
