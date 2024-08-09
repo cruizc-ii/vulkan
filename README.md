@@ -43,12 +43,31 @@ Add to `fly secrets set`
 
 ## TODO
 
+- [ ] drift yield points on PUSHOVER
+- [ ] tickmarks (miranda)
+- [ ] black and white plots
+- [ ] collapse prevention points on median ida curvse
+- exportar las imágenes automáticamente a donde van en .tex con botón
+
+word document can take these from the folder
+
+phd_thesis/figures/compare/building_configuration.png
+phd_thesis/figures/compare/pushovers.png
+phd_thesis/figures/compare/idas.png
+phd_thesis/figures/compare/roels.png
+phd_thesis/figures/compare/risks.png
+
+- [ ] doesnt make sense to have collapse going up at 5% drift or structural resurrection
+- [ ] wtf is up wit the model that Q4 costs more? this is intuitively not the case it should cost 20% more
+
+- escribir conclusiones e inconsistencias
+- future work
+
 - [ ] meter hazard para todos los periodos. escribir que agarra el periodo correspondiente al edificio
 - [ ] poder elegir sitio del peligro, poder elegir periodo (para ver) aunque interpole linealmente
+- [ ] fixed-end moments? wl\*\*2/12 one positive other negative
 - [ ] escribir en tesis las formulas correctas de Ibarra y la justificacion de n=10
-- [ ] fixed-end moments
-- [ ] tomar correctamente drift de la resurreccion estructural
-- [ ] shear checks intra analysis check.
+- [ ] shear checks intra analysis check? not at this time, write soemthing about that.
 - [ ] tests passing
 
 ## TODO
@@ -68,6 +87,8 @@ Add to `fly secrets set`
 
 ## TODO
 
+- [ ] incluir cimentacion como rugged asset always, 10% structural cost
+- [ ] ver publicaciones sobre IDAs con cortante, hablar con Vamvatsikos
 - [x] deploy to streamlit see how it works
 - [x] aim for lower period in design procedure to account for more flexibility in real model, this doesnt work.
 - [x] sustituir ya corrección de My/ke, cambiamos theta_y pero la actualizamos
@@ -75,10 +96,7 @@ Add to `fly secrets set`
 - [x] que fallo? debe ser alrededor de 15k/m2 ~0.6-1.2k USD/m2
 - [x] hacer breakdown de los costos de Wasim en mi clasificacion.
 - [x] incluir porcentaje de oficina transversal e.g. 2.7 veces cabe la distribucion de oficina que tiene dy=10m, el algoritmo de colocacion hace ese trabajo y multiplica asset.net_worth x 2.7
-- [ ] incluir cimentacion como rugged asset always, 10% structural cost
 - [x] libro de manuel alejandro con alcocer, hacer mejor los costos, desacoplar el acero longitudinal del transversal?, realmente debe hacerse desde arriba.
-- [ ] ver publicaciones sobre IDAs con cortante, hablar con Vamvatsikos
-- [ ] echar ojo a la desagregación numeros negativos
 - [x] cap6. columnas. comparar con cortante basal del metodo simplificado
 - [x] q=1? refuerzo por integridad, para proteger del colapso progresivo por carga vertical
 
@@ -131,8 +149,9 @@ Happens when overriding @properties, check that the definition of dataclasses is
 
 ## No columns to parse from file
 
-This error means pushover failed. Usually this means the model is wrong.
-It's good that this is raised.
+This error means pushover/ida failed.
+This means the model or the analysis is wrong.
+It's good that this is raised. Check results files.
 
 ## loss
 

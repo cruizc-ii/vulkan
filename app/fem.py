@@ -65,9 +65,6 @@ class FiniteElementModel(ABC, YamlMixin):
     miranda_fundamental_period: float | None = None
     cdmx_fundamental_period: float | None = None
     uniform_beam_loads_by_mass: list[float] | None = None
-    _YIELD_TANGENT_PCT: float = (
-        0.2  # less than this we consider structure to have yielded. when curr_tangent < PCT*initial tangent
-    )
 
     def __str__(self) -> str:
         h = "#!/usr/local/bin/opensees\n"
@@ -150,11 +147,14 @@ class FiniteElementModel(ABC, YamlMixin):
         return self.periods[0]
 
     def pushover_stats(self) -> dict:
-        df, ndf = self.pushover_dfs()
-        Vy, uy = self.pushover_yield(df)
+        df = self.pushover_df()
+        ndf = self.normalized_pushover_df()
+        Vy, uy = self.yield_estimation(df)
+        u_c = df["u"].values[-1]
+        ductility = u_c / uy
         cs = Vy / self.weight
         drift_y = uy / self.height
-        c_design = self.extras.get("c_design")
+        c_design = self.extras.get("c_design", 1)
         c_design_error = (cs - c_design) / c_design
         Vy_design = c_design * self.weight
         Vy_error = (Vy - Vy_design) / Vy_design
@@ -173,6 +173,7 @@ class FiniteElementModel(ABC, YamlMixin):
             "Vy [kN]": Vy,
             "uy [m]": uy,
             "cs [1]": cs,
+            "ductility": ductility,
             "drift_y [%]": 100 * drift_y,
             "c_design [1]": self.extras.get("c_design"),
             "period [s]": f"{period:.2f} s",
@@ -531,12 +532,13 @@ class FiniteElementModel(ABC, YamlMixin):
         # if force or not self._pushover_view:
         #     self.pushover(results_path=results_path, drift=drift)
 
-        df, ndf = self.pushover_dfs()
+        df = self.pushover_df()
+        ndf = self.normalized_pushover_df()
         cols = df[df.columns.difference(["u"])].columns
         fig = df.plot(x="u", y=cols)
         fig.update_layout(
-            xaxis_title="roof u (m)",
-            yaxis_title="Vb (kN)",
+            xaxis_title="roof u [m]",
+            yaxis_title="Vb [kN]",
             title_text=f"1st mode pushover",
         )
         normalized_fig = ndf.plot(x="u", y=cols)
@@ -547,6 +549,22 @@ class FiniteElementModel(ABC, YamlMixin):
             xaxis_range=[0.0, 0.05],
         )
         return fig, normalized_fig
+
+    def pushover_df(self) -> pd.DataFrame:
+        view = self._pushover_view
+        Vb = -view.base_shear()
+        Vb["sum"] = Vb.sum(axis=1)
+        roof_disp = view.roof_displacements()
+        df = Vb.join(roof_disp)
+        return df
+
+    def normalized_pushover_df(self) -> pd.DataFrame:
+        df = self.pushover_df()
+        h, W = self.height, self.weight
+        df["u"] = df["u"] / h
+        cols = df.columns[~df.columns.isin(["u"])]
+        df[cols] = df[cols] / W
+        return df
 
     def pushover_dfs(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         view = self._pushover_view
@@ -580,19 +598,21 @@ class FiniteElementModel(ABC, YamlMixin):
         ndf = cs.join(roof_drifts)
         return df, ndf
 
-    def pushover_yield(self, df: pd.DataFrame) -> tuple[float, float]:
+    @staticmethod
+    def yield_estimation(df: pd.DataFrame) -> tuple[float, float]:
+        _YIELD_TANGENT_PCT = 0.25  # curr_tangent < PCT*initial tangent => yield point.
         df = df.reset_index()
         df2 = df.diff(1)
         df2["fp"] = (
             df2["sum"] / df2["u"]
         )  # an idea might be to use a better approximation of derivative as (f(x+e)-f(x-e))/2e. will need an applymap.
         K = df2["fp"].iloc[:10].mean()
-        tol = -1e-2
+        tol = -0.05
         possible_pts = np.where(df2.diff(1, axis=0) < -tol)[
             0
         ]  # where next tangent is smaller than previous by a small negative tolerance
         df3 = df2.iloc[possible_pts]
-        indices = df3["fp"][df3["fp"] < self._YIELD_TANGENT_PCT * K].index
+        indices = df3["fp"][df3["fp"] < _YIELD_TANGENT_PCT * K].index
         if len(indices) == 0:
             return df["sum"].max(), 0
         yield_point = indices[0]

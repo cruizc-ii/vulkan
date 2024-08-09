@@ -423,7 +423,7 @@ class RectangularConcreteColumn:
     def compute_net_worth(self) -> float:
         """
         TODO: this is not how we do it, you cannot isolate an element
-        you have to compute everything from the outside then divide by the number of elements
+        you have to compute everything from the outside then divide by the number of elements!
         """
         # normalized by 1k dollars
         STEEL_DENSITY_TON = 7.85
@@ -444,7 +444,7 @@ class RectangularConcreteColumn:
         concrete = self.L * self.Ag * CONCRETE_M3_UNIT_COST
         # there is more work involved when stirrup spacing is smaller i.e. when concrete is more confined
         # when unions/overlapping with beams are stricter it is more work
-        work = 0.722 * num_stirrups**2 * WORK_UNIT_COST
+        work = 0.722 * num_stirrups**1.5 * WORK_UNIT_COST
         # print(f"{steel=} {concrete=} {work=}")
         dollars = steel + concrete + work
         dollars = INFLATION * dollars / 1e3
@@ -564,6 +564,7 @@ class RectangularConcreteColumn:
             DS = min([mono + cyclic, 1])
             cap = 100 * area / self.Et
             title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f}"
+            print(title)
         return DS
 
     def elwood_shear_capacity(

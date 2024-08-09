@@ -377,10 +377,10 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
     theta_r_member: float | None = None
     theta_r: float | None = None
     theta_r_cyclic: float | None = None
-    theta_u: float = 10.0
+    theta_u: float = 0.5
+    theta_u_cyclic: float = 0.25
     theta_pc_cyclic: float | None = None
     theta_cap_cyclic: float | None = None
-    theta_u_cyclic: float = 10.0
     betaParkAng: float | None = None
     betaJiangCheng: float | None = None
     gammaParkAng: float | None = None
@@ -519,7 +519,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         )
         # self.theta_pc = self.theta_y_member * mu_pc_spring
         self.theta_pc = (
-            self.theta_pc_member
+            self.theta_pc_member / 2
         )  # the true value might not matter too much, we just want a steep descent
 
         self.theta_pc_cyclic = 0.5 * self.theta_pc
@@ -531,7 +531,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
             self.theta_y + self.theta_cap_cyclic + self.theta_pc_cyclic
         )
 
-        self.gammaJiangCheng = (self.n + 2) * self.gammaJiangCheng
+        # self.gammaJiangCheng = (self.n + 2) * self.gammaJiangCheng
 
         self.Et = self.gammaJiangCheng * self.My * self.theta_cap_cyclic
 

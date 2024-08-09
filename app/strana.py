@@ -1000,6 +1000,7 @@ class TimehistoryRecorder(GravityRecorderMixin):
         s = f"set duration {self.record.duration}\n"
         s += f"set record_dt {self.record.dt}\n"
         s += f"set results_dir $abspath\n"
+        # integrator = API_DIR / "ida_integrator.tcl"
         integrator = API_DIR / "dynamic_integrator.tcl"
         s += f"source {integrator.resolve()}\n"
         return s
@@ -1278,7 +1279,7 @@ class IDA(NamedYamlMixin):
     _hazard: Hazard | None = None
     _design = None
     _intensities: np.ndarray | None = None
-    _NUM_PARALLEL_RUNS: int = 10
+    _NUM_PARALLEL_RUNS: int = 4
 
     def __post_init__(self):
         from app.design import ReinforcedConcreteFrame
@@ -1515,12 +1516,12 @@ class IDA(NamedYamlMixin):
         df2 = df.pivot(index="intensity", columns="record", values="peak_drift")
         df2["median"] = df2.median(axis=1)
         Sa_g = (
-            self._design.fem.pushover_stats().get("cs [1]", 1)
+            self._design.fem.pushover_stats().get("cs [1]", 0)
             if self._design and self._design.fem
             else 1
         )
         drift_y = (
-            self._design.fem.pushover_stats().get("drift_y [1]", 1)
+            self._design.fem.pushover_stats().get("drift_y [1]", 0)
             if self._design and self._design.fem
             else 1
         )

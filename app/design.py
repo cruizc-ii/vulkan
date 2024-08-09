@@ -218,7 +218,7 @@ class BuildingSpecification(ABC, NamedYamlMixin):
 
     @property
     def weight_str(self) -> str:
-        return f"{self.total_mass * GRAVITY:.1f}"
+        return f"{self.fem.weight:.0f}"
 
     def force_design(
         self,

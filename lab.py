@@ -1,12 +1,17 @@
+from pathlib import Path
 import streamlit as st
+import pandas as pd
+import numpy as np
+import time
+import random
+import plotly.express as px
 from app.assets import LOSS_MODELS_DIR
+from app.concrete import RectangularConcreteColumn
 from app.criteria import DesignCriterionFactory
 from app.design import ReinforcedConcreteFrame
 from app.hazard import (
     RECORDS_DIR,
     Hazard,
-    HazardCurve,
-    HazardCurveFactory,
     HazardCurves,
     Record,
 )
@@ -24,17 +29,11 @@ from app.utils import (
     RESULTS_DIR,
     find_files,
     COMPARE_DIR,
-    GRAVITY,
     LossModelsResultsDataFrame,
 )
 from app.occupancy import BuildingOccupancy
 from app.compare import IDACompare
-import pandas as pd
-import numpy as np
-import time
 from st_cytoscape import cytoscape
-import plotly.express as px
-import random
 from streamlit import session_state as state
 from functools import partial
 
@@ -251,23 +250,29 @@ with st.sidebar:
         path = RECORDS_DIR / "hazards" / file
         hazards = HazardCurves(path)
         site_names = list(hazards.dfs.keys())
-        index = site_names.index(hazard.site)
-        site_name = st.selectbox("select hazard sites", options=site_names, index=index)
-        site = hazards.dfs[site_name]
-        periods = list(site.keys())
-        design = ReinforcedConcreteFrame.from_file(state.design_abspath)
-        T = design.fem.period
-        period = sorted(periods, key=lambda t: abs(t - T))[0]
+        try:
 
-        # select_manually = st.checkbox("select period manually")
-        # if select_manually:
-        #     period = st.selectbox("periods", periods)
-        # hazard.period = period
+            index = site_names.index(hazard.site)
+            site_name = st.selectbox(
+                "select hazard sites", options=site_names, index=index
+            )
+            site = hazards.dfs[site_name]
+            periods = list(site.keys())
+            design = ReinforcedConcreteFrame.from_file(state.design_abspath)
+            T = design.fem.period
+            period = sorted(periods, key=lambda t: abs(t - T))[0]
 
-        curve = site[period]
-        hazard.curve = curve
-        hazard._curve = curve
-        hazard.site = site_name
+            # select_manually = st.checkbox("select period manually")
+            # if select_manually:
+            #     period = st.selectbox("periods", periods)
+            # hazard.period = period
+
+            curve = site[period]
+            hazard.curve = curve
+            hazard._curve = curve
+            hazard.site = site_name
+        except ValueError:
+            pass
         hazard.to_file(HAZARD_DIR)
 
         st.subheader(f"Records ({len(hazard.records)})")
@@ -929,7 +934,11 @@ if state.module == 3:
             c1.header("Columns hysteresis")
             options = design.fem.springs_columns
             for ix, _ in enumerate(options, start=1):
+                col: RectangularConcreteColumn = design.fem.springs_columns[ix - 1]
+                df = view.view_column_spring_moment_rotation_th(ix=ix)
+                DS = col.park_ang_kunnath_DS(df)
                 fig = view.view_column_spring_moment_rotation_fig(ix=ix)
+                DS
                 c1.plotly_chart(fig, theme=None)
 
             c2.header("Beams hysteresis")
@@ -1049,44 +1058,50 @@ if state.module == 5:
 
     units = st.button("use units")
     if not units:
-        norm_pushover_figs = compare.normalized_pushover_figs
-        st.plotly_chart(norm_pushover_figs, theme=None)
-
-        norm_ida_figs = compare.normalized_ida_figs
-        st.plotly_chart(norm_ida_figs, theme=None)
-
-        rate_figs = compare.rate_figs
-        st.plotly_chart(rate_figs, theme=None)
-
-        risk_figs = compare.risk_figs
-        st.plotly_chart(risk_figs, theme=None)
-
-        st.subheader("Summary")
-        df = compare.summary_df
-        st.dataframe(df)
+        pushover_fig = compare.normalized_pushover_figs
+        ida_fig = compare.normalized_ida_figs
+        rate_fig = compare.rate_figs
+        risk_fig = compare.risk_figs
     else:
         pushover_fig = compare.pushover_figs
-        st.plotly_chart(pushover_fig, theme=None)
-
         ida_fig = compare.ida_figs
-        st.plotly_chart(ida_fig, theme=None)
+        rate_fig = compare.rate_figs
+        risk_fig = compare.risk_figs
+    st.subheader("Pushover")
+    st.plotly_chart(pushover_fig, theme=None)
+    st.subheader("IDA")
+    st.plotly_chart(ida_fig, theme=None)
+    st.subheader("Rate of exceedance of $")
+    st.plotly_chart(rate_fig, theme=None)
+    st.subheader("Risk $")
+    st.plotly_chart(risk_fig, theme=None)
 
-        rate_figs = compare.rate_figs
-        st.plotly_chart(rate_figs, theme=None)
+    HOME = Path.home()
+    FIGURES_PATH = HOME / "Dropbox/phd_thesis/figures/compare"
+    print_figs = st.button("print figures")
+    if print_figs:
+        pushover_fig.write_image(FIGURES_PATH / "pushovers.png", engine="kaleido")
+        ida_fig.write_image(FIGURES_PATH / "idas.png", engine="kaleido")
+        rate_fig.write_image(FIGURES_PATH / "roels.png", engine="kaleido")
+        risk_fig.write_image(FIGURES_PATH / "risks.png", engine="kaleido")
 
-        risk_figs = compare.risk_figs
-        st.plotly_chart(risk_figs, theme=None)
+    df = compare.summary_df
+    st.subheader("Summary")
 
-        df = compare.summary_df
-        st.subheader("Summary")
-        st.dataframe(df)
-
-    st.header("Compare point values")
-    stat = st.selectbox("select", options=df.columns)
-    if stat:
-        # fig = df[stat].plot()
-        fig = px.scatter(df, x="design name", y=stat)
-        st.plotly_chart(fig, theme=None)
+    sdf = df
+    st.text(df.columns)
+    desired_columns = [
+        "design name",
+        "AAL %",
+        "AAL $",
+        "cs [1]",
+        "ductility",
+        "net worth [$]",
+        "elements net worth [$]",
+    ]
+    # desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]
+    sdf = sdf[desired_columns]
+    st.dataframe(sdf)
 
     for ix, comp in enumerate(compare.comparisons):
         design = comp._design_model
@@ -1101,10 +1116,18 @@ if state.module == 5:
             col1, col2, col3, col4 = st.columns(4)
             initial_cost = comp.summary.get("net worth $")
             aal = comp.summary.get("AAL $")
-            pvl = (1 + secondary_loss) * aal / discount_factor
-            risk = initial_cost + pvl
-            col1.metric("Initial cost $", f"{initial_cost:.1f}")
-            col2.metric("AAL $", f"{aal:.1f}")
-            col3.metric("PVL $", f"{pvl:.1f}")
-            col4.metric("Risk $", f"{risk:.1f}")
-            st.dataframe(comp.summary_df)
+            if aal is not None and initial_cost is not None:
+                pvl = (1 + secondary_loss) * aal / discount_factor
+                risk = initial_cost + pvl
+                col1.metric("Initial cost $", f"{initial_cost:.1f}")
+                col2.metric("AAL $", f"{aal:.1f}")
+                col3.metric("PVL $", f"{pvl:.1f}")
+                col4.metric("Risk $", f"{risk:.1f}")
+                st.dataframe(comp.summary_df)
+
+    st.header("Compare point values")
+    stat = st.selectbox("select", options=sdf.columns, index=2)
+    if stat:
+        # fig = df[stat].plot()
+        fig = px.bar(sdf, x="design name", y=stat)
+        st.plotly_chart(fig, theme=None)
