@@ -335,7 +335,7 @@ class HazardCurve(ABC, YamlMixin):
     y: list | None = None
     v0: float | None = None
     _df: DataFrame = field(default_factory=DataFrame)
-    _IDA_LINSPACE_BINS: int = 20
+    _IDA_LINSPACE_BINS: int = 12
 
     def __str__(self) -> str:
         return str(self._df)

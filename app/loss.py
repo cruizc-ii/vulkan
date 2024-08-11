@@ -267,7 +267,7 @@ class LossModel(YamlMixin, Loss):
             self._get_and_set_loss_statistics()
             self._compute_rate_losses()
             toc = time.perf_counter()
-            print(f"Computed losses in {toc - tic:0.1f} seconds {self.name}")
+            # print(f"Computed losses in {toc - tic:0.1f} seconds {self.name}")
 
     def _compute_losses(self) -> LossResultsDataFrame:
         self._csv_name = f"_src-{self.name}-{self.floor}"

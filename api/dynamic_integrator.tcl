@@ -1,19 +1,20 @@
 #This integration scheme follows what has been canonically done in the IDA world, and it forces convergence to get a huge displacement
 #more recent algorithms such as KrylovNewton can be faster and more precise and obtaining the collapse displacement, however when plotted they do not 'flatten', rather they spike up so it doesn't look that it is correct, altough it is.
 
-set tol 1e-5
+set tol 1e-6
 constraints Transformation
 numberer RCM
-integrator TRBDF2
-# integrator HHT 0.6; #the smaller the alpha, the greater the numerical damping
-system FullGeneral
+# integrator TRBDF2
+integrator Newmark 0.5 0.25
+system BandGeneral
 analysis Transient
-test NormDispIncr $tol 100 0; # switch to 2 for output
+test NormDispIncr $tol 10 0; # switch to 2 for output
 
 set algorithms {
- "Newton"
+ "ModifiedNewton"
  "BFGS"
 }
+
 
 set num_algorithms [llength $algorithms]
 set num_subdivisions 10
