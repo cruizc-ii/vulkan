@@ -640,7 +640,7 @@ class LossAggregator(NamedYamlMixin, Loss):
         fig.update_layout(
             # df.values.max()
             # xaxis_range=[-2, 3],
-            yaxis_range=[-5, 0],
+            # yaxis_range=[-5, 0],
             xaxis_title="$",
             yaxis_title="v($) [1/yr]",
         )

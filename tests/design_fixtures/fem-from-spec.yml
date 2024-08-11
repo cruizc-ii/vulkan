@@ -1,5 +1,5 @@
-a0: 0.8971144908056432
-a1: 0.0020360004692256736
+a0: 0.8242638951938202
+a1: 0.0021040504417131787
 cdmx_fundamental_period: 0.5
 chopra_fundamental_period_plus1sigma: 0.3360860565609751
 contents: []
@@ -25,7 +25,7 @@ elements:
   EFFECTIVE_INERTIA_COEFF: 1
   Ec: 24099792.53022731
   Es: 200000000.0
-  Et: 19.70534299327163
+  Et: 27.591908682798586
   FRM: 0.9
   FRV: 0.75
   Ic: null
@@ -34,22 +34,25 @@ elements:
   Iy: 0.0025925027650789503
   Kb: null
   Ke: 124957.55754488666
-  Ke_Ks_ratio: 0.5393161424844172
-  Ks: 231696.30519356675
+  Ke_Ks_ratio: 13.929478659059631
+  Ks: 1499490.69053864
+  Ks_original: 8970.727519914406
   L: 1.0
   Lpl: 0.03
   Ls: 1.5
-  Mc: 592.0635937575621
-  Mu: 0.0
+  Mr: 2.826166719595073
   My: 56.52333439190146
   N: 0.0
   P: 0.0
   Q: 4
   Vy: 37.682222927934305
   alpha: '0.0055'
-  alpha_confinement: 1.1395752053451522
+  alpha_confinement: 1.5974890879812842
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.2112370588967264
@@ -61,13 +64,13 @@ elements:
   bars_top: null
   bay: 0
   beta: 0.8357142857142857
-  betaJiangCheng: 0.05100038316580522
-  betaParkAng: -0.01502699303833978
+  betaJiangCheng: 0.03904644141384668
+  betaParkAng: -0.010758606338619765
   c: null
   category: structural
   cover: 0.03
   d: 0.4980926472418159
-  down: false
+  down: true
   dp: 0.03
   edp: peak_drifts
   elasticMatTag: 300001
@@ -82,8 +85,8 @@ elements:
   fy: 420000.0
   fyMPa: 420.0
   fyw: 420000.0
-  gammaJiangCheng: 19.607695823557673
-  gammaParkAng: -66.54691310820508
+  gammaJiangCheng: 25.61052848327887
+  gammaParkAng: -92.94884193413952
   h: 0.5280926472418159
   hidden: false
   i: 0
@@ -96,45 +99,54 @@ elements:
   left: false
   length: 3.0
   model: IMKSpring
+  n: 10
   name: FragileConcreteColumnAsset
-  net_worth: 0.4622427314463163
+  net_worth: 0.8979673287220643
   node: 0
   nu: 0.0
   num_bars: null
   p: 0.005301148793965588
   pc: 0.002650574396982794
   pcc: 0.008353340503584192
+  phi_y: 0.006760177439784125
+  phi_y_fardis: 0.0058095456436725
+  phi_y_fardis2: 0.016401011694351264
   pmax: null
   pmin: null
   pt: 0.002650574396982794
-  pw: 0.0033611526486321624
+  pw: 0.01272940521397972
   pweff: null
   qc: 0.04440278476996817
   qt: 0.04440278476996817
   radius: 0.26404632362090796
   recorder_ix: 1
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
-  s: 0.2
+  s: 0.0528092647241816
   secColTag: 100001
   singly_reinforced: false
   storey: 1
-  theta_cap_cyclic: 0.017779914328876878
-  theta_pc_cyclic: 0.05
-  theta_u: 0.1256438320181893
-  theta_u_cyclic: 0.0680238687343849
-  theta_y: 0.0002439544055080205
-  theta_y_fardis: 0.006776179932374489
+  theta_cap_cyclic: 0.019060550080241996
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.0772670522793707
+  theta_r_cyclic: 0.04409824510212412
+  theta_r_member: 0.13353022129180725
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 3.769502188212813e-05
+  theta_y_fardis: 0.006300864034318676
+  theta_y_member: 0.006300864034318676
   transf: 2
   type: spring_column
   up: false
-  x: null
-  y: null
+  x: 0.0
+  y: 0.0
 - A: 100000
   CRACKED_INERTIA_FACTOR: 1.0
-  E: 24099792.53022731
-  Ix: 0.00259250276507895
+  E: 1.0
+  Ix: 74974.534526932
   bay: 0
   category: structural
   floor: 1
@@ -165,7 +177,7 @@ elements:
   EFFECTIVE_INERTIA_COEFF: 1
   Ec: 24099792.53022731
   Es: 200000000.0
-  Et: 19.70534299327163
+  Et: 27.591908682798586
   FRM: 0.9
   FRV: 0.75
   Ic: null
@@ -174,22 +186,25 @@ elements:
   Iy: 0.0025925027650789503
   Kb: null
   Ke: 124957.55754488666
-  Ke_Ks_ratio: 0.5393161424844172
-  Ks: 231696.30519356675
+  Ke_Ks_ratio: 13.929478659059631
+  Ks: 1499490.69053864
+  Ks_original: 8970.727519914406
   L: 1.0
   Lpl: 0.03
   Ls: 1.5
-  Mc: 592.0635937575621
-  Mu: 0.0
+  Mr: 2.826166719595073
   My: 56.52333439190146
   N: 0.0
   P: 0.0
   Q: 4
   Vy: 37.682222927934305
   alpha: '0.0055'
-  alpha_confinement: 1.1395752053451522
+  alpha_confinement: 1.5974890879812842
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.2112370588967264
@@ -201,8 +216,8 @@ elements:
   bars_top: null
   bay: 0
   beta: 0.8357142857142857
-  betaJiangCheng: 0.05100038316580522
-  betaParkAng: -0.01502699303833978
+  betaJiangCheng: 0.03904644141384668
+  betaParkAng: -0.010758606338619765
   c: null
   category: structural
   cover: 0.03
@@ -222,8 +237,8 @@ elements:
   fy: 420000.0
   fyMPa: 420.0
   fyw: 420000.0
-  gammaJiangCheng: 19.607695823557673
-  gammaParkAng: -66.54691310820508
+  gammaJiangCheng: 25.61052848327887
+  gammaParkAng: -92.94884193413952
   h: 0.5280926472418159
   hidden: false
   i: 8
@@ -236,41 +251,50 @@ elements:
   left: false
   length: 3.0
   model: IMKSpring
+  n: 10
   name: FragileConcreteColumnAsset
-  net_worth: 0.4622427314463163
+  net_worth: 0.8979673287220643
   node: 8
   nu: 0.0
   num_bars: null
   p: 0.005301148793965588
   pc: 0.002650574396982794
   pcc: 0.008353340503584192
+  phi_y: 0.006760177439784125
+  phi_y_fardis: 0.0058095456436725
+  phi_y_fardis2: 0.016401011694351264
   pmax: null
   pmin: null
   pt: 0.002650574396982794
-  pw: 0.0033611526486321624
+  pw: 0.01272940521397972
   pweff: null
   qc: 0.04440278476996817
   qt: 0.04440278476996817
   radius: 0.26404632362090796
   recorder_ix: 2
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
-  s: 0.2
+  s: 0.0528092647241816
   secColTag: 100003
   singly_reinforced: false
   storey: 1
-  theta_cap_cyclic: 0.017779914328876878
-  theta_pc_cyclic: 0.05
-  theta_u: 0.1256438320181893
-  theta_u_cyclic: 0.0680238687343849
-  theta_y: 0.0002439544055080205
-  theta_y_fardis: 0.006776179932374489
+  theta_cap_cyclic: 0.019060550080241996
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.0772670522793707
+  theta_r_cyclic: 0.04409824510212412
+  theta_r_member: 0.13353022129180725
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 3.769502188212813e-05
+  theta_y_fardis: 0.006300864034318676
+  theta_y_member: 0.006300864034318676
   transf: 2
   type: spring_column
-  up: false
-  x: null
-  y: null
+  up: true
+  x: 0.0
+  y: 3.0
 - A: 100000
   ASPECT_RATIO_B_TO_H: 0.4
   Ac: 0.10521562586144582
@@ -289,7 +313,7 @@ elements:
   EFFECTIVE_INERTIA_COEFF: 1
   Ec: 24099792.53022731
   Es: 200000000.0
-  Et: 19.70534299327163
+  Et: 27.591908682798586
   FRM: 0.9
   FRV: 0.75
   Ic: null
@@ -298,22 +322,25 @@ elements:
   Iy: 0.0025925027650789503
   Kb: null
   Ke: 124957.55754488666
-  Ke_Ks_ratio: 0.5393161424844172
-  Ks: 231696.30519356675
+  Ke_Ks_ratio: 13.929478659059631
+  Ks: 1499490.69053864
+  Ks_original: 8970.727519914406
   L: 1.0
   Lpl: 0.03
   Ls: 1.5
-  Mc: 592.0635937575621
-  Mu: 0.0
+  Mr: 2.826166719595073
   My: 56.52333439190146
   N: 0.0
   P: 0.0
   Q: 4
   Vy: 37.682222927934305
   alpha: '0.0055'
-  alpha_confinement: 1.1395752053451522
+  alpha_confinement: 1.5974890879812842
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.2112370588967264
@@ -325,13 +352,13 @@ elements:
   bars_top: null
   bay: 1
   beta: 0.8357142857142857
-  betaJiangCheng: 0.05100038316580522
-  betaParkAng: -0.01502699303833978
+  betaJiangCheng: 0.03904644141384668
+  betaParkAng: -0.010758606338619765
   c: null
   category: structural
   cover: 0.03
   d: 0.4980926472418159
-  down: false
+  down: true
   dp: 0.03
   edp: peak_drifts
   elasticMatTag: 300004
@@ -346,8 +373,8 @@ elements:
   fy: 420000.0
   fyMPa: 420.0
   fyw: 420000.0
-  gammaJiangCheng: 19.607695823557673
-  gammaParkAng: -66.54691310820508
+  gammaJiangCheng: 25.61052848327887
+  gammaParkAng: -92.94884193413952
   h: 0.5280926472418159
   hidden: false
   i: 1
@@ -360,45 +387,54 @@ elements:
   left: false
   length: 3.0
   model: IMKSpring
+  n: 10
   name: FragileConcreteColumnAsset
-  net_worth: 0.4622427314463163
+  net_worth: 0.8979673287220643
   node: 1
   nu: 0.0
   num_bars: null
   p: 0.005301148793965588
   pc: 0.002650574396982794
   pcc: 0.008353340503584192
+  phi_y: 0.006760177439784125
+  phi_y_fardis: 0.0058095456436725
+  phi_y_fardis2: 0.016401011694351264
   pmax: null
   pmin: null
   pt: 0.002650574396982794
-  pw: 0.0033611526486321624
+  pw: 0.01272940521397972
   pweff: null
   qc: 0.04440278476996817
   qt: 0.04440278476996817
   radius: 0.26404632362090796
   recorder_ix: 3
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
-  s: 0.2
+  s: 0.0528092647241816
   secColTag: 100004
   singly_reinforced: false
   storey: 1
-  theta_cap_cyclic: 0.017779914328876878
-  theta_pc_cyclic: 0.05
-  theta_u: 0.1256438320181893
-  theta_u_cyclic: 0.0680238687343849
-  theta_y: 0.0002439544055080205
-  theta_y_fardis: 0.006776179932374489
+  theta_cap_cyclic: 0.019060550080241996
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.0772670522793707
+  theta_r_cyclic: 0.04409824510212412
+  theta_r_member: 0.13353022129180725
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 3.769502188212813e-05
+  theta_y_fardis: 0.006300864034318676
+  theta_y_member: 0.006300864034318676
   transf: 2
   type: spring_column
   up: false
-  x: null
-  y: null
+  x: 5.0
+  y: 0.0
 - A: 100000
   CRACKED_INERTIA_FACTOR: 1.0
-  E: 24099792.53022731
-  Ix: 0.00259250276507895
+  E: 1.0
+  Ix: 74974.534526932
   bay: 1
   category: structural
   floor: 1
@@ -429,7 +465,7 @@ elements:
   EFFECTIVE_INERTIA_COEFF: 1
   Ec: 24099792.53022731
   Es: 200000000.0
-  Et: 19.70534299327163
+  Et: 27.591908682798586
   FRM: 0.9
   FRV: 0.75
   Ic: null
@@ -438,22 +474,25 @@ elements:
   Iy: 0.0025925027650789503
   Kb: null
   Ke: 124957.55754488666
-  Ke_Ks_ratio: 0.5393161424844172
-  Ks: 231696.30519356675
+  Ke_Ks_ratio: 13.929478659059631
+  Ks: 1499490.69053864
+  Ks_original: 8970.727519914406
   L: 1.0
   Lpl: 0.03
   Ls: 1.5
-  Mc: 592.0635937575621
-  Mu: 0.0
+  Mr: 2.826166719595073
   My: 56.52333439190146
   N: 0.0
   P: 0.0
   Q: 4
   Vy: 37.682222927934305
   alpha: '0.0055'
-  alpha_confinement: 1.1395752053451522
+  alpha_confinement: 1.5974890879812842
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.2112370588967264
@@ -465,8 +504,8 @@ elements:
   bars_top: null
   bay: 1
   beta: 0.8357142857142857
-  betaJiangCheng: 0.05100038316580522
-  betaParkAng: -0.01502699303833978
+  betaJiangCheng: 0.03904644141384668
+  betaParkAng: -0.010758606338619765
   c: null
   category: structural
   cover: 0.03
@@ -486,8 +525,8 @@ elements:
   fy: 420000.0
   fyMPa: 420.0
   fyw: 420000.0
-  gammaJiangCheng: 19.607695823557673
-  gammaParkAng: -66.54691310820508
+  gammaJiangCheng: 25.61052848327887
+  gammaParkAng: -92.94884193413952
   h: 0.5280926472418159
   hidden: false
   i: 11
@@ -500,41 +539,50 @@ elements:
   left: false
   length: 3.0
   model: IMKSpring
+  n: 10
   name: FragileConcreteColumnAsset
-  net_worth: 0.4622427314463163
+  net_worth: 0.8979673287220643
   node: 11
   nu: 0.0
   num_bars: null
   p: 0.005301148793965588
   pc: 0.002650574396982794
   pcc: 0.008353340503584192
+  phi_y: 0.006760177439784125
+  phi_y_fardis: 0.0058095456436725
+  phi_y_fardis2: 0.016401011694351264
   pmax: null
   pmin: null
   pt: 0.002650574396982794
-  pw: 0.0033611526486321624
+  pw: 0.01272940521397972
   pweff: null
   qc: 0.04440278476996817
   qt: 0.04440278476996817
   radius: 0.26404632362090796
   recorder_ix: 4
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
-  s: 0.2
+  s: 0.0528092647241816
   secColTag: 100006
   singly_reinforced: false
   storey: 1
-  theta_cap_cyclic: 0.017779914328876878
-  theta_pc_cyclic: 0.05
-  theta_u: 0.1256438320181893
-  theta_u_cyclic: 0.0680238687343849
-  theta_y: 0.0002439544055080205
-  theta_y_fardis: 0.006776179932374489
+  theta_cap_cyclic: 0.019060550080241996
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.0772670522793707
+  theta_r_cyclic: 0.04409824510212412
+  theta_r_member: 0.13353022129180725
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 3.769502188212813e-05
+  theta_y_fardis: 0.006300864034318676
+  theta_y_member: 0.006300864034318676
   transf: 2
   type: spring_column
-  up: false
-  x: null
-  y: null
+  up: true
+  x: 5.0
+  y: 3.0
 - A: 100000
   ASPECT_RATIO_B_TO_H: 0.4
   Ac: 0.0453542533235533
@@ -562,13 +610,13 @@ elements:
   Iy: 0.0005120993116205333
   Kb: null
   Ke: 14809.784597912494
-  Ke_Ks_ratio: 1.0
-  Ks: 14809.784597912494
+  Ke_Ks_ratio: 7.727193373982051
+  Ks: 177717.4151749499
+  Ks_original: 1916.5800415682588
   L: 1.0
   Lpl: 0.03
   Ls: 2.5
-  Mc: 55.01328694582876
-  Mu: 0.0
+  Mr: 1.0161315554865695
   My: 20.32263110973139
   N: 0.0
   P: 0.0
@@ -577,7 +625,10 @@ elements:
   alpha: '0.0055'
   alpha_confinement: 3.439149167741479
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.1408247059311509
@@ -621,17 +672,21 @@ elements:
   integration_points: 5
   j: 9
   k: 1184.7827678329995
-  left: false
+  left: true
   length: 5.0
   model: IMKSpring
+  n: 10
   name: ConcreteBeamAsset
-  net_worth: 0.34886834682875917
+  net_worth: 0.21044105292038973
   node: 2
   nu: 0.0
   num_bars: null
   p: 0.006943240925207566
   pc: 0.003471620462603783
   pcc: 0.014582806446895235
+  phi_y: 0.010140266159676187
+  phi_y_fardis: 0.008575364132291012
+  phi_y_fardis2: 0.029034095005933357
   pmax: null
   pmin: null
   pt: 0.003471620462603783
@@ -641,7 +696,7 @@ elements:
   qt: 0.05815706074105482
   radius: 0.17603088241393863
   recorder_ix: 1
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
   s: 0.2
@@ -649,20 +704,25 @@ elements:
   singly_reinforced: false
   storey: 1
   theta_cap_cyclic: 0.01801857393502026
-  theta_pc_cyclic: 0.05
-  theta_u: 0.12711306343815443
-  theta_u_cyclic: 0.06939081746600287
-  theta_y: 0.001372243530982615
-  theta_y_fardis: 0.011907676142919576
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.07585517353475368
+  theta_r_cyclic: 0.04313292756260215
+  theta_r_member: 0.1363444110272704
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 0.00011435362758188461
+  theta_y_fardis: 0.010603591120098597
+  theta_y_member: 0.010603591120098597
   transf: 2
   type: spring_beam
   up: false
-  x: null
-  y: null
+  x: 0.0
+  y: 3.0
 - A: 100000
   CRACKED_INERTIA_FACTOR: 1.0
-  E: 24099792.53022731
-  Ix: 0.0005120993116205333
+  E: 1.0
+  Ix: 14809.784597912492
   bay: 1
   category: structural
   floor: 2
@@ -702,13 +762,13 @@ elements:
   Iy: 0.0005120993116205333
   Kb: null
   Ke: 14809.784597912494
-  Ke_Ks_ratio: 1.0
-  Ks: 14809.784597912494
+  Ke_Ks_ratio: 7.727193373982051
+  Ks: 177717.4151749499
+  Ks_original: 1916.5800415682588
   L: 1.0
   Lpl: 0.03
   Ls: 2.5
-  Mc: 55.01328694582876
-  Mu: 0.0
+  Mr: 1.0161315554865695
   My: 20.32263110973139
   N: 0.0
   P: 0.0
@@ -717,7 +777,10 @@ elements:
   alpha: '0.0055'
   alpha_confinement: 3.439149167741479
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.1408247059311509
@@ -764,14 +827,18 @@ elements:
   left: false
   length: 5.0
   model: IMKSpring
+  n: 10
   name: ConcreteBeamAsset
-  net_worth: 0.34886834682875917
+  net_worth: 0.21044105292038973
   node: 13
   nu: 0.0
   num_bars: null
   p: 0.006943240925207566
   pc: 0.003471620462603783
   pcc: 0.014582806446895235
+  phi_y: 0.010140266159676187
+  phi_y_fardis: 0.008575364132291012
+  phi_y_fardis2: 0.029034095005933357
   pmax: null
   pmin: null
   pt: 0.003471620462603783
@@ -781,24 +848,29 @@ elements:
   qt: 0.05815706074105482
   radius: 0.17603088241393863
   recorder_ix: 2
-  residual_My: 0.01
-  right: false
+  residual_My_ratio: 0.05
+  right: true
   rugged: false
   s: 0.2
   secColTag: 100009
   singly_reinforced: false
   storey: 1
   theta_cap_cyclic: 0.01801857393502026
-  theta_pc_cyclic: 0.05
-  theta_u: 0.12711306343815443
-  theta_u_cyclic: 0.06939081746600287
-  theta_y: 0.001372243530982615
-  theta_y_fardis: 0.011907676142919576
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.07585517353475368
+  theta_r_cyclic: 0.04313292756260215
+  theta_r_member: 0.1363444110272704
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 0.00011435362758188461
+  theta_y_fardis: 0.010603591120098597
+  theta_y_member: 0.010603591120098597
   transf: 2
   type: spring_beam
   up: false
-  x: null
-  y: null
+  x: 5.0
+  y: 3.0
 - A: 100000
   ASPECT_RATIO_B_TO_H: 0.4
   Ac: 0.05129535411066049
@@ -817,7 +889,7 @@ elements:
   EFFECTIVE_INERTIA_COEFF: 1
   Ec: 24099792.53022731
   Es: 200000000.0
-  Et: 11.07169690290658
+  Et: 12.904306821737697
   FRM: 0.9
   FRV: 0.75
   Ic: null
@@ -826,22 +898,25 @@ elements:
   Iy: 0.0006481256912697376
   Kb: null
   Ke: 31239.389386221676
-  Ke_Ks_ratio: 1.0
-  Ks: 31239.389386221676
+  Ke_Ks_ratio: 10.209771725824403
+  Ks: 374872.6726346601
+  Ks_original: 3059.753951913083
   L: 1.0
   Lpl: 0.03
   Ls: 1.5
-  Mc: 97.39767766068299
-  Mu: 0.0
+  Mr: 1.2193578665838836
   My: 24.38715733167767
   N: 0.0
   P: 0.0
   Q: 4
   Vy: 16.258104887785112
   alpha: '0.0055'
-  alpha_confinement: 2.895977498353246
+  alpha_confinement: 4.193333927436685
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.14936715678377735
@@ -853,13 +928,13 @@ elements:
   bars_top: null
   bay: 0
   beta: 0.8357142857142857
-  betaJiangCheng: 0.03959921227310635
-  betaParkAng: 0.04141678233682887
+  betaJiangCheng: 0.039000000000000014
+  betaParkAng: 0.01978997742089717
   c: null
   category: structural
   cover: 0.03
   d: 0.3434178919594434
-  down: false
+  down: true
   dp: 0.03
   edp: peak_drifts
   elasticMatTag: 300010
@@ -874,8 +949,8 @@ elements:
   fy: 420000.0
   fyMPa: 420.0
   fyw: 420000.0
-  gammaJiangCheng: 25.253027588105486
-  gammaParkAng: 24.14480178270088
+  gammaJiangCheng: 25.64102564102563
+  gammaParkAng: 50.53062864761295
   h: 0.37341789195944336
   hidden: false
   i: 2
@@ -888,45 +963,54 @@ elements:
   left: false
   length: 3.0
   model: IMKSpring
+  n: 10
   name: FragileConcreteColumnAsset
-  net_worth: 0.36152314543815234
+  net_worth: 1.1780694299975738
   node: 2
   nu: 0.0
   num_bars: null
   p: 0.006897936627102923
   pc: 0.0034489683135514614
   pcc: 0.013736234961917173
+  phi_y: 0.009560334619391335
+  phi_y_fardis: 0.00915617243208377
+  phi_y_fardis2: 0.01964401629025172
   pmax: null
   pmin: null
   pt: 0.0034489683135514614
-  pw: 0.0047533876609018545
+  pw: 0.025458810427959444
   pweff: null
   qc: 0.05777758884240055
   qt: 0.05777758884240055
   radius: 0.18670894597972168
   recorder_ix: 5
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
-  s: 0.2
+  s: 0.03734178919594434
   secColTag: 100010
   singly_reinforced: false
   storey: 2
-  theta_cap_cyclic: 0.017977924606743446
-  theta_pc_cyclic: 0.05
-  theta_u: 0.1264634035358306
-  theta_u_cyclic: 0.06875857870436912
-  theta_y: 0.0007806540976256653
-  theta_y_fardis: 0.008172381227241265
+  theta_cap_cyclic: 0.02063659815709849
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.07954590901827618
+  theta_r_cyclic: 0.04570165266523396
+  theta_r_member: 0.1374511546437282
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 6.505450813547211e-05
+  theta_y_fardis: 0.007970300133587483
+  theta_y_member: 0.007970300133587483
   transf: 2
   type: spring_column
   up: false
-  x: null
-  y: null
+  x: 0.0
+  y: 3.0
 - A: 100000
   CRACKED_INERTIA_FACTOR: 1.0
-  E: 24099792.53022731
-  Ix: 0.0006481256912697377
+  E: 1.0
+  Ix: 18743.633631733006
   bay: 0
   category: structural
   floor: 2
@@ -957,7 +1041,7 @@ elements:
   EFFECTIVE_INERTIA_COEFF: 1
   Ec: 24099792.53022731
   Es: 200000000.0
-  Et: 11.07169690290658
+  Et: 12.904306821737697
   FRM: 0.9
   FRV: 0.75
   Ic: null
@@ -966,22 +1050,25 @@ elements:
   Iy: 0.0006481256912697376
   Kb: null
   Ke: 31239.389386221676
-  Ke_Ks_ratio: 1.0
-  Ks: 31239.389386221676
+  Ke_Ks_ratio: 10.209771725824403
+  Ks: 374872.6726346601
+  Ks_original: 3059.753951913083
   L: 1.0
   Lpl: 0.03
   Ls: 1.5
-  Mc: 97.39767766068299
-  Mu: 0.0
+  Mr: 1.2193578665838836
   My: 24.38715733167767
   N: 0.0
   P: 0.0
   Q: 4
   Vy: 16.258104887785112
   alpha: '0.0055'
-  alpha_confinement: 2.895977498353246
+  alpha_confinement: 4.193333927436685
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.14936715678377735
@@ -993,8 +1080,8 @@ elements:
   bars_top: null
   bay: 0
   beta: 0.8357142857142857
-  betaJiangCheng: 0.03959921227310635
-  betaParkAng: 0.04141678233682887
+  betaJiangCheng: 0.039000000000000014
+  betaParkAng: 0.01978997742089717
   c: null
   category: structural
   cover: 0.03
@@ -1014,8 +1101,8 @@ elements:
   fy: 420000.0
   fyMPa: 420.0
   fyw: 420000.0
-  gammaJiangCheng: 25.253027588105486
-  gammaParkAng: 24.14480178270088
+  gammaJiangCheng: 25.64102564102563
+  gammaParkAng: 50.53062864761295
   h: 0.37341789195944336
   hidden: false
   i: 14
@@ -1028,41 +1115,50 @@ elements:
   left: false
   length: 3.0
   model: IMKSpring
+  n: 10
   name: FragileConcreteColumnAsset
-  net_worth: 0.36152314543815234
+  net_worth: 1.1780694299975738
   node: 14
   nu: 0.0
   num_bars: null
   p: 0.006897936627102923
   pc: 0.0034489683135514614
   pcc: 0.013736234961917173
+  phi_y: 0.009560334619391335
+  phi_y_fardis: 0.00915617243208377
+  phi_y_fardis2: 0.01964401629025172
   pmax: null
   pmin: null
   pt: 0.0034489683135514614
-  pw: 0.0047533876609018545
+  pw: 0.025458810427959444
   pweff: null
   qc: 0.05777758884240055
   qt: 0.05777758884240055
   radius: 0.18670894597972168
   recorder_ix: 6
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
-  s: 0.2
+  s: 0.03734178919594434
   secColTag: 100012
   singly_reinforced: false
   storey: 2
-  theta_cap_cyclic: 0.017977924606743446
-  theta_pc_cyclic: 0.05
-  theta_u: 0.1264634035358306
-  theta_u_cyclic: 0.06875857870436912
-  theta_y: 0.0007806540976256653
-  theta_y_fardis: 0.008172381227241265
+  theta_cap_cyclic: 0.02063659815709849
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.07954590901827618
+  theta_r_cyclic: 0.04570165266523396
+  theta_r_member: 0.1374511546437282
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 6.505450813547211e-05
+  theta_y_fardis: 0.007970300133587483
+  theta_y_member: 0.007970300133587483
   transf: 2
   type: spring_column
-  up: false
-  x: null
-  y: null
+  up: true
+  x: 0.0
+  y: 6.0
 - A: 100000
   ASPECT_RATIO_B_TO_H: 0.4
   Ac: 0.05129535411066049
@@ -1081,7 +1177,7 @@ elements:
   EFFECTIVE_INERTIA_COEFF: 1
   Ec: 24099792.53022731
   Es: 200000000.0
-  Et: 11.07169690290658
+  Et: 12.904306821737697
   FRM: 0.9
   FRV: 0.75
   Ic: null
@@ -1090,22 +1186,25 @@ elements:
   Iy: 0.0006481256912697376
   Kb: null
   Ke: 31239.389386221676
-  Ke_Ks_ratio: 1.0
-  Ks: 31239.389386221676
+  Ke_Ks_ratio: 10.209771725824403
+  Ks: 374872.6726346601
+  Ks_original: 3059.753951913083
   L: 1.0
   Lpl: 0.03
   Ls: 1.5
-  Mc: 97.39767766068299
-  Mu: 0.0
+  Mr: 1.2193578665838836
   My: 24.38715733167767
   N: 0.0
   P: 0.0
   Q: 4
   Vy: 16.258104887785112
   alpha: '0.0055'
-  alpha_confinement: 2.895977498353246
+  alpha_confinement: 4.193333927436685
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.14936715678377735
@@ -1117,13 +1216,13 @@ elements:
   bars_top: null
   bay: 1
   beta: 0.8357142857142857
-  betaJiangCheng: 0.03959921227310635
-  betaParkAng: 0.04141678233682887
+  betaJiangCheng: 0.039000000000000014
+  betaParkAng: 0.01978997742089717
   c: null
   category: structural
   cover: 0.03
   d: 0.3434178919594434
-  down: false
+  down: true
   dp: 0.03
   edp: peak_drifts
   elasticMatTag: 300013
@@ -1138,8 +1237,8 @@ elements:
   fy: 420000.0
   fyMPa: 420.0
   fyw: 420000.0
-  gammaJiangCheng: 25.253027588105486
-  gammaParkAng: 24.14480178270088
+  gammaJiangCheng: 25.64102564102563
+  gammaParkAng: 50.53062864761295
   h: 0.37341789195944336
   hidden: false
   i: 3
@@ -1152,45 +1251,54 @@ elements:
   left: false
   length: 3.0
   model: IMKSpring
+  n: 10
   name: FragileConcreteColumnAsset
-  net_worth: 0.36152314543815234
+  net_worth: 1.1780694299975738
   node: 3
   nu: 0.0
   num_bars: null
   p: 0.006897936627102923
   pc: 0.0034489683135514614
   pcc: 0.013736234961917173
+  phi_y: 0.009560334619391335
+  phi_y_fardis: 0.00915617243208377
+  phi_y_fardis2: 0.01964401629025172
   pmax: null
   pmin: null
   pt: 0.0034489683135514614
-  pw: 0.0047533876609018545
+  pw: 0.025458810427959444
   pweff: null
   qc: 0.05777758884240055
   qt: 0.05777758884240055
   radius: 0.18670894597972168
   recorder_ix: 7
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
-  s: 0.2
+  s: 0.03734178919594434
   secColTag: 100013
   singly_reinforced: false
   storey: 2
-  theta_cap_cyclic: 0.017977924606743446
-  theta_pc_cyclic: 0.05
-  theta_u: 0.1264634035358306
-  theta_u_cyclic: 0.06875857870436912
-  theta_y: 0.0007806540976256653
-  theta_y_fardis: 0.008172381227241265
+  theta_cap_cyclic: 0.02063659815709849
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.07954590901827618
+  theta_r_cyclic: 0.04570165266523396
+  theta_r_member: 0.1374511546437282
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 6.505450813547211e-05
+  theta_y_fardis: 0.007970300133587483
+  theta_y_member: 0.007970300133587483
   transf: 2
   type: spring_column
   up: false
-  x: null
-  y: null
+  x: 5.0
+  y: 3.0
 - A: 100000
   CRACKED_INERTIA_FACTOR: 1.0
-  E: 24099792.53022731
-  Ix: 0.0006481256912697377
+  E: 1.0
+  Ix: 18743.633631733006
   bay: 1
   category: structural
   floor: 2
@@ -1221,7 +1329,7 @@ elements:
   EFFECTIVE_INERTIA_COEFF: 1
   Ec: 24099792.53022731
   Es: 200000000.0
-  Et: 11.07169690290658
+  Et: 12.904306821737697
   FRM: 0.9
   FRV: 0.75
   Ic: null
@@ -1230,22 +1338,25 @@ elements:
   Iy: 0.0006481256912697376
   Kb: null
   Ke: 31239.389386221676
-  Ke_Ks_ratio: 1.0
-  Ks: 31239.389386221676
+  Ke_Ks_ratio: 10.209771725824403
+  Ks: 374872.6726346601
+  Ks_original: 3059.753951913083
   L: 1.0
   Lpl: 0.03
   Ls: 1.5
-  Mc: 97.39767766068299
-  Mu: 0.0
+  Mr: 1.2193578665838836
   My: 24.38715733167767
   N: 0.0
   P: 0.0
   Q: 4
   Vy: 16.258104887785112
   alpha: '0.0055'
-  alpha_confinement: 2.895977498353246
+  alpha_confinement: 4.193333927436685
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.14936715678377735
@@ -1257,8 +1368,8 @@ elements:
   bars_top: null
   bay: 1
   beta: 0.8357142857142857
-  betaJiangCheng: 0.03959921227310635
-  betaParkAng: 0.04141678233682887
+  betaJiangCheng: 0.039000000000000014
+  betaParkAng: 0.01978997742089717
   c: null
   category: structural
   cover: 0.03
@@ -1278,8 +1389,8 @@ elements:
   fy: 420000.0
   fyMPa: 420.0
   fyw: 420000.0
-  gammaJiangCheng: 25.253027588105486
-  gammaParkAng: 24.14480178270088
+  gammaJiangCheng: 25.64102564102563
+  gammaParkAng: 50.53062864761295
   h: 0.37341789195944336
   hidden: false
   i: 16
@@ -1292,41 +1403,50 @@ elements:
   left: false
   length: 3.0
   model: IMKSpring
+  n: 10
   name: FragileConcreteColumnAsset
-  net_worth: 0.36152314543815234
+  net_worth: 1.1780694299975738
   node: 16
   nu: 0.0
   num_bars: null
   p: 0.006897936627102923
   pc: 0.0034489683135514614
   pcc: 0.013736234961917173
+  phi_y: 0.009560334619391335
+  phi_y_fardis: 0.00915617243208377
+  phi_y_fardis2: 0.01964401629025172
   pmax: null
   pmin: null
   pt: 0.0034489683135514614
-  pw: 0.0047533876609018545
+  pw: 0.025458810427959444
   pweff: null
   qc: 0.05777758884240055
   qt: 0.05777758884240055
   radius: 0.18670894597972168
   recorder_ix: 8
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
-  s: 0.2
+  s: 0.03734178919594434
   secColTag: 100015
   singly_reinforced: false
   storey: 2
-  theta_cap_cyclic: 0.017977924606743446
-  theta_pc_cyclic: 0.05
-  theta_u: 0.1264634035358306
-  theta_u_cyclic: 0.06875857870436912
-  theta_y: 0.0007806540976256653
-  theta_y_fardis: 0.008172381227241265
+  theta_cap_cyclic: 0.02063659815709849
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.07954590901827618
+  theta_r_cyclic: 0.04570165266523396
+  theta_r_member: 0.1374511546437282
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 6.505450813547211e-05
+  theta_y_fardis: 0.007970300133587483
+  theta_y_member: 0.007970300133587483
   transf: 2
   type: spring_column
-  up: false
-  x: null
-  y: null
+  up: true
+  x: 5.0
+  y: 6.0
 - A: 100000
   ASPECT_RATIO_B_TO_H: 0.4
   Ac: 0.02180215411506837
@@ -1354,13 +1474,13 @@ elements:
   Iy: 0.00012802482790513336
   Kb: null
   Ke: 3702.4461494781244
-  Ke_Ks_ratio: 1.0
-  Ks: 3702.4461494781244
+  Ke_Ks_ratio: 3.5303827864548065
+  Ks: 44429.35379373749
+  Ks_original: 1048.737877287268
   L: 1.0
   Lpl: 0.03
   Ls: 2.5
-  Mc: 25.070760783677343
-  Mu: 0.0
+  Mr: 0.8129052443892557
   My: 16.258104887785112
   N: 0.0
   P: 0.0
@@ -1369,7 +1489,10 @@ elements:
   alpha: '0.0055'
   alpha_confinement: 11.382175998897585
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.09957810452251824
@@ -1413,17 +1536,21 @@ elements:
   integration_points: 5
   j: 15
   k: 296.19569195824994
-  left: false
+  left: true
   length: 5.0
   model: IMKSpring
+  n: 10
   name: ConcreteBeamAsset
-  net_worth: 0.31425375079601503
+  net_worth: 0.1758264568876456
   node: 4
   nu: 0.0
   num_bars: null
   p: 0.018135191008010643
   pc: 0.009067595504005321
   pcc: 0.06011721561956711
+  phi_y: 0.014340501929087004
+  phi_y_fardis: 0.013827072777897792
+  phi_y_fardis2: 0.03340847842167457
   pmax: null
   pmin: null
   pt: 0.009067595504005321
@@ -1433,7 +1560,7 @@ elements:
   qt: 0.1519015998961575
   radius: 0.12447263065314779
   recorder_ix: 3
-  residual_My: 0.01
+  residual_My_ratio: 0.05
   right: false
   rugged: false
   s: 0.2
@@ -1441,20 +1568,25 @@ elements:
   singly_reinforced: false
   storey: 2
   theta_cap_cyclic: 0.01830942517480984
-  theta_pc_cyclic: 0.05
-  theta_u: 0.13054750097744414
-  theta_u_cyclic: 0.07270060447395421
-  theta_y: 0.0043911792991443675
-  theta_y_fardis: 0.01593040143592697
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.07652225328656181
+  theta_r_cyclic: 0.04367535678307187
+  theta_r_member: 0.14165886548823575
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 0.00036593160826203065
+  theta_y_fardis: 0.015502543809935956
+  theta_y_member: 0.015502543809935956
   transf: 2
   type: spring_beam
   up: false
-  x: null
-  y: null
+  x: 0.0
+  y: 6.0
 - A: 100000
   CRACKED_INERTIA_FACTOR: 1.0
-  E: 24099792.53022731
-  Ix: 0.00012802482790513336
+  E: 1.0
+  Ix: 3702.4461494781244
   bay: 1
   category: structural
   floor: 3
@@ -1494,13 +1626,13 @@ elements:
   Iy: 0.00012802482790513336
   Kb: null
   Ke: 3702.4461494781244
-  Ke_Ks_ratio: 1.0
-  Ks: 3702.4461494781244
+  Ke_Ks_ratio: 3.5303827864548065
+  Ks: 44429.35379373749
+  Ks_original: 1048.737877287268
   L: 1.0
   Lpl: 0.03
   Ls: 2.5
-  Mc: 25.070760783677343
-  Mu: 0.0
+  Mr: 0.8129052443892557
   My: 16.258104887785112
   N: 0.0
   P: 0.0
@@ -1509,7 +1641,10 @@ elements:
   alpha: '0.0055'
   alpha_confinement: 11.382175998897585
   alpha_cyclic: 1
-  alpha_postyield: 0.13
+  alpha_pc: null
+  alpha_pc_member: null
+  alpha_postyield: 0.002564102564102564
+  alpha_postyield_member: 0.03
   alpha_slippage: 1
   alpha_steel_type: 0.016
   b: 0.09957810452251824
@@ -1556,14 +1691,18 @@ elements:
   left: false
   length: 5.0
   model: IMKSpring
+  n: 10
   name: ConcreteBeamAsset
-  net_worth: 0.31425375079601503
+  net_worth: 0.1758264568876456
   node: 17
   nu: 0.0
   num_bars: null
   p: 0.018135191008010643
   pc: 0.009067595504005321
   pcc: 0.06011721561956711
+  phi_y: 0.014340501929087004
+  phi_y_fardis: 0.013827072777897792
+  phi_y_fardis2: 0.03340847842167457
   pmax: null
   pmin: null
   pt: 0.009067595504005321
@@ -1573,24 +1712,29 @@ elements:
   qt: 0.1519015998961575
   radius: 0.12447263065314779
   recorder_ix: 4
-  residual_My: 0.01
-  right: false
+  residual_My_ratio: 0.05
+  right: true
   rugged: false
   s: 0.2
   secColTag: 100018
   singly_reinforced: false
   storey: 2
   theta_cap_cyclic: 0.01830942517480984
-  theta_pc_cyclic: 0.05
-  theta_u: 0.13054750097744414
-  theta_u_cyclic: 0.07270060447395421
-  theta_y: 0.0043911792991443675
-  theta_y_fardis: 0.01593040143592697
+  theta_pc_cyclic: 0.025
+  theta_pc_member: 0.1
+  theta_r: 0.07652225328656181
+  theta_r_cyclic: 0.04367535678307187
+  theta_r_member: 0.14165886548823575
+  theta_u: 0.5
+  theta_u_cyclic: 0.25
+  theta_y: 0.00036593160826203065
+  theta_y_fardis: 0.015502543809935956
+  theta_y_member: 0.015502543809935956
   transf: 2
   type: spring_beam
   up: false
-  x: null
-  y: null
+  x: 5.0
+  y: 6.0
 - area: 6.25
   category: structural
   edp: null
@@ -1634,8 +1778,8 @@ extras:
   - 38.72984142963911
   - 29.58040282748992
 frequencies:
-- 1.8798893843231017
-- 5.9371492410375675
+- 1.6889826710288491
+- 5.8752344188574
 miranda_fundamental_period: 0.25
 model: IMKFrame
 nodes:
@@ -1881,19 +2025,19 @@ num_frames: 2
 num_storeys: 2
 occupancy: EmptyOccupancy.yml
 omegas:
-- 11.81169335870179
-- 37.304208877819676
+- 10.612191102689398
+- 36.91518657680061
 periods:
-- 0.5319461923341162
-- 0.16843100272568548
+- 0.592072386030371
+- 0.17020597455488037
 pushover_abs_path: null
 total_area: 50.0
 uniform_beam_loads_by_mass: null
 values:
-- 139.5161
-- 1391.604
+- 112.6186
+- 1362.731
 vectors:
-- - -0.0392515848208658
-  - -0.1961104614458541
-- - -0.1961104614468758
-  - 0.039251584819663
+- - -0.0489597102711018
+  - -0.1939147925494001
+- - -0.1939147925508272
+  - 0.0489597102696367

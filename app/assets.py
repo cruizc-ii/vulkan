@@ -295,7 +295,7 @@ class RiskAsset(Asset):
         views_by_path: dict,
         **kwargs,
     ) -> np.ndarray:
-        print(f"Processing {self.name=} {self.node=} {self.rugged=} {self.category=}")
+        # print(f"Processing {self.name=} {self.node=} {self.rugged=} {self.category=}")
 
         if self.rugged:
             losses = (

@@ -191,7 +191,7 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
         self.node = self.i
 
     def dollars(self, *, strana_results_df, views_by_path: dict, **kwargs):
-        print(f"Structural element {self.name=} {self.node=} {self.rugged=}")
+        # print(f"Structural element {self.name=} {self.node=} {self.rugged=}")
         # strana_results_df["collapse_losses"] = (
         #     strana_results_df["collapse"]
         #     .apply(lambda r: self.net_worth if r != CollapseTypes.NONE.value else 0)
@@ -412,7 +412,7 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         i = 0
         while not designed:
             if i >= maxIter:
-                print(f'{b=:.2f}, {h=:.2f} {Ix=:.3f}, My={data["My"]:.1f}')
+                # print(f'{b=:.2f}, {h=:.2f} {Ix=:.3f}, My={data["My"]:.1f}')
                 raise DesignException(
                     f"Section is too small for moment {data['My']:.1f}"
                 )
@@ -434,8 +434,6 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self.model = self.__class__.__name__
         if self.type == ElementTypes.SPRING_COLUMN.value and self.Q == 4:
             # indirectly take into account recommendations for ductile design from BCs, I do not like this part, it does not feel right.
-            # discutir esto en conclusiones de la tesis
-            # es una inconsistencia del procedimiento de diseno
             self.s = min([0.1, self.b / 4, self.h / 4])
         # self.Kb = 1e9
         # self.Kb = self.Ks * self.Ke / (self.Ks - 2 * self.Ke)
@@ -497,9 +495,9 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         )
         # self.theta_cap = self.theta_y_member * self.ductility
         self.theta_cap = self.theta_cap_member
-        print(
-            f"{self.ductility_member=:} {self.ductility=:} {self.theta_cap_member=:} {self.theta_cap=:}"
-        )
+        # print(
+        #     f"{self.ductility_member=:.2f} {self.ductility=:.2f} {self.theta_cap_member=:.2f} {self.theta_cap=:.2f}"
+        # )
         self.alpha_postyield = (self.alpha_postyield_member) / (
             self.n + 2 - self.n * self.alpha_postyield_member
         )
@@ -514,9 +512,9 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         alpha_pc = (self.Mr - self.Mc) / self.theta_pc_member / self.Ks_original
         mu_pc = (self.theta_y_member + self.theta_pc_member) / self.theta_y_member
         mu_pc_spring = self.n * (mu_pc - 1) * (1 - alpha_pc) + mu_pc
-        print(
-            f"{mu_pc=:} {mu_pc_spring=:} {alpha_pc=:} {self.theta_pc_member=:} {self.alpha_postyield=:}"
-        )
+        # print(
+        #     f"{mu_pc=:.2f} {mu_pc_spring=:.2f} {alpha_pc=:.2f} {self.theta_pc_member=:.2f} {self.alpha_postyield=:.2f}"
+        # )
         # self.theta_pc = self.theta_y_member * mu_pc_spring
         self.theta_pc = (
             self.theta_pc_member / 2

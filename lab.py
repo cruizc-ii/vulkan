@@ -461,13 +461,14 @@ with st.sidebar:
             help="click run to save",
         )
         loss = None
+        "loss abspath", state.loss_abspath
         try:
-            if state.loss_abspath:
-                loss = LossAggregator.from_file(state.loss_abspath)
-            elif file:
+            if file:
                 loss = LossAggregator.from_file(LOSS_MODELS_DIR / file)
                 state.loss_abspath = LOSS_MODELS_DIR / file
                 loss.ida_model_path = state.ida_abspath
+            elif state.loss_abspath:
+                loss = LossAggregator.from_file(state.loss_abspath)
             else:
                 loss = LossAggregator(name=name, ida_model_path=str(state.ida_abspath))
                 loss.name = name
@@ -700,7 +701,7 @@ if state.module == 1:
             )
             col3.metric("Contents", f"$ {design.fem.contents_net_worth:.0f} k ")
             fig = design.fem.assets_pie_fig
-            st.header("summary")
+            st.header(f"summary {design.name}")
             st.plotly_chart(fig, theme=None)
             asset_records = [a.to_dict for a in design.fem.assets]
             df = pd.DataFrame.from_records(asset_records)
@@ -1087,9 +1088,8 @@ if state.module == 5:
 
     df = compare.summary_df
     st.subheader("Summary")
-
     sdf = df
-    st.text(df.columns)
+    # st.text(df.columns)
     desired_columns = [
         "design name",
         "AAL %",
