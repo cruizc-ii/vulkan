@@ -285,12 +285,12 @@ with st.sidebar:
             hazard.add_record(record)
             hazard.to_file(HAZARD_DIR)
         left, middle, right = st.columns(3)
-        go = left.button("sample 3", help="grab 3 at random")
+        go = left.button("sample 5", help="grab 3 at random")
         if go:
             with st.spinner("sampling..."):
                 time.sleep(1)
                 untouched = [r for r in record_files if r not in hazard.record_names]
-                samples = random.sample(untouched, 3)
+                samples = random.sample(untouched, 5)
                 for path in samples:
                     if path == "add a record":
                         continue

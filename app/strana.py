@@ -580,7 +580,11 @@ class StructuralResultView(YamlMixin):
         accels = storey_accels.merge(
             ground_accel, how="outer", left_index=True, right_index=True
         )
-        accels = accels.interpolate("cubic").fillna(0)
+        try:
+            accels = accels.interpolate("linear").fillna(0)
+        except ValueError as e:
+            breakpoint()
+            raise e
         return accels
 
     def view_floor_accels_envelope(self) -> DataFrame:

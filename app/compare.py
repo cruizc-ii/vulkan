@@ -127,7 +127,7 @@ class IDACompare(CompareInterface):
             Vy, drift_y = comp.summary.get("Vy [kN]", 0), comp.summary.get(
                 "drift_y [1]", 0
             )
-            W = float(comp.summary.get("weight"))
+            W = float(comp.summary.get("weight", 1))
             fig.add_trace(
                 Scattergl(
                     x=[drift_y],
@@ -297,7 +297,7 @@ class DesignComparison(YamlMixin):
     @property
     def pushover_trace(self) -> Figure:
         x, y = self.summary.get("_pushover_x", []), self.summary.get("_pushover_y", [])
-        ductility = self.summary.get("ductility", "")
+        ductility = self.summary.get("ductility", 0)
         name = self.summary.get(f"design name", "") + f"  µ={ductility:.1f}"
         trace = Scattergl(x=x, y=y, name=name)
         return trace
@@ -307,7 +307,7 @@ class DesignComparison(YamlMixin):
         x, y = self.summary.get("_norm_pushover_x", []), self.summary.get(
             "_norm_pushover_y", []
         )
-        ductility = self.summary.get("ductility", "")
+        ductility = self.summary.get("ductility", 0)
         name = self.summary.get(f"design name", "") + f"  µ = {ductility:.1f}"
         trace = Scattergl(x=x, y=y, name=name)
         return trace

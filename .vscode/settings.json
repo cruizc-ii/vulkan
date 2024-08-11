@@ -5,7 +5,5 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
-  "python.testing.unittestArgs": ["-v", "-s", ".", "-p", "*test.py"],
-  "python.experiments.optInto": ["pythonTestAdapter"],
-  "python.experiments.enabled": true
+  "python.testing.unittestArgs": ["-v", "-s", ".", "-p", "*test.py"]
 }
