@@ -1,24 +1,24 @@
 #This integration scheme follows what has been canonically done in the IDA world, and it forces convergence to get a huge displacement
 #more recent algorithms such as KrylovNewton can be faster and more precise and obtaining the collapse displacement, however when plotted they do not 'flatten', rather they spike up so it doesn't look that it is correct, altough it is.
 
-set tol 1e-6
+set tol 1e-3; # an error of 1mm is acceptable, in reality we could use tol * sqrt(dofs)
 constraints Transformation
 numberer RCM
-# integrator TRBDF2
 integrator Newmark 0.5 0.25
 system BandGeneral
 analysis Transient
-test NormDispIncr $tol 10 0; # switch to 2 for output
+test NormDispIncr $tol 100 0; # switch to 2 for output
 
+# for some reason only BFGS or Krylov does not give the infinite disp
 set algorithms {
- "ModifiedNewton"
- "BFGS"
+    "ModifiedNewton"
+    "BFGS"
 }
 
 
 set num_algorithms [llength $algorithms]
-set num_subdivisions 10
-set max_subdivisions 2 ;# (exp) divide original timestep into num_sub^exp steps
+set num_subdivisions 20
+set max_subdivisions 1 ;# (exp) divide original timestep into num_sub^exp steps
 
 set results_file $results_dir/results.csv
 set collapse_file $results_dir/collapse.csv

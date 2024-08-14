@@ -417,7 +417,7 @@ with st.sidebar:
                 run = st.button("run IDA", help="run with chosen Sa")
             if delete:
                 with st.spinner("deleting analysis"):
-                    time.sleep(2)
+                    time.sleep(1)
                     ida.delete(STRANA_DIR)
                     ida = None
                     state.ida_abspath = None
