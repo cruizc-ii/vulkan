@@ -88,21 +88,22 @@ class CodeMassesPre(DesignCriterion):
     therefore mass will be sigma*area since this frame is taking the totality the board's mass
     """
 
-    CODE_UNIFORM_LOADS_kPA = 9.81  # 1 t/m2
+    CODE_UNIFORM_LOADS_kPA = 9.81 * 0.8  # 0.6 t/m2
     SLAB_AREA_PERCENTAGE = 0.25  # part of the slab mass that goes to this frame's beams A=Lx * Lz = c Lx**2
     # i.e, the coefficient of perpendicular contribution
 
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
-        fem = PlainFEM.from_spec(self.specification)
-        uniform_load_kPa = kwargs.get("uniform_load_kPa") or self.CODE_UNIFORM_LOADS_kPA
+        fem = PlainFEM.from_spec(self.specification, *args, fem=self.fem, **kwargs)
+        uniform_load_kPa = self.CODE_UNIFORM_LOADS_kPA
         masses = np.array(
             [
                 uniform_load_kPa * self.SLAB_AREA_PERCENTAGE * fem.length**2 / GRAVITY
                 for _ in range(fem.num_storeys)
             ]
-        )
-        fem._update_masses_in_place(masses.tolist())
-        self.specification._update_masses_in_place(masses.tolist())
+        ).tolist()
+        for node, mass in zip(fem.mass_nodes, masses):
+            node.mass = mass
+        fem.masses = masses
         fem.get_and_set_eigen_results(results_path=results_path)
         return fem
 
@@ -122,7 +123,7 @@ class LoeraPre(DesignCriterion):
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         if not self.STRESS_PCT_EMPIRICAL:
             self.STRESS_PCT_EMPIRICAL = self.WORKING_STRESS_PCT
-        fem = PlainFEM.from_spec(self.specification)
+        fem = PlainFEM.from_spec(self.specification, *args, fem=self.fem, **kwargs)
         weights = np.array(fem.cumulative_weights)
         cols_st = fem.columns_by_storey
         beams_st = fem.beams_by_storey
@@ -232,6 +233,7 @@ class ForceBasedPre(DesignCriterion):
             )
             instance_path = results_path / instance.__class__.__name__
             fem = instance.run(results_path=instance_path, *args, **kwargs)
+            print(index, fem.masses, fem.mass_nodes)
         return fem
 
 
@@ -268,12 +270,11 @@ class CDMX2017Q1(DesignCriterion):
     def run(self, results_path: Path, *args, **kwargs) -> FiniteElementModel:
         """
         this criterion changes many properties of spec in place!
-
-        - change masses in place
+        - change masses in place, antipattern
         """
         from app.strana import RSA
 
-        fem = PlainFEM.from_spec(self.specification)
+        fem = PlainFEM.from_spec(self.specification, fem=self.fem)
         criterion = ForceBasedPre(specification=self.specification, fem=fem)
         shear_fem = criterion.run(results_path=results_path, *args, **kwargs)
 
@@ -303,6 +304,7 @@ class CDMX2017Q1(DesignCriterion):
                 new_elements.append(ele)
 
         fem.elements = new_elements
+        fem.masses = shear_fem.masses
         fem = BilinFrame.from_elastic(
             fem=fem,
             design_moments=design_moments,

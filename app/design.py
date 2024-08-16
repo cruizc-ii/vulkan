@@ -23,7 +23,6 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     name: str
     storeys: list[float] = field(default_factory=lambda: [4.0])
     bays: list[float] = field(default_factory=lambda: [8.0])
-    masses: list[float] = field(default_factory=list)
     damping: float = 0.05
     num_frames: int = 2
     design_criteria: list[str] = field(
@@ -95,11 +94,6 @@ class BuildingSpecification(ABC, NamedYamlMixin):
             from app.occupancy import BuildingOccupancy
 
             self.occupancy = BuildingOccupancy.DEFAULT
-
-        if len(self.masses) == 1:
-            self.masses = [self.masses[0] for _ in range(self.num_storeys)]
-        elif len(self.masses) == 0:
-            self.masses = [1 * self.width**2 for _ in range(self.num_storeys)]
 
         self._design_spectra = {
             criteria: Spectra(**data) for criteria, data in self.design_spectra.items()
@@ -174,10 +168,9 @@ class BuildingSpecification(ABC, NamedYamlMixin):
                         beamIDs[eID] = beam
                     else:
                         # for the first column, add the storey mass to the nodeID id.
-                        mass = self.masses[iy - 1]
+                        mass = 1e-9
                         masses_by_storey[nodeID] = mass
                         nodes[nodeID]["mass"] = mass
-
                 else:
                     # for ground floor, add the fixed nodeID coordinates.
                     nodes[nodeID]["fixed"] = True
@@ -186,12 +179,6 @@ class BuildingSpecification(ABC, NamedYamlMixin):
         self._adjacency = _adjacency
         self.nodes = nodes
         self.fixed_nodes = fixed_nodes
-
-    def _update_masses_in_place(
-        self, new_masses: list[float] | np.ndarray[float]
-    ) -> None:
-        self.masses = new_masses
-        return
 
     @property
     def summary(self) -> dict:
@@ -211,10 +198,6 @@ class BuildingSpecification(ABC, NamedYamlMixin):
     @property
     def fem(self):
         return self.fems[-1]
-
-    @property
-    def total_mass(self) -> float:
-        return sum(self.masses)
 
     @property
     def weight_str(self) -> str:

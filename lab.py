@@ -890,7 +890,7 @@ if state.module == 2:
     normalize_g = left.checkbox("normalize (g)", value=True)
     logx = mid.checkbox("log x", value=True)
     logy = right.checkbox("log y", value=True)
-    if hazard is not None:
+    if hazard.curve is not None:
         fig = hazard.rate_figure(normalize_g=normalize_g, logx=logx, logy=logy)
         st.plotly_chart(fig, theme=None)
         if len(hazard.records) > 0:

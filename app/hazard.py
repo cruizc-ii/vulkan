@@ -436,11 +436,11 @@ class HazardCurve(ABC, YamlMixin):
     def intensities_for_idas(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         df: DataFrame = self._df
         start, stop = df.index.min(), df.index.max()
-        linspace, step = np.linspace(
-            start=start, stop=stop, num=self._IDA_LINSPACE_BINS, retstep=True
-        )
-        # step = 0.1
-        # linspace = df.index.values.flatten()
+        # linspace, step = np.linspace(
+        #     start=start, stop=stop, num=self._IDA_LINSPACE_BINS, retstep=True
+        # )
+        step = 0.1
+        linspace = df.index.values.flatten()
         sups = linspace + step / 2
         infs = linspace - step / 2
         return linspace, sups, infs

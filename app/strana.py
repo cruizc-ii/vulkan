@@ -759,7 +759,7 @@ class GravityRecorderMixin(Recorder):
         for beams, beam_load in zip(
             self.fem.beams_by_storey, self.fem.uniform_beam_loads
         ):
-            beam_ids = FE.string_ids_for_list(beams)
+            # beam_ids = FE.string_ids_for_list(beams)
             for beam in beams:
                 node_load = beam_load * beam.length / 2
                 analysis_str += (
@@ -802,9 +802,9 @@ class StaticRecorder(GravityRecorderMixin):
 
 @dataclass
 class PushoverRecorder(GravityRecorderMixin):
-    drift: float = 0.03
+    drift: float = 0.05
     steps: int = 500
-    tol: float = 1.0e-9
+    tol: float = 1.0e-4
     modal_vectors: list[float] | None = None
 
     def __str__(self) -> str:
@@ -840,15 +840,16 @@ class PushoverRecorder(GravityRecorderMixin):
     def pushover_solvers(self) -> str:
         maxU = self.drift * self.fem.height
         dU = maxU / self.steps
-        # tol = self.tol * np.sqrt(len(self.fem.nodes))
-        string = "constraints Transformation \n"
-        string += "numberer RCM \n"
-        string += "system BandGeneral \n"
-        # string += f"test NormDispIncr {self.tol} 100 2\n"
-        string += f"test NormDispIncr {self.tol} 100\n"
-        string += "algorithm KrylovNewton \n"
-        string += f"integrator DisplacementControl {self.fem.roofID} 1 {dU:.8f} 1000\n"
-        string += "analysis Static \n"
+        tol = self.tol * np.sqrt(len(self.fem.nodes))
+        # string = "constraints Transformation\n"
+        string = "constraints Plain\n"
+        string += "numberer RCM\n"
+        string += "system BandGeneral\n"
+        string += f"test NormUnbalance {self.tol} 400\n"
+        # string += f"test NormDispIncr {tol} 100\n"
+        string += "algorithm Newton\n"
+        string += f"integrator DisplacementControl {self.fem.roofID} 1 {dU:.6f} 100\n"
+        string += "analysis Static\n"
         string += f"analyze {self.steps}"
         #         string += f"set maxU {maxU}\n"
         #         string += "set disp 0.0\n"

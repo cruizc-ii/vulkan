@@ -1,5 +1,5 @@
 - name: two_cubicles
-  dx: 3.0
+  dx: 2.0
   assets:
     - Chair
     - FaxMachine
@@ -23,7 +23,7 @@
     - NonStructuralGenericWallFinishes
     - Radio
 - name: printing_station
-  dx: 3.0
+  dx: 2.0
   assets:
     - Minicomponent
     - 60inPlotter
@@ -48,7 +48,7 @@
     - MediumTable
     - MediumTable
 - name: small_kitchen
-  dx: 3.0
+  dx: 2.0
   assets:
     - Microwave
     - CoffeeMachine
@@ -95,7 +95,7 @@
     - NonStructuralGenericWallFinishes
     - Radio
 - name: meeting_room
-  dx: 5.0
+  dx: 3.0
   assets:
     - FlowerVase
     - Projector
@@ -163,8 +163,3 @@
     - NonStructuralGenericFloorFinishes
     - NonStructuralGenericWallFinishes
     - NonStructuralGenericSecurity
-
-
-
-
-

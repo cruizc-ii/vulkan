@@ -47,6 +47,7 @@ class FiniteElementModel(ABC, YamlMixin):
     total_area: float | None = None
     depth: float | None = None
     occupancy: str | None = None
+    masses: list[float] | None = None
     periods: list = field(default_factory=list)
     frequencies: list = field(default_factory=list)
     omegas: list = field(default_factory=list)
@@ -117,13 +118,29 @@ class FiniteElementModel(ABC, YamlMixin):
         cls,
         spec: "BuildingSpecification",  # noqa: F821
         *args,
+        fem: "FiniteElementModel" | None = None,  # noqa: F821
         **kwargs,
     ) -> "FiniteElementModel":
-        nodes = [Node(id=id, **info) for id, info in spec.nodes.items()]
-        elements = ElasticBeamColumn.from_adjacency(spec._adjacency)
-        fem = cls(
+        nodes = (
+            fem.nodes
+            if fem is not None
+            else [Node(id=id, **info) for id, info in spec.nodes.items()]
+        )
+        elements = (
+            fem.elements
+            if fem is not None
+            else ElasticBeamColumn.from_adjacency(spec._adjacency)
+        )
+        # kwargs.pop("elements", [])
+        # kwargs.pop("nodes", [])
+        # fem_kwargs = fem.to_dict if fem is not None else {}
+        # this is an antipattern, so many errors here.
+        # how to make this better?
+        _fem = cls(
+            *args,
             nodes=nodes,
             elements=elements,
+            masses=fem.masses if fem is not None else [],
             damping=spec.damping,
             occupancy=spec.occupancy,
             num_frames=spec.num_frames,
@@ -136,10 +153,11 @@ class FiniteElementModel(ABC, YamlMixin):
             chopra_fundamental_period_plus1sigma=spec.chopra_fundamental_period_plus1sigma,
             miranda_fundamental_period=spec.miranda_fundamental_period,
             cdmx_fundamental_period=spec.cdmx_fundamental_period,
-            *args,
             **kwargs,
+            # **fem_kwargs,
         )
-        return fem
+        print(_fem.masses, _fem.length)
+        return _fem
 
     @property
     def period(self) -> float:
@@ -200,8 +218,7 @@ class FiniteElementModel(ABC, YamlMixin):
     def elements_assets(self) -> list["Asset"]:
         # here we count only the elements that are indeed Assets
         # for instance, the elastic column used in the IMK ensemble is not an Asset
-        eles = [ele for ele in self.elements if Asset in inspect.getmro(ele.__class__)]
-        return eles
+        return [ele for ele in self.elements if Asset in inspect.getmro(ele.__class__)]
 
     @property
     def assets(self) -> list["Asset"]:
@@ -210,13 +227,6 @@ class FiniteElementModel(ABC, YamlMixin):
     @property
     def slabs(self):
         return [s for s in self.elements if s.type == ElementTypes.SLAB.value]
-
-    def _update_masses_in_place(
-        self, new_masses: list[float] | np.ndarray[float]
-    ) -> None:
-        for node, mass in zip(self.mass_nodes, new_masses):
-            node.mass = mass
-        return
 
     def build_and_place_slabs(self) -> list[Asset]:
         slabs = []
@@ -622,15 +632,17 @@ class FiniteElementModel(ABC, YamlMixin):
     @property
     def uniform_area_loads_kPa(self) -> list[float]:
         area = self.length**2
-        masses_per_storey = np.array(self.weights)
-        pressures_per_storey = masses_per_storey / area
+        pressures_per_storey = np.array(self.weights) / area
         return pressures_per_storey.tolist()
 
     @property
     def uniform_beam_loads(self) -> list[float]:
-        masses_per_storey = np.array(self.masses)
-        beam_loads = GRAVITY * masses_per_storey / self.length
-        return beam_loads.tolist()
+        if self.length == 0:
+            beam_loads = [0.0 for _ in self.masses]
+        else:
+            beam_loads = GRAVITY * np.array(self.masses) / self.length
+            beam_loads = beam_loads.tolist()
+        return beam_loads
 
     @property
     def height(self) -> float:
@@ -875,9 +887,9 @@ class FiniteElementModel(ABC, YamlMixin):
     def massIDs_str(self):
         return " ".join([str(n_id) for n_id in self.massIDs])
 
-    @property
-    def masses(self):
-        return [n.mass for n in self.mass_nodes]
+    # @property
+    # def masses(self):
+    #     return [n.mass for n in self.mass_nodes]
 
     @property
     def roofID(self):

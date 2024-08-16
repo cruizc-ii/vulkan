@@ -8,11 +8,10 @@ groups:
       - cubicle
       - bathroom
   - name: OfficeFloorMedium
-    pct: 0.20
-    dy: 8
+    pct: 0.15
+    dy: 7
     units:
       - small_kitchen
       - printing_station
-      - two_cubicles
+      - cubicle
       - meeting_room
-      - bathroom
