@@ -1,0 +1,98 @@
+curve:
+  kind: user
+  v0: 0.000464692
+  x:
+  - 0.0347125
+  - 0.0496027
+  - 0.07088
+  - 0.10128400000000001
+  - 0.144731
+  - 0.206814
+  - 0.295528
+  - 0.422296
+  - 0.603442
+  - 0.8622920000000001
+  - 1.23218
+  - 1.7607300000000001
+  - 2.516
+  y:
+  - 0.000464692
+  - 0.00032239000000000004
+  - 0.000220948
+  - 0.000143303
+  - 8.42433e-05
+  - 4.34129e-05
+  - 1.92821e-05
+  - 7.45395e-06
+  - 2.65343e-06
+  - 9.55716e-07
+  - 3.62988e-07
+  - 1.33812e-07
+  - 4.06452e-08
+kind: acc
+name: auto
+period: null
+records:
+- dt: 0.01
+  kind: acc
+  name: 62_SCT241093NS.csv
+  path: /Users/carlo/vulkan/records/62_SCT241093NS.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: 42_TL140995EW.csv
+  path: /Users/carlo/vulkan/records/42_TL140995EW.csv
+  scale: 1.0
+- dt: 0.005
+  kind: acc
+  name: 15_BA241093NS.csv
+  path: /Users/carlo/vulkan/records/15_BA241093NS.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: 19_SCT101294NS.csv
+  path: /Users/carlo/vulkan/records/19_SCT101294NS.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: 68_UC250489NS.csv
+  path: /Users/carlo/vulkan/records/68_UC250489NS.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: 74_ROMCS140995NS.csv
+  path: /Users/carlo/vulkan/records/74_ROMCS140995NS.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: filtrado2.csv
+  path: /Users/carlo/vulkan/records/filtrado2.csv
+  scale: 1.0
+- dt: 0.005
+  kind: acc
+  name: 10_BA241093EW.csv
+  path: /Users/carlo/vulkan/records/10_BA241093EW.csv
+  scale: 1.0
+- dt: 0.005
+  kind: acc
+  name: 78_JA250489EW.csv
+  path: /Users/carlo/vulkan/records/78_JA250489EW.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: 20_ROMBS101294NS.csv
+  path: /Users/carlo/vulkan/records/20_ROMBS101294NS.csv
+  scale: 1.0
+- dt: 0.01
+  kind: acc
+  name: 33_LI250489NS.csv
+  path: /Users/carlo/vulkan/records/33_LI250489NS.csv
+  scale: 1.0
+- dt: 0.005
+  kind: acc
+  name: 64_BL101294NS.csv
+  path: /Users/carlo/vulkan/records/64_BL101294NS.csv
+  scale: 1.0
+site: ':         -99.1301      19.4251  hj72  hj72
+
+  '
