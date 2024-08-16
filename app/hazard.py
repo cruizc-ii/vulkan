@@ -335,7 +335,7 @@ class HazardCurve(ABC, YamlMixin):
     y: list | None = None
     v0: float | None = None
     _df: DataFrame = field(default_factory=DataFrame)
-    _IDA_LINSPACE_BINS: int = 20
+    _IDA_LINSPACE_BINS: int = 24
 
     def __str__(self) -> str:
         return str(self._df)
@@ -453,7 +453,7 @@ class HazardCurve(ABC, YamlMixin):
         method: str = "average",
     ) -> DataFrame:
         """
-        array MUST have repeated values otherwise this wont work ..??
+        array MUST have repeated values otherwise this wont work (?)
         returns a normalized dataframe with the rate of exceedance
         converts array into dataframe -> cdf -> 1-v/v0 = CDF
         """

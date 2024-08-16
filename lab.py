@@ -279,18 +279,20 @@ with st.sidebar:
         record_files = find_files(RECORDS_DIR, only_yml=False, only_csv=True)
         record_files = ["add a record"] + record_files
         record_name = st.selectbox("add a record", options=record_files)
+        num_recs = st.number_input("num records to sample", 1, 100, 5, step=1)
         if record_name != "add a record":
             record_path = str((RECORDS_DIR / record_name).resolve())
             record = Record(record_path)
             hazard.add_record(record)
             hazard.to_file(HAZARD_DIR)
         left, middle, right = st.columns(3)
-        go = left.button("sample 5", help="grab 3 at random")
+        go = left.button(f"sample {int(num_recs)}", help="grab at random")
+
         if go:
             with st.spinner("sampling..."):
                 time.sleep(1)
                 untouched = [r for r in record_files if r not in hazard.record_names]
-                samples = random.sample(untouched, 5)
+                samples = random.sample(untouched, int(num_recs))
                 for path in samples:
                     if path == "add a record":
                         continue
@@ -339,8 +341,7 @@ with st.sidebar:
             state.first_render = False
 
     if state.module == 3:
-        state.design_abspath
-        state.hazard_abspath
+        "design:", state.design_abspath
 
         stranas = find_files(STRANA_DIR)
         design_missing = False
@@ -361,7 +362,7 @@ with st.sidebar:
                 ida.hazard_abspath = str(state.hazard_abspath) or ida.hazard_abspath
             else:
                 ida = IDA(
-                    name="default ida",
+                    name="default-ida",
                     design_abspath=str(state.design_abspath),
                     hazard_abspath=str(state.hazard_abspath),
                 )
@@ -377,9 +378,10 @@ with st.sidebar:
             design_missing = True
 
         if file and not (design_missing or hazard_missing):
-            # "design:", state.design_abspath
-            # "hazard:", state.hazard_abspath
-            standard = st.button("run for hazard", help="uses the hazard points only")
+            "hazard:", state.hazard_abspath
+            standard = st.button(
+                "run for selected hazard points", help="uses the hazard points only"
+            )
             delete = st.button("🗑️", help="delete this analysis")
             with st.expander("manual ida"):
                 st.warning(
@@ -415,7 +417,7 @@ with st.sidebar:
                 run = st.button("run IDA", help="run with chosen Sa")
             if delete:
                 with st.spinner("deleting analysis"):
-                    time.sleep(2)
+                    time.sleep(1)
                     ida.delete(STRANA_DIR)
                     ida = None
                     state.ida_abspath = None

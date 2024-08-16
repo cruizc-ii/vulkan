@@ -50,7 +50,7 @@ class Loss:
     scatter_src: str | None = None
     _srcs_dfs_cache: dict = field(default_factory=dict)
     _scatter_df: ScatterResultsDataFrame | None = None
-    _RATE_NUM_BINS: int = 20
+    _RATE_NUM_BINS: int = 24
     _csv_name: str = ""
     _scatter_csv_name: str = ""
     _collapse_mask_csv_name: str = ""
@@ -267,7 +267,7 @@ class LossModel(YamlMixin, Loss):
             self._get_and_set_loss_statistics()
             self._compute_rate_losses()
             toc = time.perf_counter()
-            print(f"Computed losses in {toc - tic:0.1f} seconds {self.name}")
+            # print(f"Computed losses in {toc - tic:0.1f} seconds {self.name}")
 
     def _compute_losses(self) -> LossResultsDataFrame:
         self._csv_name = f"_src-{self.name}-{self.floor}"
