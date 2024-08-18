@@ -63,21 +63,13 @@ phd_thesis/figures/compare/idas.png
 phd_thesis/figures/compare/roels.png
 phd_thesis/figures/compare/risks.png
 
-- [ ] fixed-end moments? wl\*\*2/12 one positive other negative
 - [ ] modificar un poco ductilidades Q=4 indirectamente, alargar duct
 - [ ] modificar un poco costos estructurales, cimentacion mas cara?, estribos mas baratos, varillas mas caras
       casi llevarlo al extremo.
 
-- [ ] meter hazard para todos los periodos. escribir que agarra el periodo correspondiente al edificio
-- [ ] poder elegir sitio del peligro, poder elegir periodo (para ver) aunque interpole linealmente
-
-- [ ] escribir en tesis las formulas correctas de Ibarra y la justificacion de n=10,
-
-- [ ] collapse prevention points on median ida curves + yield point = dynamic ductility
-
 ## TODO
 
-- [ ] tests passing
+- [ ] Tests passing
 - [ ] Source code has MIT licence.
 - [ ] Anyone can mount it on server.
 - [ ] Biblioteca unam has a .zip of the source code.

@@ -172,8 +172,8 @@ class IDACompare(CompareInterface):
         fig.update_layout(
             yaxis_title="Sa/Sa_design [1]",
             xaxis_title="drift/drift_yield [1]",
-            xaxis_range=[0.0, 10.0],
-            yaxis_range=[0.0, 8.0],
+            xaxis_range=[0.0, 20.0],
+            # yaxis_range=[0.0, 8.0],
             legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
         )
         fig = self.prettify_fig(fig)
@@ -258,11 +258,12 @@ class IDACompare(CompareInterface):
 
     def run(
         self,
+        pushover=False,
         strana=False,
         loss=False,
     ) -> bool:
         for comp in self.comparisons:
-            comp.run(name=self.name, strana=strana, loss=loss)
+            comp.run(name=self.name, pushover=pushover, strana=strana, loss=loss)
 
         return True
 
@@ -370,12 +371,15 @@ class DesignComparison(YamlMixin):
     def run(
         self,
         name: str | None = None,
+        pushover: bool = False,
         strana: bool = False,
         loss: bool = False,
         standard: bool = True,
     ):
         name = name if name else str(uuid())
         ida_name = f"{name}-{self._design_model.name}-{self._hazard_model.name}"
+        if pushover:
+            self._design = ReinforcedConcreteFrame.from_file(self.design_abspath)
         if strana:
             strana_abspath = str((STRANA_DIR / f"{ida_name}.yml").resolve())
             ida = IDA(
@@ -388,7 +392,7 @@ class DesignComparison(YamlMixin):
             ida.to_file(STRANA_DIR)
             self._strana_model = ida
             self.strana_abspath = strana_abspath
-        else:
+        elif not pushover:
             ida = IDA.from_file(self.strana_abspath)
             self._strana_model = ida
             strana_abspath = self.strana_abspath

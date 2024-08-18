@@ -164,14 +164,24 @@ class FiniteElementModel(ABC, YamlMixin):
         # this should break when we call it without running modal first.
         return self.periods[0]
 
+    def collapse_drift_estimation(self, ndf: pd.DataFrame) -> float:
+        SHEAR_TOLERANCE = 0.01
+        V_c = ndf["sum"].values[-1]
+        u_c = ndf["u"].values[-1]
+        if np.abs(V_c) < SHEAR_TOLERANCE:
+            _df = ndf.iloc[20:]  # do not take the initial ones
+            _df = _df.where(_df["sum"] < SHEAR_TOLERANCE).dropna()
+            u_c = _df["u"].values[0]
+        return u_c
+
     def pushover_stats(self) -> dict:
         df = self.pushover_df()
         ndf = self.normalized_pushover_df()
         Vy, uy = self.yield_estimation(df)
-        u_c = df["u"].values[-1]
-        ductility = u_c / uy
-        cs = Vy / self.weight
+        drift_c = self.collapse_drift_estimation(ndf)
         drift_y = uy / self.height
+        ductility = drift_c / drift_y
+        cs = Vy / self.weight
         c_design = self.extras.get("c_design", 1)
         c_design_error = (cs - c_design) / c_design
         Vy_design = c_design * self.weight
@@ -610,7 +620,7 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @staticmethod
     def yield_estimation(df: pd.DataFrame) -> tuple[float, float]:
-        _YIELD_TANGENT_PCT = 0.25  # curr_tangent < PCT*initial tangent => yield point.
+        _YIELD_TANGENT_PCT = 0.20  # curr_tangent < PCT*initial tangent => yield point.
         df = df.reset_index()
         df2 = df.diff(1)
         df2["fp"] = (

@@ -38,6 +38,12 @@ from streamlit import session_state as state
 from functools import partial
 
 
+HOME = Path.home()
+FIGURES_PATH = (
+    HOME / "Dropbox/phd_thesis/figures/compare"
+)  # TODO: remove when wrapping up
+
+
 st.set_page_config(
     page_title="vulkan",
     page_icon="🌋",
@@ -564,8 +570,9 @@ with st.sidebar:
             else:
                 compare = IDACompare(name=name, hazard_abspath=hazard_abspath)
         except HazardNotFoundException as e:
-            print(e)
+            print("You must select a hazard first", e)
             hazard_missing = True
+            raise e
 
         compare.name = name
         compare.hazard_abspath = hazard_abspath
@@ -602,21 +609,26 @@ with st.sidebar:
             compare.to_file(COMPARE_DIR)
 
         for ix, comp in enumerate(compare.comparisons):
-            _c1, _c2, _c3, _c4, _c5 = st.columns([2, 1, 1, 1, 1])
+            _c1, _c2, _c3, _c4, _c5, _c6 = st.columns([2, 1, 1, 1, 1, 1])
             with st.container():
                 _c1.write(comp.design_abspath.split("/")[-1])
-                go_strana = _c2.button(
+                go_po = _c2.button(
+                    "po", help="perform pushover", key=f"po-compare-design-{ix}"
+                )
+                go_strana = _c3.button(
                     "ida", help="perform ida", key=f"ida-compare-design-{ix}"
                 )
-                go_loss = _c3.button(
+                go_loss = _c4.button(
                     "loss",
                     help="perform loss computation",
                     key=f"loss-compare-design-{ix}",
                 )
-                go_complete = _c4.button(
+                go_complete = _c5.button(
                     "all", help="perform ida then loss", key=f"all-compare-design-{ix}"
                 )
-                rm = _c5.button("🗑️", key=f"rm-compare-design-{ix}")
+                rm = _c6.button("🗑️", key=f"rm-compare-design-{ix}")
+                if go_po:
+                    comp.run(pushover=True)
                 if go_strana:
                     comp.run(strana=True)
                 if go_loss:
@@ -625,11 +637,12 @@ with st.sidebar:
                     comp.run(strana=True, loss=True)
                 if rm:
                     compare.remove_design(comp.design_abspath)
-                if any([go_strana, go_loss, go_complete, rm]):
+                if any([go_po, go_strana, go_loss, go_complete, rm]):
                     compare.to_file(COMPARE_DIR)
                     st.success("success")
 
-        c1, c2, c3, c4 = st.columns(4)
+        c0, c1, c2, c3, c4 = st.columns(5)
+        po = c0.button("run po", help="perform pushover comparison")
         go = c1.button("run ida", help="perform ida comparison")
         loss = c2.button("run loss", help="perform loss computation ")
         complete = c3.button("run all", help="run ida then loss on all models")
@@ -643,6 +656,7 @@ with st.sidebar:
         if compare and hazard and not hazard_missing:
             if any(
                 [
+                    po,
                     go,
                     loss,
                     complete,
@@ -657,6 +671,8 @@ with st.sidebar:
                     }
                 )
                 with st.spinner("running..."):
+                    if po:
+                        compare.run(pushover=True)
                     if go:
                         compare.run(strana=True)
                     if loss:
@@ -766,6 +782,7 @@ if state.module == 1:
             Vy_error = stats["Vy_error"]
             uy = stats["uy"]
             drift_y = stats["drift_y"]
+            ductility = stats["ductility"]
 
             col1, col2 = st.columns(2)
             col1.header("Design values")
@@ -794,6 +811,8 @@ if state.module == 1:
                 label="roof disp yield",
                 value=uy,
             )
+
+            col2.metric(label="ductility", value=ductility)
 
             st.subheader("Springs timehistory (Moments)")
             fig = design.fem._pushover_view.generate_springs_visual_timehistory_fig(
@@ -1070,6 +1089,7 @@ if state.module == 5:
         ida_fig = compare.ida_figs
         rate_fig = compare.rate_figs
         risk_fig = compare.risk_figs
+
     st.subheader("Pushover")
     st.plotly_chart(pushover_fig, theme=None)
     st.subheader("IDA")
@@ -1079,8 +1099,6 @@ if state.module == 5:
     st.subheader("Risk $")
     st.plotly_chart(risk_fig, theme=None)
 
-    HOME = Path.home()
-    FIGURES_PATH = HOME / "Dropbox/phd_thesis/figures/compare"
     print_figs = st.button("print figures")
     if print_figs:
         pushover_fig.write_image(FIGURES_PATH / "pushovers.png", engine="kaleido")
@@ -1101,7 +1119,6 @@ if state.module == 5:
         "net worth [$]",
         "elements net worth [$]",
     ]
-    # desired_columns = [c for c in desired_columns if c in sdf.columns.to_list()]
     sdf = sdf[desired_columns]
     st.dataframe(sdf)
 
@@ -1130,6 +1147,5 @@ if state.module == 5:
     st.header("Compare point values")
     stat = st.selectbox("select", options=sdf.columns, index=2)
     if stat:
-        # fig = df[stat].plot()
         fig = px.bar(sdf, x="design name", y=stat)
         st.plotly_chart(fig, theme=None)

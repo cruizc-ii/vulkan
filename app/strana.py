@@ -762,10 +762,11 @@ class GravityRecorderMixin(Recorder):
             # beam_ids = FE.string_ids_for_list(beams)
             for beam in beams:
                 node_load = beam_load * beam.length / 2
+                node_moment = beam_load * beam.length**2 / 12
                 analysis_str += (
                     # f"eleLoad -ele {beam_ids} -type beamUniform {-beam_load:.1f} \n"
-                    f"load {beam.i} 0. {-node_load} 0. \n"
-                    f"load {beam.j} 0. {-node_load} 0. \n"
+                    f"load {beam.i} 0. {-node_load} {node_moment} \n"
+                    f"load {beam.j} 0. {-node_load} {-node_moment} \n"
                     ""
                 )
         analysis_str += "}\n"
