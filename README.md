@@ -63,14 +63,16 @@ phd_thesis/figures/compare/idas.png
 phd_thesis/figures/compare/roels.png
 phd_thesis/figures/compare/risks.png
 
-- [ ] doesnt make sense to have collapse going up at 5% drift or structural resurrection
+- [ ] fixed-end moments? wl\*\*2/12 one positive other negative
+- [ ] modificar un poco ductilidades Q=4 indirectamente, alargar duct
+- [ ] modificar un poco costos estructurales, cimentacion mas cara?, estribos mas baratos, varillas mas caras
+      casi llevarlo al extremo.
 
 - [ ] meter hazard para todos los periodos. escribir que agarra el periodo correspondiente al edificio
 - [ ] poder elegir sitio del peligro, poder elegir periodo (para ver) aunque interpole linealmente
-- [ ] fixed-end moments? wl\*\*2/12 one positive other negative
+
 - [ ] escribir en tesis las formulas correctas de Ibarra y la justificacion de n=10,
-- [ ] shear checks intra analysis check? not at this time, write soemthing about that.
-- [ ] meter modelo q=1 de forma hacker
+
 - [ ] collapse prevention points on median ida curves + yield point = dynamic ductility
 
 ## TODO

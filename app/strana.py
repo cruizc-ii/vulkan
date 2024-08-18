@@ -804,7 +804,7 @@ class StaticRecorder(GravityRecorderMixin):
 class PushoverRecorder(GravityRecorderMixin):
     drift: float = 0.05
     steps: int = 500
-    tol: float = 1.0e-4
+    tol: float = 1.0e-3
     modal_vectors: list[float] | None = None
 
     def __str__(self) -> str:
@@ -841,14 +841,12 @@ class PushoverRecorder(GravityRecorderMixin):
         maxU = self.drift * self.fem.height
         dU = maxU / self.steps
         tol = self.tol * np.sqrt(len(self.fem.nodes))
-        # string = "constraints Transformation\n"
-        string = "constraints Plain\n"
+        string = "constraints Transformation\n"
         string += "numberer RCM\n"
         string += "system BandGeneral\n"
-        string += f"test NormUnbalance {self.tol} 400\n"
-        # string += f"test NormDispIncr {tol} 100\n"
-        string += "algorithm Newton\n"
-        string += f"integrator DisplacementControl {self.fem.roofID} 1 {dU:.6f} 100\n"
+        string += f"test NormDispIncr {tol} 1000\n"
+        string += "algorithm ModifiedNewton\n"
+        string += f"integrator DisplacementControl {self.fem.roofID} 1 {dU:.6f} 1000\n"
         string += "analysis Static\n"
         string += f"analyze {self.steps}"
         #         string += f"set maxU {maxU}\n"
