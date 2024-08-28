@@ -312,8 +312,8 @@ class CDMX2017Q1(DesignCriterion):
             Q=self.Q,
         )
 
-        slabs = fem.build_and_place_slabs()
-        fem.elements = fem.elements + slabs
+        slabs, foundation = fem.build_and_place_slabs_and_foundation(Q=self.Q)
+        fem.elements = fem.elements + slabs + [foundation]
         fem.get_and_set_eigen_results(results_path=results_path)
         fem.extras["column_design_moments"] = design_moments
         fem.extras["design_shears"] = peak_shears

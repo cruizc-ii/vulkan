@@ -1,6 +1,0 @@
-Algorithm Newton did not converge at time 0.000000 -3 1
-Algorithm KrylovNewton did not converge at time 10.595000 -3 1
-Algorithm BFGS did not converge at time 10.670000 -3 1
-Algorithm Broyden did not converge at time 12.840000 -3 1
-FAILURE, couldn't converge with any algorithm or reduced step
-time 12.840000

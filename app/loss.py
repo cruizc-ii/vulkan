@@ -50,7 +50,7 @@ class Loss:
     scatter_src: str | None = None
     _srcs_dfs_cache: dict = field(default_factory=dict)
     _scatter_df: ScatterResultsDataFrame | None = None
-    _RATE_NUM_BINS: int = 24
+    _RATE_NUM_BINS: int = 12
     _csv_name: str = ""
     _scatter_csv_name: str = ""
     _collapse_mask_csv_name: str = ""
@@ -200,17 +200,17 @@ class Loss:
         ndf = pd.DataFrame(new_dfs, index=self._loss_linspace)
         return ndf
 
-    def _rate_of_exceedance_for_loss_df(self, df: LossResultsDataFrame) -> pd.DataFrame:
-        df = df[df.columns.difference(["mean", "aal", "std"])]
-        columns = df.columns
-        num_columns = len(columns)
-        freq = df.index.get_level_values("freq")
-        for loss in self._loss_linspace:
-            df[loss] = (
-                df[df[columns] > loss].count(axis=1).values * freq.values / num_columns
-            )
-        rate_df = df[df.columns.difference(columns)].sum()
-        return rate_df
+    # def _rate_of_exceedance_for_loss_df(self, df: LossResultsDataFrame) -> pd.DataFrame:
+    #     df = df[df.columns.difference(["mean", "aal", "std"])]
+    #     columns = df.columns
+    #     num_columns = len(columns)
+    #     freq = df.index.get_level_values("freq")
+    #     for loss in self._loss_linspace:
+    #         df[loss] = (
+    #             df[df[columns] > loss].count(axis=1).values * freq.values / num_columns
+    #         )
+    #     rate_df = df[df.columns.difference(columns)].sum()
+    #     return rate_df
 
     def multiple_rates_of_exceedance_fig(
         self, df: LossModelsResultsDataFrame, key: str

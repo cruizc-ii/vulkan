@@ -21,6 +21,7 @@ ASSETS_PATH = "https://vulkan1.s3.amazonaws.com/"
 GRAVITY = 9.81
 METERS_TO_FEET = 1 / 0.3048
 INFLATION = 3.0
+DUCTILITY_COST_FACTOR = 2.0  # incosistent factor to deal with slabs & foundation increase in steel due to Q-factor == 1
 
 
 class DesignException(Exception):

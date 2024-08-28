@@ -15,21 +15,15 @@ black:
 	python3 -m black .
 .PHONY: ci
 ci: black test
-.PHONY: clean-results
-clean-results:
-	rm -rf results/**;
 .PHONY: clean
 clean:
-	rm -rf models/design/**;
-	rm -rf models/strana/**;
-	rm -rf models/loss/**;
-	rm -rf models/compare/**;
-	find models/loss_csvs/ -delete
-	find models/rate_csvs/ -delete
-	find results/** -name ".csv" -delete
+	rm -rf models/strana/** &
+	rm -rf models/loss/** &
+	rm -rf models/compare/** &
+	find models/loss_csvs/** -name "*.csv" -delete &
+	find models/rate_csvs/** -name "*.csv" -delete &
+	find results/** -delete &
 	git restore models/;
-clean-results:
-	rm -rf results/**;
 docker: build docker_run
 build:
 	podman build -t vulkan .

@@ -21,6 +21,7 @@ from plotly.graph_objects import Figure, Scattergl, Scatter, Bar, Line, Pie
 from app.concrete import DesignException, RectangularConcreteColumn
 from app.elements import (
     FE,
+    ConcreteElasticFoundation,
     Node,
     DiaphragmNode,
     BeamColumn,
@@ -238,19 +239,24 @@ class FiniteElementModel(ABC, YamlMixin):
     def slabs(self):
         return [s for s in self.elements if s.type == ElementTypes.SLAB.value]
 
-    def build_and_place_slabs(self) -> list[Asset]:
+    def build_and_place_slabs_and_foundation(
+        self, Q: int = 1
+    ) -> tuple[list[Asset], Asset]:
         slabs = []
         for floor, beams in enumerate(self.beams_by_storey, 1):
             for beam in beams:
                 id = (
                     beam.id * 10000000
                 )  # hack to avoid having duplicate ids, each beam is tied to a slab via an ID.
-                slab = ConcreteElasticSlab(id=id, length=beam.length, floor=floor)
+                slab = ConcreteElasticSlab(id=id, length=beam.length, floor=floor, Q=Q)
                 slabs.append(slab)
         for asset in slabs:
             if asset.net_worth:
                 asset.net_worth = (self.num_frames - 1) * asset.net_worth
-        return slabs
+        foundation = ConcreteElasticFoundation(
+            id=id * 2, length=self.length, Q=Q, floor=1
+        )
+        return slabs, foundation
 
     def build_nonstructural_elements(self) -> list[Asset]:
         from app.occupancy import BuildingOccupancy
@@ -620,7 +626,7 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @staticmethod
     def yield_estimation(df: pd.DataFrame) -> tuple[float, float]:
-        _YIELD_TANGENT_PCT = 0.20  # curr_tangent < PCT*initial tangent => yield point.
+        _YIELD_TANGENT_PCT = 0.30  # curr_tangent < PCT*initial tangent => yield point.
         df = df.reset_index()
         df2 = df.diff(1)
         df2["fp"] = (
@@ -699,7 +705,7 @@ class FiniteElementModel(ABC, YamlMixin):
                 }
             }
             for e in self.elements
-            if (e.type != ElementTypes.SLAB.value)
+            if e.type not in [ElementTypes.SLAB.value, ElementTypes.FOUNDATION.value]
         ]
         fig += [
             {
@@ -1363,7 +1369,6 @@ class IMKFrame(FiniteElementModel):
     def __post_init__(self):
         self.model = self.__class__.__name__
         super().__post_init__()
-        slabs = self.slabs
         if not self.done:
             nodes = []
             next_id = self.nodes[-1].id + 1
@@ -1510,8 +1515,11 @@ class IMKFrame(FiniteElementModel):
                 imk2.net_worth = (2 * self.num_frames - 1) * imk2.net_worth
                 elements.append(imk2)
                 elem_id += 1
-            self.elements = elements
-            self.elements = self.elements + slabs
+            slabs = self.slabs
+            foundation = [
+                s for s in self.elements if s.type == ElementTypes.FOUNDATION.value
+            ]
+            self.elements = elements + slabs + foundation
             self.done = True
 
     @property
@@ -1621,17 +1629,18 @@ class FEMFactory:
 
 
 class ElementFactory:
-    DEFAULT = ElasticBeamColumn.__name__
+    # DEFAULT = ElasticBeamColumn.__name__
     options = {
         BeamColumn.__name__: BeamColumn,
         ConcreteElasticSlab.__name__: ConcreteElasticSlab,
+        ConcreteElasticFoundation.__name__: ConcreteElasticFoundation,
         ElasticBeamColumn.__name__: ElasticBeamColumn,
         BilinBeamColumn.__name__: BilinBeamColumn,
         IMKSpring.__name__: IMKSpring,
     }
 
     def __new__(cls, **data) -> FiniteElementModel:
-        model = data.get("model", cls.DEFAULT)
+        model = data.get("model")
         return cls.options[model](**data)
 
     @classmethod

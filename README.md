@@ -55,58 +55,10 @@ Add to `fly secrets set`
 
 ## TODO
 
-word document can take these from the folder
-
-phd_thesis/figures/compare/building_configuration.png
-phd_thesis/figures/compare/pushovers.png
-phd_thesis/figures/compare/idas.png
-phd_thesis/figures/compare/roels.png
-phd_thesis/figures/compare/risks.png
-
-- [ ] modificar un poco ductilidades Q=4 indirectamente, alargar duct
-- [ ] modificar un poco costos estructurales, cimentacion mas cara?, estribos mas baratos, varillas mas caras
-      casi llevarlo al extremo.
-
-## TODO
-
 - [ ] Tests passing
 - [ ] Source code has MIT licence.
 - [ ] Anyone can mount it on server.
 - [ ] Biblioteca unam has a .zip of the source code.
-
-## TODO
-
-- [x] push with 1st mode, plot modes of vibration
-- [x] fix pushover stats, merge everything on a single call
-- [x] callibrate str-elems+slabs cost
-- [x] Compute Vy, uy correctly from pushover curve as 10% of original stiffness
-- [x] change theta_y -> theta_y2 (Fardis)
-- [x] for collapse, when analysis doesn't converge at the last subdivision, create an empty file called collapse.csv with drifts, printA, etc, then process into results.yml with info about the collapse
-
-## TODO
-
-- [ ] incluir cimentacion como rugged asset always, 10% structural cost
-- [ ] ver publicaciones sobre IDAs con cortante, hablar con Vamvatsikos
-- [x] deploy to streamlit see how it works
-- [x] aim for lower period in design procedure to account for more flexibility in real model, this doesnt work.
-- [x] sustituir ya corrección de My/ke, cambiamos theta_y pero la actualizamos
-- [x] design with a smaller period, so the extra flexibility doesn't hurt as much!
-- [x] que fallo? debe ser alrededor de 15k/m2 ~0.6-1.2k USD/m2
-- [x] hacer breakdown de los costos de Wasim en mi clasificacion.
-- [x] incluir porcentaje de oficina transversal e.g. 2.7 veces cabe la distribucion de oficina que tiene dy=10m, el algoritmo de colocacion hace ese trabajo y multiplica asset.net_worth x 2.7
-- [x] libro de manuel alejandro con alcocer, hacer mejor los costos, desacoplar el acero longitudinal del transversal?, realmente debe hacerse desde arriba.
-- [x] cap6. columnas. comparar con cortante basal del metodo simplificado
-- [x] q=1? refuerzo por integridad, para proteger del colapso progresivo por carga vertical
-
-### Design
-
-- [x] introduce PDelta.
-- [x] fix deselecting model.yml when clicking 'run'
-- [x] include more tests for CDMX design
-- [x] check mass and weight are correctly set
-- [x] check gravity applying is correct.
-- [x] check damping is correctly set
-- [x] check scaling factors are correctly set
 
 ## Loss Checks
 

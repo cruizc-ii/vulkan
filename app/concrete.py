@@ -423,11 +423,14 @@ class RectangularConcreteColumn:
     def compute_net_worth(self) -> float:
         """
         TODO: this is not how we do it, you cannot isolate an element
-        you have to compute everything from the outside then divide by the number of elements!
+        and get its cost from first principles
+        you have to compute everything from the outside with work costs
+        then divide by the number of elements!
         """
         # normalized by 1k dollars
         STEEL_DENSITY_TON = 7.85
-        STEEL_TON_UNIT_COST = 920
+        STEEL_REBAR_TON_UNIT_COST = 1800  # already bent so no extra work needed
+        STEEL_STIRRUP_UNIT_COST = 2200  # already bent so no extra work needed
         CONCRETE_M3_UNIT_COST = 150
         # this unit cost is callibrated to give the % of unit costs in real structures
         WORK_UNIT_COST = 1
@@ -435,22 +438,23 @@ class RectangularConcreteColumn:
         stirrup_volume = num_stirrups * self._stirrup.area * self.perimeter
         longitudinal_volume = self.L * self.As
         # print(f"{stirrup_volume=} {longitudinal_volume=} {self.s=} {num_stirrups=}")
-        steel = (
-            (stirrup_volume + longitudinal_volume)
-            * STEEL_DENSITY_TON
-            * STEEL_TON_UNIT_COST
+        rebar_steel = (
+            longitudinal_volume * STEEL_DENSITY_TON * STEEL_REBAR_TON_UNIT_COST
         )
+        stirrup_steel = stirrup_volume * STEEL_DENSITY_TON * STEEL_STIRRUP_UNIT_COST
         # concrete costs the same when poured no matter the Q or the fpc
         concrete = self.L * self.Ag * CONCRETE_M3_UNIT_COST
         # there is more work involved when stirrup spacing is smaller i.e. when concrete is more confined
         # when unions/overlapping with beams are stricter it is more work
-        work = 0.722 * num_stirrups**1.5 * WORK_UNIT_COST
+        # work = 0.722 * num_stirrups**1.5 * WORK_UNIT_COST
+        work = 0
         # print(f"{steel=} {concrete=} {work=}")
-        dollars = steel + concrete + work
+        dollars = rebar_steel + stirrup_steel + concrete + work
         dollars = INFLATION * dollars / 1e3
         # dollars = (
         #     dollars / 2
         # )  ## there are two IMK springs, so this will only be half the cost. not sure why this gives low values for elements compares to slabs
+        # we have incorrectly callibrated costs
         # print(f"{dollars=}")
         return dollars
 

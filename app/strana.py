@@ -583,7 +583,7 @@ class StructuralResultView(YamlMixin):
         try:
             accels = accels.interpolate("linear").fillna(0)
         except ValueError as e:
-            breakpoint()
+            # breakpoint()
             raise e
         return accels
 

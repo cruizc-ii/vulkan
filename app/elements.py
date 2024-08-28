@@ -7,6 +7,7 @@ from app.assets import (
     Asset,
 )
 from app.utils import (
+    DUCTILITY_COST_FACTOR,
     OPENSEES_ELEMENT_EDPs,
     OPENSEES_EDPs,
     OPENSEES_REACTION_EDPs,
@@ -29,6 +30,7 @@ class ElementTypes(Enum):
     SPRING_BEAM = "spring_beam"
     SPRING_COLUMN = "spring_column"
     SLAB = "slab"
+    FOUNDATION = "foundation"
 
 
 class FEMValidationException(Exception):
@@ -164,7 +166,7 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
     integration_points: int = 5
     _DOLLARS_PER_UNIT_VOLUME: float = 1.500
     _SLAB_PCT: float = 5.0
-    Q: float = 1.0
+    Q: int = 1.0
 
     def __repr__(self) -> str:
         return f"ElasticBeamColumn {self.length:.1f}m"
@@ -283,6 +285,7 @@ class ElasticBeamColumn(RiskAsset, BeamColumn):
 class ConcreteElasticSlab(YamlMixin, RiskAsset):
     id: int | None = None
     type: str = ElementTypes.SLAB.value
+    Q: int = 1
     name: str = "ConcreteSlabAsset"
     model: str = "ConcreteElasticSlab"
     length: float | None = None
@@ -307,10 +310,53 @@ class ConcreteElasticSlab(YamlMixin, RiskAsset):
 
             area = CodeMassesPre.SLAB_AREA_PERCENTAGE * self.length**2
             self.area = area
+            # this is an incosistenty, why should slabs care about Q?
             cost_per_unit_area = (
                 20 + 2.54 * 100 * self.thickness
             )  # lstsq regression on median prices GUÍA DE REFERENCIA PARA FORMULAR EL CATÁLOGO DE CONCEPTOS DEL PRESUPUESTO BASE DE OBRA PÚBLICA. veracruz
-            self.net_worth = INFLATION * cost_per_unit_area * area
+            ductility_correction = DUCTILITY_COST_FACTOR if self.Q == 1 else 1
+            self.net_worth = (
+                INFLATION * cost_per_unit_area * area * ductility_correction
+            )
+            self.net_worth = self.net_worth / 1000  # in 1k usd
+        return super().__post_init__()
+
+
+@dataclass
+class ConcreteElasticFoundation(YamlMixin, RiskAsset):
+    id: int | None = None
+    type: str = ElementTypes.FOUNDATION.value
+    Q: int = 1
+    name: str = "ConcreteFoundationAsset"
+    model: str = "ConcreteElasticFoundation"
+    length: float | None = None
+    thickness: float = 0
+    area: float | None = None
+
+    def __repr__(self) -> str:
+        return f"ConcreteElasticFoundation t={self.thickness:.2f}m"
+
+    def __str__(self) -> str:
+        # must return empty for OpenSees, as this is a virtual element
+        return ""
+
+    def __post_init__(self):
+        self.type = ElementTypes.FOUNDATION.value
+        if self.net_worth is None:
+            if self.thickness < 0.08:
+                self.thickness = 0.08
+            if self.thickness > 0.30:
+                self.thickness = 0.30
+            area = self.length**2
+            self.area = area
+            cost_per_unit_area = (
+                2.54 * 100 * self.thickness
+            )  # lstsq regression on median prices GUÍA DE REFERENCIA PARA FORMULAR EL CATÁLOGO DE CONCEPTOS DEL PRESUPUESTO BASE DE OBRA PÚBLICA. veracruz
+            ductility_correction = DUCTILITY_COST_FACTOR if self.Q == 1 else 1
+            # this is an incosistenty, why should foundations care about Q?
+            self.net_worth = (
+                INFLATION * cost_per_unit_area * area * ductility_correction
+            )
             self.net_worth = self.net_worth / 1000  # in 1k usd
         return super().__post_init__()
 
@@ -321,7 +367,7 @@ class BilinBeamColumn(ElasticBeamColumn):
     Vy: float | None = None
 
     def __repr__(self) -> str:
-        return "BilinBeamColumn My={self.My:.0f}"
+        return f"BilinBeamColumn My={self.My:.0f}"
 
     def __post_init__(self):
         self.model = self.__class__.__name__
@@ -433,8 +479,10 @@ class IMKSpring(RectangularConcreteColumn, ElasticBeamColumn):
         self.Ke = 6 * self.E * self.Ix / self.length
         self.model = self.__class__.__name__
         if self.type == ElementTypes.SPRING_COLUMN.value and self.Q == 4:
-            # indirectly take into account recommendations for ductile design from BCs, I do not like this part, it does not feel right.
-            self.s = min([0.1, self.b / 4, self.h / 4])
+            # indirectly take into account recommendations for ductile design from BCs
+            #  I do not like this part, it does not feel right.
+            # also separations are too small, consider 5cm the minimum
+            self.s = max(min([0.1, self.b / 4, self.h / 4]), 0.05)
         # self.Kb = 1e9
         # self.Kb = self.Ks * self.Ke / (self.Ks - 2 * self.Ke)
         self.radius = self.h / 2

@@ -527,6 +527,7 @@ with st.sidebar:
             fig.update_layout(height=300, width=300)
             st.plotly_chart(fig, theme=None)
             st.header("Filter")
+
             all_categories = sorted(list(set([lm["category"] for lm in assets])))
             selected_categories = st.multiselect(
                 "Category", options=all_categories, default=all_categories
@@ -812,7 +813,7 @@ if state.module == 1:
                 value=uy,
             )
 
-            col2.metric(label="ductility", value=ductility)
+            col2.metric(label="ductility", value=f"{ductility:.2f}")
 
             st.subheader("Springs timehistory (Moments)")
             fig = design.fem._pushover_view.generate_springs_visual_timehistory_fig(
@@ -954,7 +955,7 @@ if state.module == 3:
             design = ida._design
 
             c1.header("Columns hysteresis")
-            options = design.fem.springs_columns
+            options = design.fem.springs_columns[:5]
             for ix, _ in enumerate(options, start=1):
                 col: RectangularConcreteColumn = design.fem.springs_columns[ix - 1]
                 df = view.view_column_spring_moment_rotation_th(ix=ix)
@@ -964,7 +965,7 @@ if state.module == 3:
                 c1.plotly_chart(fig, theme=None)
 
             c2.header("Beams hysteresis")
-            options = design.fem.springs_beams
+            options = design.fem.springs_beams[:5]
             for ix, _ in enumerate(options, start=1):
                 fig = view.view_beam_spring_moment_rotation_fig(ix=ix)
                 c2.plotly_chart(fig, theme=None)
