@@ -242,6 +242,9 @@ class Hazard(NamedYamlMixin):
     def intensities_for_idas(self):
         return self._curve.intensities_for_idas()
 
+    def hazard_spaced_intensities_for_idas(self):
+        return self._curve.hazard_spaced_intensities_for_idas()
+
     def simulate_intensities(self, n: int = 10) -> "TimeHistorySeries":
         return self._curve.simulate_intensities(n)
 
@@ -435,7 +438,7 @@ class HazardCurve(ABC, YamlMixin):
 
     def intensities_for_idas(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         df: DataFrame = self._df
-        df.to_csv("hazard.csv")
+        # df.to_csv("hazard.csv")
         start, stop = df.index.min(), df.index.max()
         linspace, step = np.linspace(
             start=start, stop=stop, num=self._IDA_LINSPACE_BINS, retstep=True
@@ -451,6 +454,62 @@ class HazardCurve(ABC, YamlMixin):
         sups = linspace + step / 2
         infs = linspace - step / 2
         return linspace, sups, infs
+
+    def hazard_spaced_intensities_for_idas(self):
+        df = self._df.reset_index()
+        bins = df.rolling(2).mean()
+        bins = bins["index"].dropna().values
+        self._df["d"] = self._df["y"].diff(-1)
+        freq = self._df["d"].dropna().values
+        return bins, freq
+
+    def evenly_spaced_intensities_for_idas(self):
+        df = self._df
+        start, stop, num = df.index.min(), df.index.max(), self._IDA_LINSPACE_BINS
+        linspace, step = np.linspace(start=start, stop=stop, num=num, retstep=True)
+        d = step / 2.0
+        bins = np.linspace(start=start + d, stop=stop - d, num=num - 1)
+        ix = df.index
+        idx = ix.union(linspace)
+        df = df.reindex(idx)
+        df = df.interpolate(method="cubic")
+        df = df.loc[linspace]
+        df["d"] = df["y"].diff(-1)
+        freq = df["d"].dropna().values
+        return bins, freq
+
+    def elastically_spaced_intensities_for_idas(
+        self, Say: float, elastic_pct: float = 0.2
+    ):
+        m, r = self._IDA_LINSPACE_BINS * elastic_pct, self._IDA_LINSPACE_BINS * (
+            1 - elastic_pct
+        )
+        m, r = int(m), int(r)
+        df = self._df
+        start, stop, num = df.index.min(), Say, m
+        linspace1, step = np.linspace(start=start, stop=stop, num=num, retstep=True)
+        d = step / 2
+        bins1 = np.linspace(start=start + d, stop=stop - d, num=num - 1)
+        ix = df.index
+        idx = ix.union(linspace1)
+        haz1 = df.reindex(idx)
+        haz1 = haz1.interpolate(method="cubic")
+        haz1 = haz1.loc[linspace1]
+        haz1["d"] = haz1["y"].diff(-1)
+        freq1 = haz1["d"].dropna().values
+        start, stop, num = Say, df.index.max(), r
+        linspace2, step = np.linspace(start=start, stop=stop, num=num, retstep=True)
+        d = step / 2
+        bins2 = np.linspace(start=start + d, stop=stop - d, num=num - 1)
+        ix = df.index
+        idx = ix.union(linspace2)
+        haz2 = df.reindex(idx)
+        haz2 = haz2.interpolate(method="cubic")
+        haz2 = haz2.loc[linspace2]
+        haz2["d"] = haz2["y"].diff(-1)
+        freq2 = haz2["d"].dropna().values
+        freq, bins = np.concatenate([freq1, freq2]), np.concatenate([bins1, bins2])
+        return freq, bins
 
     @staticmethod
     def rate_of_exceedance(

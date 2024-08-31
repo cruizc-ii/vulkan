@@ -1283,6 +1283,7 @@ class IDA(NamedYamlMixin):
     _hazard: Hazard | None = None
     _design = None
     _intensities: np.ndarray | None = None
+    _frequencies: np.ndarray | None = None
     _NUM_PARALLEL_RUNS: int = 4
 
     def __post_init__(self):
@@ -1300,7 +1301,9 @@ class IDA(NamedYamlMixin):
             raise SpecNotFoundException
 
         if self.standard:
-            self._intensities = self._hazard.intensities_for_idas()
+            self._intensities, self._frequencies = (
+                self._hazard.hazard_spaced_intensities_for_idas()
+            )
         else:
             linspace = np.arange(self.start, self.stop + self.step / 2, self.step)
             self._intensities = (
@@ -1313,20 +1316,17 @@ class IDA(NamedYamlMixin):
         self,
         *,
         run_id: str,
-        results_path: Path = None,
+        results_path: Path | None = None,
         fem_ix: int = -1,
         period_ix: int = -1,
     ) -> list[dict]:
-        """
-        returns a set of input dicts for running IDAs in parallel.
-        """
         fem = self._design.fems[fem_ix]
         modal_view = fem.get_and_set_eigen_results(results_path)
         period = modal_view.periods[period_ix]
         input_dicts = []
         for rix, record in enumerate(self._hazard.records, start=1):
-            for iix, (intensity, sup, inf) in enumerate(
-                zip(*self._intensities), start=1
+            for iix, (intensity, freq) in enumerate(
+                zip(self._intensities, self._frequencies), start=1
             ):
                 intensity_str_precision = f"{intensity:.6f}"
                 outdir = results_path / run_id / record.name / intensity_str_precision
@@ -1334,15 +1334,11 @@ class IDA(NamedYamlMixin):
                 scale_factor = results_to_meters * record.get_scale_factor(
                     period=period, intensity=intensity
                 )
-                rate_inf, rate_sup = self._hazard._curve.interpolate_rate_for_values(
-                    [inf, sup]
-                )
-                freq = rate_inf - rate_sup
                 input_dicts.append(
                     dict(
                         freq=freq,
-                        inf=inf,
-                        sup=sup,
+                        # inf=inf,
+                        # sup=sup,
                         period=period,
                         outdir=outdir,
                         results_to_meters=results_to_meters,
@@ -1434,8 +1430,8 @@ class IDA(NamedYamlMixin):
                     "record": record_name,
                     "intensity_str": input["intensity_str_precision"],
                     "intensity": input["intensity"],
-                    "sup": input["sup"],
-                    "inf": input["inf"],
+                    # "sup": input["sup"],
+                    # "inf": input["inf"],
                     "freq": input["freq"],
                     # **input, # doesn't work because input has non-hashable objects
                     **results,
