@@ -385,8 +385,12 @@ with st.sidebar:
 
         if file and not (design_missing or hazard_missing):
             "hazard:", state.hazard_abspath
-            standard = st.button(
-                "run for selected hazard points", help="uses the hazard points only"
+            haz_spaced = st.button(
+                "run for hazard points", help="uses the hazard points only"
+            )
+            even_spaced = st.button("even grid", help="run an evenly spaced grid")
+            elastic_spaced = st.button(
+                "use Say", help="run some points until Say, then fill the rest"
             )
             delete = st.button("🗑️", help="delete this analysis")
             with st.expander("manual ida"):
@@ -429,7 +433,7 @@ with st.sidebar:
                     state.ida_abspath = None
                     st.success("delete successful")
 
-            if run or standard:
+            if run or haz_spaced or even_spaced or elastic_spaced:
                 with st.spinner("running..."):
                     time.sleep(1)
                     ida = IDA(
@@ -439,7 +443,9 @@ with st.sidebar:
                             "stop": stop,
                             "step": step,
                             "name": name,
-                            "standard": standard,
+                            "hazard_spaced": haz_spaced,
+                            "evenly_spaced": even_spaced,
+                            "elastically_spaced": elastic_spaced,
                         },
                     )
                     ida.run_parallel(results_dir=RESULTS_DIR)
@@ -914,7 +920,13 @@ if state.module == 2:
     logy = right.checkbox("log y", value=True)
     if hazard.curve is not None:
         fig = hazard.rate_figure(normalize_g=normalize_g, logx=logx, logy=logy)
-        st.text(hazard.hazard_spaced_intensities_for_idas())
+        # st.text(hazard.hazard_spaced_intensities_for_idas())
+        # st.text(hazard.evenly_spaced_intensities_for_idas())
+        # st.text(
+        #     hazard.elastically_spaced_intensities_for_idas(
+        #         design.fem.extras["c_design"]
+        #     )
+        # )
         st.plotly_chart(fig, theme=None)
         if len(hazard.records) > 0:
             record = (

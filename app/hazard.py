@@ -239,11 +239,14 @@ class Hazard(NamedYamlMixin):
         # if isinstance(self.curve, str):
         #     self._curve = HazardCurveFactory(name=self.curve)
 
-    def intensities_for_idas(self):
-        return self._curve.intensities_for_idas()
+    def evenly_spaced_intensities_for_idas(self):
+        return self._curve.evenly_spaced_intensities_for_idas()
 
     def hazard_spaced_intensities_for_idas(self):
         return self._curve.hazard_spaced_intensities_for_idas()
+
+    def elastically_spaced_intensities_for_idas(self, Say: float):
+        return self._curve.elastically_spaced_intensities_for_idas(Say)
 
     def simulate_intensities(self, n: int = 10) -> "TimeHistorySeries":
         return self._curve.simulate_intensities(n)
@@ -338,7 +341,7 @@ class HazardCurve(ABC, YamlMixin):
     y: list | None = None
     v0: float | None = None
     _df: DataFrame = field(default_factory=DataFrame)
-    _IDA_LINSPACE_BINS: int = 12
+    _IDA_LINSPACE_BINS: int = 32
 
     def __str__(self) -> str:
         return str(self._df)
@@ -348,7 +351,7 @@ class HazardCurve(ABC, YamlMixin):
             if self.y and self.x:
                 self.v0 = self.y[0]
                 index = np.array(self.x).astype("float64")
-                self._df = DataFrame(dict(y=self.y), index=index, dtype="float64")
+                self._df = DataFrame(dict(y=self.y, x=index), dtype="float64")
                 dataframe_schema.validate(self._df)
         else:
             dataframe_schema.validate(self._df)
@@ -436,35 +439,17 @@ class HazardCurve(ABC, YamlMixin):
         df = TimeHistorySeries(sas, index=years)
         return df
 
-    def intensities_for_idas(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        df: DataFrame = self._df
-        # df.to_csv("hazard.csv")
-        start, stop = df.index.min(), df.index.max()
-        linspace, step = np.linspace(
-            start=start, stop=stop, num=self._IDA_LINSPACE_BINS, retstep=True
-        )
-        # linspace, _ = np.linspace(
-        #     start=start + step,
-        #     stop=stop - step,
-        #     num=self._IDA_LINSPACE_BINS,
-        #     retstep=True,
-        # )
-        # step = 0.1
-        # linspace = df.index.values.flatten()
-        sups = linspace + step / 2
-        infs = linspace - step / 2
-        return linspace, sups, infs
-
     def hazard_spaced_intensities_for_idas(self):
-        df = self._df.reset_index()
-        bins = df.rolling(2).mean()
-        bins = bins["index"].dropna().values
-        self._df["d"] = self._df["y"].diff(-1)
-        freq = self._df["d"].dropna().values
+        df = self._df
+        df = df.rolling(2).mean()
+        bins = df["x"].dropna().values
+        df["d"] = df["y"].diff(-1)
+        freq = df["d"].dropna().values
         return bins, freq
 
     def evenly_spaced_intensities_for_idas(self):
         df = self._df
+        df = df.set_index(df["x"])
         start, stop, num = df.index.min(), df.index.max(), self._IDA_LINSPACE_BINS
         linspace, step = np.linspace(start=start, stop=stop, num=num, retstep=True)
         d = step / 2.0
@@ -486,6 +471,7 @@ class HazardCurve(ABC, YamlMixin):
         )
         m, r = int(m), int(r)
         df = self._df
+        df = df.set_index(df["x"])
         start, stop, num = df.index.min(), Say, m
         linspace1, step = np.linspace(start=start, stop=stop, num=num, retstep=True)
         d = step / 2
@@ -509,7 +495,7 @@ class HazardCurve(ABC, YamlMixin):
         haz2["d"] = haz2["y"].diff(-1)
         freq2 = haz2["d"].dropna().values
         freq, bins = np.concatenate([freq1, freq2]), np.concatenate([bins1, bins2])
-        return freq, bins
+        return bins, freq
 
     @staticmethod
     def rate_of_exceedance(

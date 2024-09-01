@@ -50,7 +50,7 @@ class Loss:
     scatter_src: str | None = None
     _srcs_dfs_cache: dict = field(default_factory=dict)
     _scatter_df: ScatterResultsDataFrame | None = None
-    _RATE_NUM_BINS: int = 12
+    _RATE_NUM_BINS: int = 32
     _csv_name: str = ""
     _scatter_csv_name: str = ""
     _collapse_mask_csv_name: str = ""

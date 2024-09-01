@@ -386,7 +386,7 @@ class DesignComparison(YamlMixin):
                 name=ida_name,
                 hazard_abspath=self.hazard_abspath,
                 design_abspath=self.design_abspath,
-                standard=standard,
+                hazard_spaced=standard,
             )
             ida.run_parallel(results_dir=RESULTS_DIR)
             ida.to_file(STRANA_DIR)

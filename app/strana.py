@@ -1279,7 +1279,9 @@ class IDA(NamedYamlMixin):
     stop: float = 1.0
     step: float = 0.1
     results: dict | None = None
-    standard: bool = False
+    hazard_spaced: bool = True
+    evenly_spaced: bool = False
+    elastically_spaced: bool = False
     _hazard: Hazard | None = None
     _design = None
     _intensities: np.ndarray | None = None
@@ -1300,9 +1302,19 @@ class IDA(NamedYamlMixin):
         except FileNotFoundError:
             raise SpecNotFoundException
 
-        if self.standard:
+        if self.hazard_spaced:
             self._intensities, self._frequencies = (
                 self._hazard.hazard_spaced_intensities_for_idas()
+            )
+        elif self.evenly_spaced:
+            self._intensities, self._frequencies = (
+                self._hazard.evenly_spaced_intensities_for_idas()
+            )
+        elif self.elastically_spaced:
+            self._intensities, self._frequencies = (
+                self._hazard.elastically_spaced_intensities_for_idas(
+                    self._design.fem.extras["c_design"]
+                )
             )
         else:
             linspace = np.arange(self.start, self.stop + self.step / 2, self.step)
@@ -1430,9 +1442,9 @@ class IDA(NamedYamlMixin):
                     "record": record_name,
                     "intensity_str": input["intensity_str_precision"],
                     "intensity": input["intensity"],
+                    "freq": input["freq"],
                     # "sup": input["sup"],
                     # "inf": input["inf"],
-                    "freq": input["freq"],
                     # **input, # doesn't work because input has non-hashable objects
                     **results,
                 }
