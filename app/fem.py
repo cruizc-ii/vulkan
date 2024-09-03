@@ -626,7 +626,7 @@ class FiniteElementModel(ABC, YamlMixin):
 
     @staticmethod
     def yield_estimation(df: pd.DataFrame) -> tuple[float, float]:
-        _YIELD_TANGENT_PCT = 0.30  # curr_tangent < PCT*initial tangent => yield point.
+        _YIELD_TANGENT_PCT = 0.40  # curr_tangent < PCT*initial tangent => yield point.
         df = df.reset_index()
         df2 = df.diff(1)
         df2["fp"] = (

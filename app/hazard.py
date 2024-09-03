@@ -441,8 +441,8 @@ class HazardCurve(ABC, YamlMixin):
 
     def hazard_spaced_intensities_for_idas(self):
         df = self._df
-        df = df.rolling(2).mean()
-        bins = df["x"].dropna().values
+        df2 = df.rolling(2).mean()
+        bins = df2["x"].dropna().values
         df["d"] = df["y"].diff(-1)
         freq = df["d"].dropna().values
         return bins, freq

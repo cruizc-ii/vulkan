@@ -385,46 +385,46 @@ with st.sidebar:
 
         if file and not (design_missing or hazard_missing):
             "hazard:", state.hazard_abspath
-            haz_spaced = st.button(
-                "run for hazard points", help="uses the hazard points only"
-            )
-            even_spaced = st.button("even grid", help="run an evenly spaced grid")
-            elastic_spaced = st.button(
-                "use Say", help="run some points until Say, then fill the rest"
-            )
-            delete = st.button("🗑️", help="delete this analysis")
+            run = st.button("run IDA", help="runs an evenly spaced grid")
             with st.expander("manual ida"):
-                st.warning(
-                    "BETA: this might give wrong loss results for Sa>a in hazard"
+                haz_spaced = st.button(
+                    "run for hazard points", help="uses the hazard points only"
                 )
-                start = st.number_input(
-                    r"start Sa (g)",
-                    value=ida.start,
-                    min_value=0.0,
-                    step=ida.step,
-                    max_value=10.0,
-                    format="%g",
-                    help="starting Sa (g)",
+                even_spaced = st.button("even grid", help="run an evenly spaced grid")
+                elastic_spaced = st.button(
+                    "use Say", help="run some points until Say, then fill the rest"
                 )
-                stop = st.number_input(
-                    r"stop Sa (g)",
-                    value=ida.stop,
-                    min_value=0.0,
-                    step=ida.step,
-                    max_value=10.0,
-                    format="%g",
-                    help="stop Sa (g)",
-                )
-                step = st.number_input(
-                    r"step Sa (g)",
-                    value=ida.step,
-                    min_value=0.005,
-                    step=0.1,
-                    max_value=10.0,
-                    format="%g",
-                    help="step Sa (g)",
-                )
-                run = st.button("run IDA", help="run with chosen Sa")
+                delete = st.button("🗑️", help="delete this analysis")
+                # st.warning(
+                #     "BETA: this might give wrong loss results for Sa>a in hazard"
+                # )
+                # start = st.number_input(
+                #     r"start Sa (g)",
+                #     value=ida.start,
+                #     min_value=0.0,
+                #     step=ida.step,
+                #     max_value=10.0,
+                #     format="%g",
+                #     help="starting Sa (g)",
+                # )
+                # stop = st.number_input(
+                #     r"stop Sa (g)",
+                #     value=ida.stop,
+                #     min_value=0.0,
+                #     step=ida.step,
+                #     max_value=10.0,
+                #     format="%g",
+                #     help="stop Sa (g)",
+                # )
+                # step = st.number_input(
+                #     r"step Sa (g)",
+                #     value=ida.step,
+                #     min_value=0.005,
+                #     step=0.1,
+                #     max_value=10.0,
+                #     format="%g",
+                #     help="step Sa (g)",
+                # )
             if delete:
                 with st.spinner("deleting analysis"):
                     time.sleep(1)
@@ -439,11 +439,11 @@ with st.sidebar:
                     ida = IDA(
                         **{
                             **ida.to_dict,
-                            "start": start,
-                            "stop": stop,
-                            "step": step,
+                            # "start": start,
+                            # "stop": stop,
+                            # "step": step,
                             "name": name,
-                            "hazard_spaced": haz_spaced,
+                            "hazard_spaced": haz_spaced or run,
                             "evenly_spaced": even_spaced,
                             "elastically_spaced": elastic_spaced,
                         },
@@ -920,7 +920,7 @@ if state.module == 2:
     logy = right.checkbox("log y", value=True)
     if hazard.curve is not None:
         fig = hazard.rate_figure(normalize_g=normalize_g, logx=logx, logy=logy)
-        # st.text(hazard.hazard_spaced_intensities_for_idas())
+        st.text(hazard.hazard_spaced_intensities_for_idas())
         # st.text(hazard.evenly_spaced_intensities_for_idas())
         # st.text(
         #     hazard.elastically_spaced_intensities_for_idas(

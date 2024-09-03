@@ -583,7 +583,6 @@ class StructuralResultView(YamlMixin):
         try:
             accels = accels.interpolate("linear").fillna(0)
         except ValueError as e:
-            # breakpoint()
             raise e
         return accels
 
@@ -1279,9 +1278,9 @@ class IDA(NamedYamlMixin):
     stop: float = 1.0
     step: float = 0.1
     results: dict | None = None
-    hazard_spaced: bool = True
+    hazard_spaced: bool = False
     evenly_spaced: bool = False
-    elastically_spaced: bool = False
+    elastically_spaced: bool = True
     _hazard: Hazard | None = None
     _design = None
     _intensities: np.ndarray | None = None
@@ -1317,12 +1316,13 @@ class IDA(NamedYamlMixin):
                 )
             )
         else:
-            linspace = np.arange(self.start, self.stop + self.step / 2, self.step)
-            self._intensities = (
-                linspace,
-                linspace + self.step / 2,
-                linspace - self.step / 2,
-            )
+            raise Exception("Must choose a hazard spacing.")
+            # linspace = np.arange(self.start, self.stop + self.step / 2, self.step)
+            # self._intensities = (
+            #     linspace,
+            #     linspace + self.step / 2,
+            #     linspace - self.step / 2,
+            # )
 
     def generate_run_dicts(
         self,
@@ -1336,10 +1336,8 @@ class IDA(NamedYamlMixin):
         modal_view = fem.get_and_set_eigen_results(results_path)
         period = modal_view.periods[period_ix]
         input_dicts = []
-        for rix, record in enumerate(self._hazard.records, start=1):
-            for iix, (intensity, freq) in enumerate(
-                zip(self._intensities, self._frequencies), start=1
-            ):
+        for record in self._hazard.records:
+            for intensity, freq in zip(self._intensities, self._frequencies):
                 intensity_str_precision = f"{intensity:.6f}"
                 outdir = results_path / run_id / record.name / intensity_str_precision
                 results_to_meters = 1.0 / 100
@@ -1348,15 +1346,13 @@ class IDA(NamedYamlMixin):
                 )
                 input_dicts.append(
                     dict(
-                        freq=freq,
-                        # inf=inf,
-                        # sup=sup,
                         period=period,
                         outdir=outdir,
                         results_to_meters=results_to_meters,
                         scale_factor=scale_factor,
                         record=record,
                         intensity=intensity,
+                        freq=freq,
                         intensity_str_precision=intensity_str_precision,
                         fem=fem,
                         id=f"${record}-{intensity_str_precision}",
@@ -1443,8 +1439,6 @@ class IDA(NamedYamlMixin):
                     "intensity_str": input["intensity_str_precision"],
                     "intensity": input["intensity"],
                     "freq": input["freq"],
-                    # "sup": input["sup"],
-                    # "inf": input["inf"],
                     # **input, # doesn't work because input has non-hashable objects
                     **results,
                 }

@@ -374,7 +374,6 @@ class DesignComparison(YamlMixin):
         pushover: bool = False,
         strana: bool = False,
         loss: bool = False,
-        standard: bool = True,
     ):
         name = name if name else str(uuid())
         ida_name = f"{name}-{self._design_model.name}-{self._hazard_model.name}"
@@ -386,7 +385,6 @@ class DesignComparison(YamlMixin):
                 name=ida_name,
                 hazard_abspath=self.hazard_abspath,
                 design_abspath=self.design_abspath,
-                hazard_spaced=standard,
             )
             ida.run_parallel(results_dir=RESULTS_DIR)
             ida.to_file(STRANA_DIR)
