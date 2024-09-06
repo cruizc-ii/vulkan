@@ -1279,8 +1279,8 @@ class IDA(NamedYamlMixin):
     step: float = 0.1
     results: dict | None = None
     hazard_spaced: bool = False
-    evenly_spaced: bool = False
-    elastically_spaced: bool = True
+    evenly_spaced: bool = True
+    elastically_spaced: bool = False
     _hazard: Hazard | None = None
     _design = None
     _intensities: np.ndarray | None = None
