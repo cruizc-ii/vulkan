@@ -345,15 +345,15 @@ class ConcreteElasticFoundation(YamlMixin, RiskAsset):
         if self.net_worth is None:
             if self.thickness < 0.08:
                 self.thickness = 0.08
-            if self.thickness > 0.30:
-                self.thickness = 0.30
-            area = self.length**2
+            if self.thickness > 0.25:
+                self.thickness = 0.25
+            area = self.length**2 / 2
             self.area = area
             cost_per_unit_area = (
                 2.54 * 100 * self.thickness
             )  # lstsq regression on median prices GUÍA DE REFERENCIA PARA FORMULAR EL CATÁLOGO DE CONCEPTOS DEL PRESUPUESTO BASE DE OBRA PÚBLICA. veracruz
             ductility_correction = DUCTILITY_COST_FACTOR if self.Q == 1 else 1
-            # this is an incosistenty, why should foundations care about Q?
+            # this is an incosistency, why should foundations care about Q?
             self.net_worth = (
                 INFLATION * cost_per_unit_area * area * ductility_correction
             )

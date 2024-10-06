@@ -17,6 +17,8 @@ from scipy.stats import lognorm
 LOSS_MODELS_DIR = Path(__file__).resolve().parent.parent / "models" / "loss"
 RISK_MODELS_DIR = Path(__file__).resolve().parent.parent / "models" / "risk"
 LossResultsDataFrame = pd.DataFrame  # summarized accels vs loss values
+# FIXME: PFA, PFV, drifts, should not be lists within DF, rather we should de-normarlize the df
+# should be n*times longer, including a column for the storey (floors)
 
 
 class AssetNotFoundException(Exception):
@@ -66,7 +68,7 @@ class LognormalRisk(YamlMixin):
     frag_cdf_df: pd.DataFrame | None = None
     vuln_pdf_df: pd.DataFrame | None = None
     vuln_cdf_df: pd.DataFrame | None = None
-    vuln_means: np.ndarray | None = None
+    vuln_means: list | None = None
     init: bool = False
     hidden: bool = False
     rugged: bool = False
@@ -108,7 +110,7 @@ class LognormalRisk(YamlMixin):
 
             self.vuln_means.append(vuln_ln.rv.mean())
 
-        self.vuln_means = np.array(self.vuln_means)
+        # self.vuln_means = np.array(self.vuln_means)
 
         DOMAIN_POINTS = 100
         frag_domain = np.linspace(
@@ -170,7 +172,7 @@ class LognormalRisk(YamlMixin):
     def expected_loss(self, x: float) -> float:
         if not self.init:
             self.__lazy_post_init__()
-        vuln_means: np.ndarray = self.vuln_means
+        vuln_means = np.array(self.vuln_means)
         ix = self.frag_cdf_df.index.get_loc(x, method="nearest")
         cdfs = self.frag_cdf_df.iloc[ix].to_numpy()
         probs = np.flip(np.diff(np.flip(cdfs), prepend=0))

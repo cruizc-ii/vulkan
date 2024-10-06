@@ -170,7 +170,7 @@ with st.sidebar:
             min_value=2,
             step=1,
             max_value=len(bays) + 1,
-            value=design.num_frames,
+            value=min(design.num_frames, len(bays) + 1),
             format="%d",
             help="number of identical perpendicular frames, they will follow bay spacing.",
         )
@@ -443,8 +443,8 @@ with st.sidebar:
                             # "stop": stop,
                             # "step": step,
                             "name": name,
-                            "hazard_spaced": haz_spaced or run,
-                            "evenly_spaced": even_spaced,
+                            "hazard_spaced": haz_spaced,
+                            "evenly_spaced": even_spaced or run,
                             "elastically_spaced": elastic_spaced,
                         },
                     )
@@ -920,13 +920,19 @@ if state.module == 2:
     logy = right.checkbox("log y", value=True)
     if hazard.curve is not None:
         fig = hazard.rate_figure(normalize_g=normalize_g, logx=logx, logy=logy)
-        st.text(hazard.hazard_spaced_intensities_for_idas())
+        # st.text(hazard.hazard_spaced_intensities_for_idas())
         # st.text(hazard.evenly_spaced_intensities_for_idas())
         # st.text(
         #     hazard.elastically_spaced_intensities_for_idas(
         #         design.fem.extras["c_design"]
         #     )
         # )
+        st.plotly_chart(fig, theme=None)
+        left, mid, right = st.columns(3)
+        hazard_spaced = left.checkbox(label="hazard")
+        evenly = mid.checkbox(label="even spacing")
+        elastic = right.checkbox(label="elastic")
+        fig = hazard.freq_figure(hazard=hazard, evenly=evenly, elastic=elastic)
         st.plotly_chart(fig, theme=None)
         if len(hazard.records) > 0:
             record = (
@@ -943,12 +949,17 @@ if state.module == 3:
     if hazard_missing:
         st.warning("Please select a hazard")
     if not (design_missing or hazard_missing) and ida and ida.results:
-        fig = ida.view_ida_curves()
-        # fig.update_layout(width=640 * 3, height=640,)
+        normalize = st.checkbox("Normalize")
+        if normalize:
+            fig = ida.view_normalized_ida_curves()
+        else:
+            fig = ida.view_ida_curves()
         st.plotly_chart(fig, container_width=True, theme=None)
-        fig = ida.view_normalized_ida_curves()
+
+        fig = ida.view_median_curves()
         st.plotly_chart(fig, container_width=True, theme=None)
-        st.dataframe(pd.DataFrame.from_records(ida.stats), height=800)
+
+        st.dataframe(pd.DataFrame.from_records(ida.results), height=800)
 
         if selected_ix is not None:
             instance_path = ida.results[selected_ix]["path"]
@@ -960,27 +971,27 @@ if state.module == 3:
             # findme
             for fig in figures:
                 st.plotly_chart(fig, theme=None)
-
             # cols_moments = view.view_spring_moment_rotation_th(ele_type="COLUMN")
             # beams_moments = view.view_spring_moment_rotation_th(ele_type="BEAM")
 
             c1, c2 = st.columns(2)
             design = ida._design
-
             c1.header("Columns hysteresis")
             options = design.fem.springs_columns[:5]
             for ix, _ in enumerate(options, start=1):
                 col: RectangularConcreteColumn = design.fem.springs_columns[ix - 1]
                 df = view.view_column_spring_moment_rotation_th(ix=ix)
                 DS = col.park_ang_kunnath_DS(df)
-                fig = view.view_column_spring_moment_rotation_fig(ix=ix)
-                DS
+                fig = view.view_column_spring_moment_rotation_fig(ix=ix, DS=DS)
                 c1.plotly_chart(fig, theme=None)
 
             c2.header("Beams hysteresis")
             options = design.fem.springs_beams[:5]
             for ix, _ in enumerate(options, start=1):
-                fig = view.view_beam_spring_moment_rotation_fig(ix=ix)
+                beam: RectangularConcreteColumn = design.fem.springs_beams[ix - 1]
+                df = view.view_beam_spring_moment_rotation_th(ix=ix)
+                DS = beam.park_ang_kunnath_DS(df)
+                fig = view.view_beam_spring_moment_rotation_fig(ix=ix, DS=DS)
                 c2.plotly_chart(fig, theme=None)
 
     else:
@@ -1033,16 +1044,16 @@ if state.module == 4:
             )
         if not agg_key_1:
             fig = asset.rate_fig(normalization=normalization)
-            st.plotly_chart(fig, theme=None)
+            one.plotly_chart(fig, theme=None)
             fig = asset.expected_loss_and_variance_fig(normalization=normalization)
-            st.plotly_chart(fig, theme=None)
+            two.plotly_chart(fig, theme=None)
             if selected_ix is None:
                 fig = asset.scatter_fig(
                     category_filter=selected_categories,
                     name_filter=selected_names,
                     floor_filter=selected_floors,
                 )
-                st.plotly_chart(fig, theme=None)
+                three.plotly_chart(fig, theme=None)
         elif agg_key_1 and selected_ix is None:
             df: LossModelsResultsDataFrame = loss.loss_models_df
             df = loss.filter_src_df(
@@ -1087,6 +1098,13 @@ if state.module == 4:
                     df2 = df2 * 1.0 / normalization
                     fig = px.imshow(df2)
                     st.plotly_chart(fig, theme=None)
+
+        st.header("Loss frequency details")
+        df = loss._loss_df
+        df = df.reset_index()
+        df["freq*mean"] = df["freq"] * df["mean"]
+        df = df.append(df.sum(numeric_only=True), ignore_index=True)
+        st.dataframe(df)
 
 if state.module == 5:
     if hazard_missing:

@@ -542,9 +542,9 @@ class StructuralResultView(YamlMixin):
         )
         return df
 
-    def view_column_spring_moment_rotation_fig(self, ix: int):
+    def view_column_spring_moment_rotation_fig(self, ix: int, DS: float = 0):
         df = self.view_column_spring_moment_rotation_th(ix=ix)
-        fig = df.plot(x="r", y="M")
+        fig = df.plot(x="r", y="M", title=f"DS={DS:.3f}")
         return fig
 
     def view_beam_spring_moment_rotation_th(self, ix: int):
@@ -555,9 +555,9 @@ class StructuralResultView(YamlMixin):
         )
         return df
 
-    def view_beam_spring_moment_rotation_fig(self, ix: int):
+    def view_beam_spring_moment_rotation_fig(self, ix: int, DS: float = 0):
         df = self.view_beam_spring_moment_rotation_th(ix=ix)
-        fig = df.plot(x="r", y="M")
+        fig = df.plot(x="r", y="M", title=f"DS={DS:.3f}")
         return fig
 
     def view_drifts(self) -> DataFrame:
@@ -1358,7 +1358,6 @@ class IDA(NamedYamlMixin):
                         id=f"${record}-{intensity_str_precision}",
                     )
                 )
-
         return input_dicts
 
     def run_parallel(
@@ -1453,68 +1452,6 @@ class IDA(NamedYamlMixin):
         print(f"IDA in {dt:0.1f} s. ({dt/60:0.1f} min.)")
         return results_df
 
-    def run(
-        self,
-        results_path: Path = None,
-        run_id: str = None,
-        fem_ix: int = -1,
-        period_ix: int = 0,
-    ) -> IDAResultsDataFrame:
-        if not run_id:
-            run_id = str(uuid())
-
-        fem = self._design.fems[fem_ix]
-        modal_view = fem.get_and_set_eigen_results(results_path)
-        period = modal_view.periods[period_ix]
-
-        dataframe_records = []
-        num_records = len(self._hazard.records)
-        num_intensities = len(self._intensities[0])
-        counter = 0
-        for rix, record in enumerate(self._hazard.records, start=1):
-            collapse = False
-            for iix, (intensity, sup, inf) in enumerate(
-                zip(*self._intensities), start=1
-            ):
-                counter += 1
-                complete_pct = 100 * counter / (num_records * num_intensities)
-                print(
-                    f"record {rix} of {num_records} at intensity {iix} of {num_intensities} ({intensity:.2f}g) -- {complete_pct:.0f} % done."
-                )
-                intensity_str_precision = f"{intensity:.8f}"
-                outdir = results_path / run_id / record.name / intensity_str_precision
-                results_to_meters = 1.0 / 100
-                scale_factor = results_to_meters * record.get_scale_factor(
-                    period=period, intensity=intensity
-                )
-                rate_inf, rate_sup = self._hazard._curve.interpolate_rate_for_values(
-                    [inf, sup]
-                )
-                freq = rate_inf - rate_sup  # frequency of exceedance of bin i.
-                strana = StructuralAnalysis(outdir, fem=fem)
-                th_view = strana.timehistory(record=record, scale=scale_factor)
-                results = th_view.get_and_set_timehistory_summary()
-                collapse = self._design.fem.determine_collapse_from_results(
-                    results, th_view
-                )
-                row = {
-                    "record": record.name,
-                    "intensity_str": intensity_str_precision,
-                    "intensity": intensity,
-                    "sup": sup,
-                    "inf": inf,
-                    "freq": freq,
-                    "collapse": collapse,
-                    **results,
-                }
-                dataframe_records.append(row)
-                th_view.to_file()
-
-        results_df = DataFrame.from_records(dataframe_records)
-        results_df.to_csv(STRANA_DIR / f"{run_id}.csv")
-        self.results = results_df.to_dict(orient="records")
-        return results_df
-
     @property
     def summary(self) -> dict:
         # precompute collapse capacity, collapse intensity
@@ -1540,11 +1477,29 @@ class IDA(NamedYamlMixin):
             "_ida_y": _ida_y,
             "_norm_ida_x": _norm_ida_x,
             "_norm_ida_y": _norm_ida_y,
+            # "_df": df2,
         }
 
-    @property
-    def stats(self) -> list[dict]:
-        return self.results
+    def view_median_curves(self) -> Figure:
+        df = DataFrame.from_records(self.results)
+        df = df.pivot(index="intensity", columns="record", values="peak_drift")
+        df["median"] = df.median(axis=1)
+        df = df.reset_index()
+        fig = df.plot(x="median", y="intensity")
+        fig.update_layout(
+            yaxis_title="accel (g)",
+            xaxis_title="peak drift any storey [1]",
+            title="median IDA curves",
+            # marginal_x="histogram",
+            # marginal_y="rug",
+            # yaxis_range=[0.0, 0.3],
+            xaxis_range=[0, 0.10],
+            width=900,
+            height=600,
+            # autosize=True,
+            # responsive=True,
+        )
+        return fig
 
     def view_ida_curves(self) -> Figure:
         """
@@ -1560,7 +1515,7 @@ class IDA(NamedYamlMixin):
             color="record",
             # symbol="symbol",
             # symbol_sequence=["circle", "x"],
-            markers=True,
+            markers=False,
         )
         # seems like figures are 100% of parent container
         # can use_container_width=True
@@ -1572,7 +1527,7 @@ class IDA(NamedYamlMixin):
             # marginal_y="rug",
             # yaxis_range=[0.0, 0.3],
             xaxis_range=[0, 0.10],
-            width=1100,
+            width=1000,
             height=600,
             # autosize=True,
             # responsive=True,
@@ -1584,8 +1539,8 @@ class IDA(NamedYamlMixin):
         df["symbol"] = df["collapse"].apply(lambda c: "x" if c else "circle")
         fig = px.line(
             df,
-            y="Sa/Say_design",
-            x="peak_drift/drift_yield",
+            y="Sa/Say_design [1]",
+            x="peak_drift/drift_yield [1]",
             color="record",
             # symbol="symbol",
             # symbol_sequence=["circle", "x"],
@@ -1605,7 +1560,6 @@ class IDA(NamedYamlMixin):
             # autosize=True,
             # responsive=True,
         )
-
         return fig
 
 

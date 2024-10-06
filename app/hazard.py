@@ -271,6 +271,9 @@ class Hazard(NamedYamlMixin):
     ):
         return self._curve.figure(normalize_g=normalize_g, logx=logx, logy=logy)
 
+    def freq_figure(self, *, hazard=True, evenly=False, elastic=False):
+        return self._curve.freq_figure(hazard=hazard, evenly=evenly, elastic=elastic)
+
 
 def crisis_parser(s: str):
     dfs: dict[str, dict[float, HazardCurve]] = defaultdict(dict)
@@ -392,6 +395,29 @@ class HazardCurve(ABC, YamlMixin):
             fig.update_yaxes(type="log")
         return fig
 
+    def freq_figure(self, *, hazard=True, evenly=False, elastic=False):
+        if hazard:
+            x, y = self.hazard_spaced_intensities_for_idas()
+        if evenly:
+            x, y = self.evenly_spaced_intensities_for_idas()
+        if elastic:
+            x, y, self.elastically_spaced_intensities_for_idas()
+        df = DataFrame(y, index=x)
+        fig: Figure = df.plot.bar()
+        fig.update_layout(
+            xaxis_title="Sa (g)",
+            yaxis_title="1/yr",
+            title_text="freq of occurrence.",
+            # xaxis_type="log",
+            # yaxis_type="log",
+        )
+        fig.update_traces(
+            marker=dict(color="black"),
+        )
+        fig.update_yaxes(type="log")
+        fig.update_xaxes(type="log")
+        return fig
+
     def interpolate_rate_for_values(self, values: list[float]) -> list[float]:
         df: DataFrame = self._df
         merged = df.index.union(values)
@@ -450,14 +476,14 @@ class HazardCurve(ABC, YamlMixin):
     def evenly_spaced_intensities_for_idas(self):
         df = self._df
         df = df.set_index(df["x"])
-        start, stop, num = df.index.min(), df.index.max(), self._IDA_LINSPACE_BINS
+        ix = df.index
+        start, stop, num = ix.min(), ix.max(), self._IDA_LINSPACE_BINS
         linspace, step = np.linspace(start=start, stop=stop, num=num, retstep=True)
         d = step / 2.0
         bins = np.linspace(start=start + d, stop=stop - d, num=num - 1)
-        ix = df.index
         idx = ix.union(linspace)
         df = df.reindex(idx)
-        df = df.interpolate(method="cubic")
+        df = df.interpolate(method="linear")
         df = df.loc[linspace]
         df["d"] = df["y"].diff(-1)
         freq = df["d"].dropna().values
@@ -466,6 +492,10 @@ class HazardCurve(ABC, YamlMixin):
     def elastically_spaced_intensities_for_idas(
         self, Say: float, elastic_pct: float = 0.2
     ):
+        """
+        creates a grid with elastic_pct% number of points up to Say
+        and the rest evenly spaced, why waste computing time on the elastic portion?
+        """
         m, r = self._IDA_LINSPACE_BINS * elastic_pct, self._IDA_LINSPACE_BINS * (
             1 - elastic_pct
         )
@@ -474,23 +504,23 @@ class HazardCurve(ABC, YamlMixin):
         df = df.set_index(df["x"])
         start, stop, num = df.index.min(), Say, m
         linspace1, step = np.linspace(start=start, stop=stop, num=num, retstep=True)
-        d = step / 2
+        d = step / 2.0
         bins1 = np.linspace(start=start + d, stop=stop - d, num=num - 1)
         ix = df.index
         idx = ix.union(linspace1)
         haz1 = df.reindex(idx)
-        haz1 = haz1.interpolate(method="cubic")
+        haz1 = haz1.interpolate(method="linear")
         haz1 = haz1.loc[linspace1]
         haz1["d"] = haz1["y"].diff(-1)
         freq1 = haz1["d"].dropna().values
         start, stop, num = Say, df.index.max(), r
         linspace2, step = np.linspace(start=start, stop=stop, num=num, retstep=True)
-        d = step / 2
+        d = step / 2.0
         bins2 = np.linspace(start=start + d, stop=stop - d, num=num - 1)
         ix = df.index
         idx = ix.union(linspace2)
         haz2 = df.reindex(idx)
-        haz2 = haz2.interpolate(method="cubic")
+        haz2 = haz2.interpolate(method="linear")
         haz2 = haz2.loc[linspace2]
         haz2["d"] = haz2["y"].diff(-1)
         freq2 = haz2["d"].dropna().values

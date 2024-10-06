@@ -33,7 +33,8 @@ colors = px.colors.qualitative.Bold
 colors = px.colors.sequential.Greys_r
 from plotly.colors import n_colors
 
-colors = n_colors("rgb(0, 0, 0)", "rgb(200, 200, 200)", 2, colortype="rgb")
+
+colors = n_colors("rgb(0, 0, 0)", "rgb(200, 200, 200)", 10, colortype="rgb")
 
 
 @dataclass
