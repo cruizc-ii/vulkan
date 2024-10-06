@@ -559,7 +559,9 @@ class RectangularConcreteColumn:
         if isinstance(df_or_x, float):
             DS = 1
         else:
-            area = -trapezoid(df_or_x[moment_col], x=df_or_x[rotation_col])
+            area = max(
+                [-trapezoid(df_or_x[moment_col], x=df_or_x[rotation_col]), 0]
+            )  # some numerical errors with neg area
             theta_max = max(abs(df_or_x[rotation_col]))
             mono = max([theta_max - self.theta_y, 0]) / (
                 self.theta_u_cyclic - self.theta_y
@@ -567,8 +569,8 @@ class RectangularConcreteColumn:
             cyclic = area / self.Et
             DS = min([mono + cyclic, 1])
             cap = 100 * area / self.Et
-            title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f}"
-            # print(title)
+            # title = f"{area=:.1f}, {self.Et=:.1f} {cap=:.1f}% -- {mono=:.2f} {cyclic=:.2f} {DS=:.2f}"
+
         return DS
 
     def elwood_shear_capacity(

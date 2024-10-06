@@ -53,19 +53,6 @@ Add to `fly secrets set`
 
 `fly ssh console`
 
-## TODO
-
-- [ ] Tests passing
-- [ ] Source code has MIT licence.
-- [ ] Anyone can mount it on server.
-- [ ] Biblioteca unam has a .zip of the source code.
-
-## Loss Checks
-
-- [x] AAL, 0.01 a bit low. 1e-4 2e-4 around 0.02%
-- [x] EL v0 = AAL
-- [x] v(L=0) = v0.
-
 ## Developing
 
 SI engineering units: force: kN, length: m, time: s.

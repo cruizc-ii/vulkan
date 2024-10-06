@@ -50,12 +50,12 @@ class Loss:
     scatter_src: str | None = None
     _srcs_dfs_cache: dict = field(default_factory=dict)
     _scatter_df: ScatterResultsDataFrame | None = None
-    _RATE_NUM_BINS: int = 64
     _csv_name: str = ""
     _scatter_csv_name: str = ""
     _collapse_mask_csv_name: str = ""
     _collapse_mask_df: pd.DataFrame | None = None
     _collapse_rate_df: pd.DataFrame | None = None
+    _RATE_NUM_BINS: int = 64
 
     def __post_init__(self):
         if self.src:
@@ -87,11 +87,10 @@ class Loss:
         lambda0 = sum(freq)
         df["aal"] = df["mean"] * freq.values
         aal = float(df["aal"].sum())
-        mean = aal / lambda0
-        self.expected_loss = mean
+        self.expected_loss = aal / lambda0
         self.average_annual_loss = aal
-        self.average_annual_loss_pct = self.average_annual_loss / self.net_worth * 100
-        self.expected_loss_pct = self.expected_loss / self.net_worth * 100
+        self.average_annual_loss_pct = 100 * self.average_annual_loss / self.net_worth
+        self.expected_loss_pct = 100 * self.expected_loss / self.net_worth
         return self.stats()
 
     def _compute_rate_losses(self) -> pd.DataFrame:
@@ -116,6 +115,39 @@ class Loss:
             self._rate_df, RATE_CSV_RESULTS_DIR, name=self._csv_name
         )
         return self._rate_df
+
+    def expected_loss_and_variance_fig(self, normalization: float = 1.0):
+        df = self._loss_df
+        df = df * 1.0 / normalization
+        df["std"] = df[df.columns.difference(["mean"])].std(axis=1, ddof=0)
+        df = df.reset_index()
+        fig = px.line(df, x="intensity", y=["mean", "std"], markers=True)
+        fig.update_layout(
+            xaxis_title="accel (g)",
+            yaxis_title="Loss $",
+            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+            legend_font=dict(size=12),
+            title_font_size=24,
+        )
+        return fig
+
+    def rate_fig(self, normalization: float = 1.0, log_axes: bool = True):
+        df = self._rate_df
+        df.index = df.index * 1.0 / normalization
+        fig = px.line(df, markers=True)
+        if log_axes:
+            fig.update_layout(
+                # xaxis_type="log",
+                yaxis_type="log",
+            )
+        fig.update_layout(
+            # df.values.max()
+            # xaxis_range=[-2, 3],
+            # yaxis_range=[-5, 0],
+            xaxis_title="$",
+            yaxis_title="v($) [1/yr]",
+        )
+        return fig
 
     def aggregated_expected_loss_and_variance_fig(self, df: LossModelsResultsDataFrame):
         # start, stop, num = df.index.min(), df.index.max(), 10
@@ -612,39 +644,6 @@ class LossAggregator(NamedYamlMixin, Loss):
 
     #         vdf = pd.DataFrame(rates, index=index)
     #         return vdf
-
-    def expected_loss_and_variance_fig(self, normalization: float = 1.0):
-        df = self._loss_df
-        df = df * 1.0 / normalization
-        df["std"] = df[df.columns.difference(["mean"])].std(axis=1, ddof=0)
-        df = df.reset_index()
-        fig = px.line(df, x="intensity", y=["mean", "std"], markers=True)
-        fig.update_layout(
-            xaxis_title="accel (g)",
-            yaxis_title="Loss $",
-            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-            legend_font=dict(size=12),
-            title_font_size=24,
-        )
-        return fig
-
-    def rate_fig(self, normalization: float = 1.0, log_axes: bool = True):
-        df = self._rate_df
-        df.index = df.index * 1.0 / normalization
-        fig = px.line(df, markers=True)
-        if log_axes:
-            fig.update_layout(
-                # xaxis_type="log",
-                yaxis_type="log",
-            )
-        fig.update_layout(
-            # df.values.max()
-            # xaxis_range=[-2, 3],
-            # yaxis_range=[-5, 0],
-            xaxis_title="$",
-            yaxis_title="v($) [1/yr]",
-        )
-        return fig
 
     @property
     def summary(self) -> dict:
